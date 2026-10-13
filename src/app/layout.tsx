@@ -7,6 +7,7 @@ import { PublicConfigProvider } from "#/lib/public-config";
 import { getPublicConfig } from "#/lib/site-config";
 import "./game-tokens.generated.css";
 import "./globals.css";
+import "./game-ui.css";
 
 // Copied from the Unity tree by scripts/prepare-game-assets.mjs.
 const vcr = localFont({

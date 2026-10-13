@@ -1,0 +1,98 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { ImageResponse } from "next/og";
+import art from "#/components/grid/fitting-art.generated.json";
+import { boundsOf } from "#/components/grid/geometry";
+import { moduleCells, type GridModel } from "#/components/grid/model";
+import { loadFitPage } from "#/lib/site/loaders";
+import { siteDeps } from "#/lib/site/server";
+
+// A fit's share card: what link previews on Discord, X and elsewhere show for its page.
+export const alt = "A Citadel ship fit";
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+
+// Copied from the Unity tree by scripts/prepare-game-assets.mjs; next.config.ts traces it into this route.
+const FONT = join(process.cwd(), "src/app/fonts/VCROSDNEUE.ttf");
+const T = art.tokens;
+const TIERS = art.tiers as Record<string, { bg: string; border: string; base: string }>;
+
+function MiniGrid({ model }: { model: GridModel }) {
+  const cells = model.modules.flatMap(moduleCells);
+  const enabled = model.slots.flatMap((slot, index) => (slot === "None" ? [] : [{ row: Math.floor(index / model.cols), col: index % model.cols }]));
+  const box = boundsOf([...enabled, ...cells]);
+  if (!box) return null;
+  const cell = Math.floor(Math.min(440 / box.rows, 440 / box.cols));
+  const at = (row: number, col: number) => ({ left: (col - box.minCol) * cell, top: (row - box.minRow) * cell });
+  return (
+    <div style={{ display: "flex", position: "relative", width: box.cols * cell, height: box.rows * cell }}>
+      {enabled.map(({ row, col }) => (
+        <div
+          key={`s${row},${col}`}
+          style={{ position: "absolute", ...at(row, col), width: cell - 4, height: cell - 4, margin: 2, border: "1px solid rgba(107, 122, 122, 0.72)", background: "rgba(83, 96, 96, 0.12)" }}
+        />
+      ))}
+      {model.modules.flatMap((module) => {
+        const tier = TIERS[module.tier]!;
+        const unknown = !module.known;
+        return moduleCells(module).map(({ row, col }) => (
+          <div
+            key={`m${module.index}-${row},${col}`}
+            style={{
+              position: "absolute",
+              ...at(row, col),
+              width: cell - 2,
+              height: cell - 2,
+              margin: 1,
+              background: unknown ? art.colors.HazardTapeRed : tier.bg,
+              border: `2px solid ${module.issues.length ? art.colors.InvalidRed : tier.base}`,
+            }}
+          />
+        ));
+      })}
+    </div>
+  );
+}
+
+type Params = Promise<{ id: string }>;
+
+export default async function FitCard({ params }: { params: Params }) {
+  const { id } = await params;
+  const [font, data] = await Promise.all([readFile(FONT), loadFitPage(siteDeps(), id, { userId: null, isAdmin: false })]);
+  const fonts = [{ name: "VCR", data: font, weight: 400 as const }];
+  const frame = { display: "flex", width: "100%", height: "100%", background: "#0c0e0f", fontFamily: "VCR", color: T["text-primary"] } as const;
+
+  if (data.status !== "ok") {
+    return new ImageResponse(
+      <div style={{ ...frame, alignItems: "center", justifyContent: "center", fontSize: 72, letterSpacing: 12 }}>CITADEL FITS</div>,
+      { ...size, fonts },
+    );
+  }
+  const { fit, shown, grid } = data;
+  const hull = data.hull?.name ?? "UNKNOWN HULL";
+  const rating = shown.reference?.rating ?? null;
+  const standing = shown.standing === "outdated" ? { text: "OUTDATED", color: T["state-negative"] } : shown.standing === "current" ? { text: "WORKS ON CURRENT BUILD", color: T["state-positive"] } : null;
+  return new ImageResponse(
+    <div style={{ ...frame, padding: 56, gap: 56 }}>
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: T["accent-orange"] }}>{`${hull} FIT`}</div>
+          <div style={{ display: "flex", fontSize: 60, letterSpacing: 4, lineHeight: 1.1, textTransform: "uppercase" }}>{fit.title}</div>
+          <div style={{ display: "flex", fontSize: 26, letterSpacing: 4, color: T["text-primary-muted"] }}>{`BY ${fit.authorName.toUpperCase()}`}</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 28, letterSpacing: 4 }}>
+          <div style={{ display: "flex", gap: 36 }}>
+            <span style={{ color: T["state-quantity"] }}>{`${fit.votes} ${fit.votes === 1 ? "UPVOTE" : "UPVOTES"}`}</span>
+            {rating !== null && <span style={{ color: T["state-quantity"] }}>{`RATING ${rating}`}</span>}
+          </div>
+          {standing && <div style={{ display: "flex", color: standing.color, fontSize: 22 }}>{standing.text}</div>}
+          <div style={{ display: "flex", fontSize: 20, letterSpacing: 8, color: T["text-secondary"] }}>CITADEL THEORYCRAFTING</div>
+        </div>
+      </div>
+      <div style={{ display: "flex", width: 470, alignItems: "center", justifyContent: "center", background: T["panel-bg"], border: `1px solid ${T["accent-muted"]}` }}>
+        {grid.status === "ready" ? <MiniGrid model={grid.model} /> : <div style={{ display: "flex", fontSize: 24, color: T["text-secondary"] }}>{hull}</div>}
+      </div>
+    </div>,
+    { ...size, fonts },
+  );
+}

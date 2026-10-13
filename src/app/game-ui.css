@@ -1,0 +1,774 @@
+/* The site's game-UI primitives, drawn with the game's tokens (game-tokens.generated.css) and the
+   game's recipes: chamfered panels with one border, the item tooltip plate (ItemTooltip.uss .mtt),
+   action buttons, tier and state colours. Hard edges only. */
+
+:root {
+  --page-bg: rgb(12, 14, 15);
+  --plate-bg: rgba(10, 12, 14, 0.95);
+  --plate-border: rgba(255, 255, 255, 0.06);
+  --rule: rgba(255, 255, 255, 0.04);
+  --track: 0.12em;
+}
+
+/* ---- Layout ------------------------------------------------------------------------------------ */
+
+.page {
+  margin: 0 auto;
+  display: flex;
+  max-width: 1280px;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+  padding: var(--spacing-xl) var(--spacing-xl) 64px;
+}
+
+.page-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-md) var(--spacing-lg);
+}
+
+.page-title h1 {
+  margin: 0;
+  font-size: var(--font-size-header);
+  letter-spacing: 0.2em;
+  color: var(--text-primary);
+}
+
+.eyebrow {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.3em;
+  color: var(--text-secondary);
+}
+
+/* ---- Panel: chamfered top-left and bottom-right with one 1px border. The shape is drawn by two
+   clipped layers behind the content, so tooltips inside a panel are never clipped by it. ---- */
+
+.panel {
+  --cut: 10px;
+  --panel-edge: rgba(83, 96, 96, 0.45);
+  position: relative;
+  isolation: isolate;
+}
+
+.panel::before,
+.panel::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+
+.panel::before {
+  inset: 0;
+  background: var(--panel-edge);
+}
+
+.panel::after {
+  inset: 1px;
+  background: var(--panel-bg);
+}
+
+.panel__body {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: 1px;
+}
+
+.panel__header {
+  display: flex;
+  clip-path: polygon(calc(var(--cut) - 1px) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--cut) - 1px));
+  min-height: var(--panel-header-height);
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-lg) 0 calc(var(--cut) + var(--spacing-sm));
+  background: var(--header-bg);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.3em;
+  color: var(--text-secondary);
+}
+
+.panel__header-aside {
+  margin-left: auto;
+  letter-spacing: var(--track);
+}
+
+.panel__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+/* ---- Buttons: the action button (tokens.components --action-button-*), with a small chamfer. ---- */
+
+.btn {
+  --cut: 5px;
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  border: 1px solid transparent;
+  background: var(--action-button-bg);
+  padding: 0 var(--spacing-lg);
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-normal);
+  letter-spacing: var(--track);
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled),
+.btn:focus-visible {
+  border-color: var(--action-button-border-hover);
+  background: var(--action-button-bg-hover);
+  outline: none;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.btn--quiet {
+  background: var(--input-bg);
+}
+
+.btn--quiet:hover:not(:disabled),
+.btn--quiet:focus-visible {
+  border-color: var(--accent-muted);
+  background: var(--surface-hover);
+}
+
+.btn--on {
+  border-color: var(--toggle-active-border);
+  background: var(--toggle-active-bg);
+  color: var(--toggle-active-text);
+}
+
+.btn--on:hover:not(:disabled) {
+  border-color: var(--toggle-active-hover-border);
+  background: var(--toggle-active-hover-bg);
+}
+
+.link {
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--accent-orange);
+  outline: none;
+}
+
+/* ---- Fields ---------------------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  color: var(--text-secondary);
+}
+
+.input,
+.select,
+.textarea {
+  min-height: 30px;
+  border: 1px solid var(--panel-border);
+  background: var(--input-bg);
+  padding: 4px var(--spacing-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-normal);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 0;
+}
+
+.textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: var(--accent-muted);
+  outline: none;
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  color: var(--text-primary-muted);
+  cursor: pointer;
+}
+
+.check input {
+  width: 12px;
+  height: 12px;
+  appearance: none;
+  border: 1px solid var(--accent-muted);
+  background: var(--input-bg);
+  margin: 0;
+}
+
+.check input:checked {
+  border-color: var(--state-positive);
+  background: var(--state-positive);
+  box-shadow: inset 0 0 0 2px var(--panel-bg);
+}
+
+/* ---- Chips, badges and notes ------------------------------------------------------------------ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tooltip-badge-border);
+  background: var(--tooltip-badge-bg);
+  padding: 1px 6px;
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--track);
+  color: var(--text-primary-muted);
+  text-decoration: none;
+}
+
+a.chip:hover {
+  border-color: var(--accent-muted);
+  color: var(--accent-orange);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  white-space: nowrap;
+}
+
+.badge--current {
+  background: rgba(0, 255, 111, 0.08);
+  color: var(--state-positive);
+}
+
+.badge--outdated,
+.badge--invalid {
+  background: rgba(255, 68, 68, 0.12);
+  color: var(--state-negative);
+}
+
+.badge--pending,
+.badge--unknown,
+.badge--draft {
+  background: var(--surface-default);
+  color: var(--text-primary-muted);
+}
+
+.badge--hidden {
+  background: rgba(255, 153, 0, 0.12);
+  color: var(--accent-orange);
+}
+
+.rating {
+  color: var(--state-quantity);
+  letter-spacing: var(--track);
+}
+
+.tone-positive {
+  color: var(--state-positive);
+}
+
+.tone-negative {
+  color: var(--state-negative);
+}
+
+.tone-neutral {
+  color: var(--text-primary-muted);
+}
+
+.note {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.15em;
+  color: var(--text-secondary);
+}
+
+.note--error {
+  color: var(--state-negative);
+}
+
+/* A strip across the page for an outage: the forge's orange on a dim plate. */
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm) var(--spacing-lg);
+  border-left: 2px solid var(--accent-orange);
+  background: var(--accent-orange-dim);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: var(--font-size-small);
+  letter-spacing: 0.12em;
+  color: var(--accent-orange);
+}
+
+.banner small {
+  font-size: var(--font-size-tiny);
+  color: var(--text-primary-muted);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-2xl) var(--spacing-lg);
+  color: var(--text-primary-muted);
+  letter-spacing: 0.12em;
+}
+
+/* ---- Tooltip plate (ItemTooltip.uss .tooltip--module + .mtt) ----------------------------------- */
+
+.plate {
+  display: flex;
+  min-width: 200px;
+  max-width: 280px;
+  flex-direction: column;
+  gap: 3px;
+  border: 1px solid var(--plate-border);
+  background: var(--plate-bg);
+  padding: 6px 8px;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+  text-align: left;
+  pointer-events: none;
+}
+
+.plate__name {
+  font-size: var(--font-size-normal);
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.plate__sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--spacing-sm);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+}
+
+.plate__divider {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--rule);
+}
+
+.plate__heading {
+  margin-top: 3px;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.plate__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.plate__row b {
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.plate__tier-badge {
+  margin-left: 4px;
+  border: 1px solid var(--tooltip-badge-border);
+  background: var(--tooltip-badge-bg);
+  padding: 0 3px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Shown while its anchor is hovered or focused. */
+.tip-anchor {
+  position: relative;
+}
+
+.tip-anchor > .tip {
+  position: absolute;
+  z-index: 30;
+  display: none;
+}
+
+.tip-anchor:hover > .tip,
+.tip-anchor:focus-visible > .tip,
+.tip-anchor:focus-within > .tip {
+  display: flex;
+}
+
+/* ---- Tier and quality accents (ItemTooltip.uss .mtt--accent-*) -------------------------------- */
+
+.accent-standard { color: var(--tier-standard-base); }
+.accent-augmented { color: var(--tier-augmented-base); }
+.accent-prototype { color: var(--tier-prototype-base); }
+.accent-artifact { color: var(--accent-orange); }
+.accent-regalia { color: var(--tier-regalia-base); }
+.accent-harmonic { color: var(--tier-harmonic-base); }
+.accent-heretical { color: var(--tier-heretical-base); }
+.accent-quality-faction { color: rgb(255, 107, 107); }
+.accent-quality-flawed { color: var(--tier-standard-text); }
+.accent-quality-standard { color: rgba(217, 217, 217, 0.6); }
+.accent-quality-superior { color: rgb(241, 229, 170); }
+.accent-quality-masterwork { color: var(--state-quantity); }
+
+/* ---- Markdown (descriptions and comments, already sanitized) ---------------------------------- */
+
+.prose {
+  font-size: var(--font-size-small);
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--text-primary-muted);
+  overflow-wrap: anywhere;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose > :last-child {
+  margin-bottom: 0;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose pre,
+.prose blockquote {
+  margin: 0 0 0.8em;
+}
+
+.prose a {
+  color: var(--accent-orange);
+}
+
+.prose strong {
+  color: var(--text-primary);
+  font-weight: 400;
+}
+
+.prose code,
+.prose pre {
+  background: var(--surface-default);
+  padding: 0 4px;
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--accent-muted);
+  padding-left: var(--spacing-md);
+}
+
+.prose h1,
+.prose h2,
+.prose h3 {
+  margin: 0.8em 0 0.4em;
+  font-size: var(--font-size-small);
+  font-weight: 400;
+  letter-spacing: 0.2em;
+  color: var(--text-primary);
+}
+
+/* ---- Fit page --------------------------------------------------------------------------------- */
+
+.fit-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  align-items: start;
+  gap: var(--spacing-xl);
+}
+
+.fit-layout__main,
+.fit-layout__side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+@media (max-width: 960px) {
+  .fit-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.fit-title {
+  margin: 0;
+  font-size: var(--font-size-header);
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  line-height: 1.3;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  border-left: 2px solid var(--state-negative);
+  background: rgba(255, 68, 68, 0.06);
+  padding: var(--spacing-sm) var(--spacing-md);
+  list-style: none;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.15em;
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats__row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  border-bottom: 1px solid var(--rule);
+  padding: 5px 4px;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.15em;
+  outline: none;
+  cursor: default;
+}
+
+.stats__row:hover,
+.stats__row:focus-visible {
+  background: var(--surface-hover);
+}
+
+.stats__label {
+  color: var(--text-primary-muted);
+}
+
+.stats__tip {
+  top: 0;
+  right: calc(100% + 8px);
+}
+
+@media (max-width: 960px) {
+  .stats__tip {
+    top: 100%;
+    right: 0;
+  }
+}
+
+.comment-thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: var(--spacing-lg);
+}
+
+.comment-replies {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-left: var(--spacing-xl);
+  border-left: 1px solid var(--accent-muted);
+  padding-left: var(--spacing-lg);
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.comment__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-normal);
+  letter-spacing: 0.15em;
+}
+
+.comment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+/* ---- Browse ------------------------------------------------------------------------------------ */
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  align-items: end;
+  gap: var(--spacing-md) var(--spacing-lg);
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  padding: var(--spacing-lg) 0;
+}
+
+.filters__check {
+  min-height: 30px;
+}
+
+.filters__buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.fit-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--spacing-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fit-card {
+  --cut: 8px;
+  --card-edge: var(--panel-border);
+  --card-fill: var(--strip-card-bg);
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+}
+
+/* The panel's two clipped layers: a chamfered 1px edge that meets cleanly on the diagonal. */
+.fit-card::before,
+.fit-card::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+
+.fit-card::before {
+  inset: 0;
+  background: var(--card-edge);
+}
+
+.fit-card::after {
+  inset: 1px;
+  background: var(--card-fill);
+}
+
+.fit-card:hover,
+.fit-card:focus-within {
+  --card-edge: var(--accent-muted);
+  --card-fill: rgb(20, 23, 24);
+}
+
+.fit-card__link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+  outline: none;
+}
+
+.fit-card__hull {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.3em;
+  color: var(--accent-orange);
+}
+
+.fit-card__title {
+  font-size: var(--font-size-small);
+  letter-spacing: 0.12em;
+  line-height: 1.35;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.fit-card__link:hover .fit-card__title,
+.fit-card__link:focus-visible .fit-card__title {
+  color: var(--accent-orange);
+}
+
+.fit-card__meta {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.15em;
+}
+
+.fit-card__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-top: auto;
+}
+
+.fit-card__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+  color: var(--text-primary-muted);
+}
+
+/* ---- Admin ------------------------------------------------------------------------------------- */
+
+.reports {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--rule);
+  padding: var(--spacing-md) 0;
+}
+
+.report__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.report__preview {
+  font-size: var(--font-size-small);
+  letter-spacing: 0.1em;
+  overflow-wrap: anywhere;
+}
+
+.report__reason {
+  margin: 0;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+  color: var(--text-primary-muted);
+  overflow-wrap: anywhere;
+}
