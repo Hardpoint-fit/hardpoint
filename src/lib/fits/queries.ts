@@ -832,6 +832,18 @@ export async function resolveReportsForTarget(db: Queryable, targetKind: ReportT
 // Evaluations (the re-evaluation job)
 
 /**
+ * The stored content of one fit at one moment, whatever its status, for the engine to evaluate. The
+ * `revision` goes back to recordEvaluation so a verdict for content the author changed meanwhile is dropped.
+ * Null when there is no such fit.
+ */
+export async function getFitForEvaluation(db: Queryable, id: string): Promise<FitNeedingEvaluation | null> {
+  if (!ID.test(id)) return null;
+  const { rows } = await db.query<Row>(`SELECT id, hull_item, fit, updated_at::text AS revision FROM fits WHERE id = $1`, [id]);
+  const row = rows[0];
+  return row ? { id: row.id, hullItem: row.hull_item, fit: row.fit, revision: row.revision } : null;
+}
+
+/**
  * Published fits with no verdict stored for `buildSha`, oldest first. Record a verdict for every one you
  * evaluate, failures included (valid: false), or the next call returns it again.
  */

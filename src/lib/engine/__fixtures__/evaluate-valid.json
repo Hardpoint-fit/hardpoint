@@ -1,0 +1,464 @@
+{
+ "buildSha": "c919ec0e11b9ba74824d1509cb2a123b317f67da",
+ "valid": true,
+ "issues": [],
+ "conduits": [
+  {
+   "moduleIndex": 10,
+   "connectionCount": 1
+  }
+ ],
+ "regaliaSets": [
+  {
+   "set": "271759098196484334",
+   "fittedCount": 2,
+   "moduleIndices": [
+    11,
+    12
+   ]
+  }
+ ],
+ "stats": [
+  {
+   "stat": "Mass",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": -0.067047119140625,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1276464883135659217",
+     "affinityType": "None",
+     "raw": 0.029998779296875,
+     "ratio": 1,
+     "effective": 0.029998779296875,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1329495787612835751",
+     "affinityType": "None",
+     "raw": -0.0200042724609375,
+     "ratio": 0.84100341796875,
+     "effective": -0.0168304443359375,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1343056967634011071",
+     "affinityType": "None",
+     "raw": -0.040008544921875,
+     "ratio": 0.9579925537109375,
+     "effective": -0.038330078125,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1304467395283315534",
+     "affinityType": "None",
+     "raw": -0.05999755859375,
+     "ratio": 1,
+     "effective": -0.05999755859375,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "RegaliaPiece",
+     "asset": "359734331002714082",
+     "affinityType": "None",
+     "raw": 0.0200042724609375,
+     "ratio": 0.9579925537109375,
+     "effective": 0.0191650390625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "Torque",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.0800018310546875,
+   "sources": [
+    {
+     "kind": "RegaliaPiece",
+     "asset": "376835473569659020",
+     "affinityType": "None",
+     "raw": 0.0800018310546875,
+     "ratio": 1,
+     "effective": 0.0800018310546875,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "MaxSpeed",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.1876983642578125,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1304467395283315534",
+     "affinityType": "None",
+     "raw": 0.07000732421875,
+     "ratio": 0.9579925537109375,
+     "effective": 0.0670623779296875,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1387039041809030747",
+     "affinityType": "None",
+     "raw": 0.0200042724609375,
+     "ratio": 0.84100341796875,
+     "effective": 0.0168304443359375,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "RegaliaPiece",
+     "asset": "376835473569659020",
+     "affinityType": "None",
+     "raw": 0.0200042724609375,
+     "ratio": 0.677001953125,
+     "effective": 0.0135498046875,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "RegaliaPiece",
+     "asset": "376835473569659020",
+     "affinityType": "None",
+     "raw": 0.079986572265625,
+     "ratio": 1,
+     "effective": 0.079986572265625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "SignatureRadius",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": -0.097991943359375,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1329495787612835751",
+     "affinityType": "None",
+     "raw": -0.17999267578125,
+     "ratio": 1,
+     "effective": -0.17999267578125,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1340739176998289780",
+     "affinityType": "None",
+     "raw": 0.100006103515625,
+     "ratio": 1,
+     "effective": 0.100006103515625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "SensorRange",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.17999267578125,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1278500398224355069",
+     "affinityType": "None",
+     "raw": 0.17999267578125,
+     "ratio": 1,
+     "effective": 0.17999267578125,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "TurretRotationRate",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.0999908447265625,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1340739176998289780",
+     "affinityType": "None",
+     "raw": 0.0999908447265625,
+     "ratio": 1,
+     "effective": 0.0999908447265625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "TurretRange",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.1399993896484375,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1340739176998289780",
+     "affinityType": "None",
+     "raw": 0.1399993896484375,
+     "ratio": 1,
+     "effective": 0.1399993896484375,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "MaxHull",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.029998779296875,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1284176030826467319",
+     "affinityType": "None",
+     "raw": 0.029998779296875,
+     "ratio": 1,
+     "effective": 0.029998779296875,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "MaxArmor",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": -0.05999755859375,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1343056967634011071",
+     "affinityType": "None",
+     "raw": -0.05999755859375,
+     "ratio": 1,
+     "effective": -0.05999755859375,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "HeatDissipationRate",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.0399932861328125,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1276464883135659217",
+     "affinityType": "None",
+     "raw": 0.0399932861328125,
+     "ratio": 1,
+     "effective": 0.0399932861328125,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "MaxHeat",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.1953125,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1276464883135659217",
+     "affinityType": "None",
+     "raw": 0.149993896484375,
+     "ratio": 1,
+     "effective": 0.149993896484375,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1309670480061494117",
+     "affinityType": "None",
+     "raw": -0.0800018310546875,
+     "ratio": 1,
+     "effective": -0.0800018310546875,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "Module",
+     "asset": "1304467395283315534",
+     "affinityType": "None",
+     "raw": -0.07000732421875,
+     "ratio": 0.9579925537109375,
+     "effective": -0.0670623779296875,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "RegaliaPiece",
+     "asset": "359734331002714082",
+     "affinityType": "None",
+     "raw": 0.149993896484375,
+     "ratio": 0.9579925537109375,
+     "effective": 0.1436920166015625,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "RegaliaPiece",
+     "asset": "359734331002714082",
+     "affinityType": "None",
+     "raw": 0.0699920654296875,
+     "ratio": 0.84100341796875,
+     "effective": 0.058868408203125,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "MissileDamage",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.100006103515625,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1309670480061494117",
+     "affinityType": "None",
+     "raw": 0.100006103515625,
+     "ratio": 1,
+     "effective": 0.100006103515625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "BarrierMaxHP",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.220001220703125,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1343056967634011071",
+     "affinityType": "None",
+     "raw": 0.220001220703125,
+     "ratio": 1,
+     "effective": 0.220001220703125,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "SalvageLuck",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.079986572265625,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1278500398224355069",
+     "affinityType": "None",
+     "raw": 0.079986572265625,
+     "ratio": 1,
+     "effective": 0.079986572265625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "TurretCritChance",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.2700042724609375,
+   "sources": [
+    {
+     "kind": "RegaliaSet",
+     "asset": "271759098196484334",
+     "affinityType": "None",
+     "raw": 0.2700042724609375,
+     "ratio": 1,
+     "effective": 0.2700042724609375,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "MaxAmmoCount",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.25,
+   "sources": [
+    {
+     "kind": "RegaliaPiece",
+     "asset": "359734331002714082",
+     "affinityType": "None",
+     "raw": 0.25,
+     "ratio": 1,
+     "effective": 0.25,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "ECMMaxRange",
+   "stage": "Fitted",
+   "operation": "Multiply",
+   "total": 0.079986572265625,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1278500398224355069",
+     "affinityType": "None",
+     "raw": 0.079986572265625,
+     "ratio": 1,
+     "effective": 0.079986572265625,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "ArmorResistKinetic",
+   "stage": "Fitted",
+   "operation": "DamageReduction",
+   "total": -0.0399932861328125,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1329495787612835751",
+     "affinityType": "None",
+     "raw": -0.0399932861328125,
+     "ratio": 1,
+     "effective": -0.0399932861328125,
+     "isStackingExempt": false
+    }
+   ]
+  },
+  {
+   "stat": "CargoCapacity",
+   "stage": "Fitted",
+   "operation": "Add",
+   "total": -6,
+   "sources": [
+    {
+     "kind": "Module",
+     "asset": "1276464883135659217",
+     "affinityType": "None",
+     "raw": -4,
+     "ratio": 1,
+     "effective": -4,
+     "isStackingExempt": false
+    },
+    {
+     "kind": "RegaliaPiece",
+     "asset": "359734331002714082",
+     "affinityType": "None",
+     "raw": -2,
+     "ratio": 1,
+     "effective": -2,
+     "isStackingExempt": false
+    }
+   ]
+  }
+ ],
+ "rating": 5332
+}

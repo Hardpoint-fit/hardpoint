@@ -1,0 +1,15 @@
+{
+ "buildSha": "c919ec0e11b9ba74824d1509cb2a123b317f67da",
+ "valid": false,
+ "issues": [
+  {
+   "moduleIndex": 13,
+   "kind": "Overlap",
+   "message": "This item overlaps another."
+  }
+ ],
+ "conduits": [],
+ "regaliaSets": [],
+ "stats": [],
+ "rating": 0
+}

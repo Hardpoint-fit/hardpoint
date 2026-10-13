@@ -12,6 +12,7 @@ import {
   fitsNeedingEvaluation,
   generateFitId,
   getFit,
+  getFitForEvaluation,
   listComments,
   listOpenReports,
   publishFit,
@@ -576,4 +577,20 @@ test("deleting a fit cascades to its votes, comments and evaluations", async () 
 
 test("anonymous viewers are the default everywhere", () => {
   assert.deepEqual(ANONYMOUS, { userId: null, isAdmin: false });
+});
+
+test("getFitForEvaluation returns stored content and a revision that changes on edit", async () => {
+  const d = await draft();
+  const before = await getFitForEvaluation(db, d.id);
+  assert.equal(before.id, d.id);
+  assert.equal(before.hullItem, "1000");
+  assert.deepEqual(before.fit, d.fit);
+  await updateFit(db, { id: d.id, authorUserId: ALICE.userId, content: sampleFit("1000") });
+  const after = await getFitForEvaluation(db, d.id);
+  assert.notEqual(after.revision, before.revision);
+  // a verdict recorded against the old revision is refused
+  assert.equal(await recordEvaluation(db, d.id, good, { revision: before.revision }), false);
+  assert.equal(await recordEvaluation(db, d.id, good, { revision: after.revision }), true);
+  assert.equal(await getFitForEvaluation(db, "nope"), null);
+  assert.equal(await getFitForEvaluation(db, "AAAAAAAAAA"), null);
 });

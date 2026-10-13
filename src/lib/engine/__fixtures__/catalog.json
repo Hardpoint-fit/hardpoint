@@ -1,0 +1,5614 @@
+{
+ "buildSha": "c919ec0e11b9ba74824d1509cb2a123b317f67da",
+ "hulls": [
+  {
+   "def": "1274722114706556685",
+   "name": "SCARAB",
+   "shipClass": "Cruiser",
+   "rows": 15,
+   "cols": 15,
+   "slots": [
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Battery",
+    "None",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Battery",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Subsystem",
+    "Subsystem",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Subsystem",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Propulsion",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Propulsion",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Propulsion",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None"
+   ],
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "79298",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "3342336",
+         "max": "4718592",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "4915200",
+         "max": "6094848",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "7274496",
+         "max": "9502720",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "8585216",
+         "max": "11272192",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [],
+    "artifacts": [
+     "295810116418873646"
+    ],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [],
+    "rating": {
+     "base": 2560,
+     "scalesWithQuality": true,
+     "tierShares": [
+      102,
+      204,
+      307,
+      409
+     ],
+     "regaliaShare": 1920,
+     "hereticalShare": 1791,
+     "ascendedHereticalShare": 4479
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1421202711594240286",
+   "name": "SERAPH",
+   "shipClass": "Cruiser",
+   "rows": 15,
+   "cols": 15,
+   "slots": [
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Battery",
+    "Subsystem",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Battery",
+    "Core",
+    "Subsystem",
+    "Core",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Propulsion",
+    "Core",
+    "Propulsion",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Propulsion",
+    "None",
+    "Core",
+    "None",
+    "Propulsion",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None"
+   ],
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "79298",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "3342336",
+         "max": "4718592",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "4915200",
+         "max": "6094848",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "7274496",
+         "max": "9502720",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "8585216",
+         "max": "11272192",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [],
+    "artifacts": [
+     "323613845660499413"
+    ],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [],
+    "rating": {
+     "base": 2200,
+     "scalesWithQuality": true,
+     "tierShares": [
+      87,
+      176,
+      263,
+      352
+     ],
+     "regaliaShare": 1650,
+     "hereticalShare": 1539,
+     "ascendedHereticalShare": 3849
+    },
+    "authored": [
+     {
+      "source": "newPlayerShip",
+      "quality": "Faction",
+      "rarity": "Normal",
+      "isIdentified": true,
+      "pointRating": 1870
+     }
+    ]
+   }
+  }
+ ],
+ "items": [
+  {
+   "def": "1276464883135659217",
+   "name": "COOLANT RESERVOIR",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "ONExTWO",
+   "moduleType": "Utility",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Regalia",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70123",
+         "max": "74711",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "ArmorResistKinetic",
+       "operation": "DamageReduction",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "1310",
+         "max": "2621",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "1966",
+         "max": "3276",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "2621",
+         "max": "3932",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [
+     "298763300850247925"
+    ],
+    "hereticals": [
+     "273348005033744251",
+     "384198119203812031",
+     "403623045190279764",
+     "404940237732457155",
+     "422246952293803063",
+     "424259342220093921",
+     "427290929439511251",
+     "458925580931376598",
+     "460065845972061300",
+     "464864253914993658",
+     "471124748824829746",
+     "509558342704662516"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 210,
+     "scalesWithQuality": true,
+     "tierShares": [
+      23,
+      46,
+      69,
+      92
+     ],
+     "regaliaShare": 157,
+     "hereticalShare": 146,
+     "ascendedHereticalShare": 367
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1278500398224355069",
+   "name": "SURVEY SCANNER",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "ONExTWO",
+   "moduleType": "Utility",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70123",
+         "max": "74711",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "ArmorResistKinetic",
+       "operation": "DamageReduction",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "1310",
+         "max": "2621",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "1966",
+         "max": "3276",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "2621",
+         "max": "3932",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [
+     "326679363925324887"
+    ],
+    "regalia": [],
+    "hereticals": [
+     "273348005033744251",
+     "384198119203812031",
+     "403623045190279764",
+     "404940237732457155",
+     "422246952293803063",
+     "424259342220093921",
+     "427290929439511251",
+     "458925580931376598",
+     "460065845972061300",
+     "464864253914993658",
+     "471124748824829746",
+     "509558342704662516"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 206,
+     "scalesWithQuality": true,
+     "tierShares": [
+      22,
+      45,
+      67,
+      90
+     ],
+     "regaliaShare": 154,
+     "hereticalShare": 144,
+     "ascendedHereticalShare": 360
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "category": "Module",
+   "slotType": "Battery",
+   "slotSize": "ONExONE",
+   "moduleType": "None",
+   "payloads": [
+    "ArmorRepairCharge"
+   ],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 2,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "79298",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "3342336",
+         "max": "4718592",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "4915200",
+         "max": "6094848",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "7274496",
+         "max": "9502720",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "8585216",
+         "max": "11272192",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 0,
+     "scalesWithQuality": true,
+     "tierShares": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "regaliaShare": 0,
+     "hereticalShare": 0,
+     "ascendedHereticalShare": 0
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "category": "Module",
+   "slotType": "Subsystem",
+   "slotSize": "ONExTWO",
+   "moduleType": "ECM",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Regalia",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "ECMMaxRange",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "74055",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [
+     "380494397485989429"
+    ],
+    "hereticals": [
+     "273445768679449137",
+     "277269535299252145",
+     "389202597592192270",
+     "421366082003430097",
+     "429014582939690392",
+     "480188954131773226",
+     "480953009242732218",
+     "488801904439256367",
+     "508826034769534055",
+     "511066426034207871",
+     "520065309061462194",
+     "531771138748473293"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 210,
+     "scalesWithQuality": true,
+     "tierShares": [
+      23,
+      46,
+      69,
+      92
+     ],
+     "regaliaShare": 157,
+     "hereticalShare": 146,
+     "ascendedHereticalShare": 367
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1297320276078073896",
+   "name": "OMNI REPAIRER TURRET",
+   "category": "Module",
+   "slotType": "Battery",
+   "slotSize": "ONExONE",
+   "moduleType": "None",
+   "payloads": [
+    "ArmorRepairCharge"
+   ],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 2,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "79298",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "3342336",
+         "max": "4718592",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "4915200",
+         "max": "6094848",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "7274496",
+         "max": "9502720",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "8585216",
+         "max": "11272192",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 0,
+     "scalesWithQuality": true,
+     "tierShares": [
+      0,
+      0,
+      0,
+      0
+     ],
+     "regaliaShare": 0,
+     "hereticalShare": 0,
+     "ascendedHereticalShare": 0
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "category": "Module",
+   "slotType": "Subsystem",
+   "slotSize": "ONExTHREE",
+   "moduleType": "Armor",
+   "payloads": [],
+   "shape": {
+    "originRow": 1,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 1,
+      "col": 2
+     },
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 4,
+    "candidates": [
+     {
+      "row": 1,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 1,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 1,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Regalia",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxArmor",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "917504",
+         "max": "1638400",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "1376256",
+         "max": "2490368",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "1638400",
+         "max": "3407872",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "2359296",
+         "max": "4849664",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxArmor",
+       "operation": "Add",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "2359296",
+         "max": "4259840",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "3604480",
+         "max": "4849664",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "3997696",
+         "max": "5439488",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "4980736",
+         "max": "7274496",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [
+     "347883142607505651"
+    ],
+    "hereticals": [
+     "289273414964130488",
+     "331804870597123891",
+     "349410853447822890",
+     "352199355482945619",
+     "375639260894649849",
+     "379385589551641468",
+     "417561518021970979",
+     "419845879662142468",
+     "421832900024042259",
+     "442802928596557944",
+     "447335584261504002",
+     "504000692289434716"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 308,
+     "scalesWithQuality": true,
+     "tierShares": [
+      33,
+      67,
+      101,
+      135
+     ],
+     "regaliaShare": 231,
+     "hereticalShare": 215,
+     "ascendedHereticalShare": 538
+    },
+    "authored": [
+     {
+      "source": "hubTutorialPack",
+      "quality": "Faction",
+      "rarity": "Normal",
+      "isIdentified": true,
+      "pointRating": 261
+     }
+    ]
+   }
+  },
+  {
+   "def": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "category": "Module",
+   "slotType": "Propulsion",
+   "slotSize": "ONExTWO",
+   "moduleType": "Propulsion",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxSpeed",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "Torque",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "60294",
+         "max": "62260",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [
+     "442331544196374989"
+    ],
+    "regalia": [],
+    "hereticals": [
+     "280927685736360386",
+     "347097589403001214",
+     "458374949384075336",
+     "474955037326832127",
+     "489740520453018007",
+     "491442517304958230",
+     "495455446172856611",
+     "495996874474364707",
+     "503946266686376183",
+     "520232485227331586",
+     "522514222274932859",
+     "524811216334225875"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 198,
+     "scalesWithQuality": true,
+     "tierShares": [
+      21,
+      43,
+      65,
+      87
+     ],
+     "regaliaShare": 148,
+     "hereticalShare": 138,
+     "ascendedHereticalShare": 346
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1309670480061494117",
+   "name": "INCENDIARY SALVO",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "ONExTWO",
+   "moduleType": "Missile",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MissileDamage",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "69468",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileSpeed",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74055",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MissileHomingStrength",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileRechargeTime",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "60949",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "58983",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "56361",
+         "max": "61604",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "53740",
+         "max": "60949",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [],
+    "hereticals": [
+     "274708230701435833",
+     "287389899665212534",
+     "315815665894295977",
+     "319174177868921608",
+     "356887229984011192",
+     "374853203525913872",
+     "375306639517716533",
+     "377408589991319221",
+     "379721108944761365",
+     "390785584445147492",
+     "423060597797749739",
+     "461015603556779592"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 206,
+     "scalesWithQuality": true,
+     "tierShares": [
+      22,
+      45,
+      67,
+      90
+     ],
+     "regaliaShare": 154,
+     "hereticalShare": 144,
+     "ascendedHereticalShare": 360
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1329495787612835751",
+   "name": "SLIP COATING",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "ONExTWO",
+   "moduleType": "Utility",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70123",
+         "max": "74711",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "ArmorResistKinetic",
+       "operation": "DamageReduction",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "1310",
+         "max": "2621",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "1966",
+         "max": "3276",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "2621",
+         "max": "3932",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [],
+    "hereticals": [
+     "273348005033744251",
+     "384198119203812031",
+     "403623045190279764",
+     "404940237732457155",
+     "422246952293803063",
+     "424259342220093921",
+     "427290929439511251",
+     "458925580931376598",
+     "460065845972061300",
+     "464864253914993658",
+     "471124748824829746",
+     "509558342704662516"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 210,
+     "scalesWithQuality": true,
+     "tierShares": [
+      23,
+      46,
+      69,
+      92
+     ],
+     "regaliaShare": 157,
+     "hereticalShare": 146,
+     "ascendedHereticalShare": 367
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "ONExTWO",
+   "moduleType": "Turret",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact",
+     "Regalia",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "TurretDamage",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66191",
+         "max": "66846",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretCritChance",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "TurretRotationRate",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretRange",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [
+     "403671240517905438"
+    ],
+    "regalia": [
+     "398496575653313900"
+    ],
+    "hereticals": [
+     "274880764621880714",
+     "275358414527684314",
+     "276059728624600177",
+     "316013086141699315",
+     "322411867475404507",
+     "357599346201734503",
+     "415860085692985896",
+     "447208900674634138",
+     "448044838534875217",
+     "460346436721268090",
+     "505992779918566756",
+     "529756410021538794"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 206,
+     "scalesWithQuality": true,
+     "tierShares": [
+      22,
+      45,
+      67,
+      90
+     ],
+     "regaliaShare": 154,
+     "hereticalShare": 144,
+     "ascendedHereticalShare": 360
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1343056967634011071",
+   "name": "BARRIER RACK",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "ONExTWO",
+   "moduleType": "Shield",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 3,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "BarrierMaxHP",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70123",
+         "max": "74711",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "BarrierRegenRate",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [],
+    "hereticals": [
+     "286767801377230360",
+     "312310006218118398",
+     "312826372521316169",
+     "313800502741546546",
+     "332840990664946774",
+     "336357091050560526",
+     "352759099077602961",
+     "355657524067136171",
+     "357676520760073348",
+     "384198119203812031",
+     "389882551860800477",
+     "527604196438151787"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 210,
+     "scalesWithQuality": true,
+     "tierShares": [
+      23,
+      46,
+      69,
+      92
+     ],
+     "regaliaShare": 157,
+     "hereticalShare": 146,
+     "ascendedHereticalShare": 367
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "category": "Conduit",
+   "slotType": "Core",
+   "slotSize": "ONExONE",
+   "moduleType": "Propulsion",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 0,
+    "candidates": []
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxSpeed",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "Torque",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "60294",
+         "max": "62260",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [],
+    "artifacts": [],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [],
+    "rating": {
+     "base": 190,
+     "scalesWithQuality": true,
+     "tierShares": [
+      20,
+      41,
+      62,
+      83
+     ],
+     "regaliaShare": 142,
+     "hereticalShare": 132,
+     "ascendedHereticalShare": 332
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "category": "Module",
+   "slotType": "Propulsion",
+   "slotSize": "ONExONE",
+   "moduleType": "Propulsion",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 2,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact",
+     "Regalia",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxSpeed",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "Torque",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "60294",
+         "max": "62260",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [
+     "339516517406247546"
+    ],
+    "regalia": [
+     "376835473569659020"
+    ],
+    "hereticals": [
+     "280927685736360386",
+     "347097589403001214",
+     "458374949384075336",
+     "474955037326832127",
+     "489740520453018007",
+     "491442517304958230",
+     "495455446172856611",
+     "495996874474364707",
+     "503946266686376183",
+     "520232485227331586",
+     "522514222274932859",
+     "524811216334225875"
+    ],
+    "harmonicSets": [
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 162,
+     "scalesWithQuality": true,
+     "tierShares": [
+      17,
+      35,
+      53,
+      71
+     ],
+     "regaliaShare": 121,
+     "hereticalShare": 113,
+     "ascendedHereticalShare": 283
+    },
+    "authored": []
+   }
+  },
+  {
+   "def": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "category": "Module",
+   "slotType": "Core",
+   "slotSize": "L_TRIOMINO",
+   "moduleType": "Turret",
+   "payloads": [],
+   "shape": {
+    "originRow": 2,
+    "originCol": 2,
+    "cells": [
+     {
+      "row": 2,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 2
+     },
+     {
+      "row": 3,
+      "col": 3
+     }
+    ]
+   },
+   "portRules": {
+    "maxPorts": 4,
+    "candidates": [
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Up"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 2,
+      "col": 2,
+      "direction": "Right"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 2,
+      "direction": "Left"
+     },
+     {
+      "row": 3,
+      "col": 3,
+      "direction": "Down"
+     },
+     {
+      "row": 3,
+      "col": 3,
+      "direction": "Right"
+     }
+    ]
+   },
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Regalia",
+     "Harmonic",
+     "Heretical"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     },
+     {
+      "rarity": "Heretical",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "TurretDamage",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66191",
+         "max": "66846",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretCritChance",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "TurretRotationRate",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretRange",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [
+     "Turret",
+     "Shield",
+     "Propulsion",
+     "Drone",
+     "ECM",
+     "Missile",
+     "Mining",
+     "Armor",
+     "Utility"
+    ],
+    "artifacts": [],
+    "regalia": [
+     "359734331002714082"
+    ],
+    "hereticals": [
+     "274880764621880714",
+     "275358414527684314",
+     "276059728624600177",
+     "316013086141699315",
+     "322411867475404507",
+     "357599346201734503",
+     "415860085692985896",
+     "447208900674634138",
+     "448044838534875217",
+     "460346436721268090",
+     "505992779918566756",
+     "529756410021538794"
+    ],
+    "harmonicSets": [
+     "328586449861078631",
+     "355563483137070958",
+     "358896232002213805",
+     "377848105322041577",
+     "405656166137731046",
+     "450130648934888880",
+     "468976290869027801",
+     "470198298653387211",
+     "503168870180031669",
+     "529371378710448193"
+    ],
+    "rating": {
+     "base": 302,
+     "scalesWithQuality": true,
+     "tierShares": [
+      33,
+      66,
+      99,
+      132
+     ],
+     "regaliaShare": 226,
+     "hereticalShare": 211,
+     "ascendedHereticalShare": 528
+    },
+    "authored": []
+   }
+  }
+ ],
+ "regaliaSets": [
+  {
+   "def": "271759098196484334",
+   "name": "KASSIK'S SEVERANCE",
+   "pieces": [
+    "297276472306431989",
+    "359734331002714082",
+    "376835473569659020",
+    "519416144862481557"
+   ]
+  },
+  {
+   "def": "271842034956224520",
+   "name": "TESSERA'S VIGIL",
+   "pieces": [
+    "332476303812774449",
+    "398496575653313900",
+    "434100042014308992",
+    "460593953622019903"
+   ]
+  }
+ ],
+ "modifierPools": [
+  {
+   "moduleType": "Turret",
+   "modifiers": {
+    "prefix": [
+     {
+      "stat": "TurretDamage",
+      "operation": "Multiply",
+      "pool": "Turret",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "66191",
+        "max": "66846",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "66846",
+        "max": "67502",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "66846",
+        "max": "68812",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "67502",
+        "max": "69468",
+        "allowed": true
+       }
+      ]
+     },
+     {
+      "stat": "TurretCritChance",
+      "operation": "Multiply",
+      "pool": "Turret",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "66846",
+        "max": "68812",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "67502",
+        "max": "70123",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "68157",
+        "max": "71434",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "68812",
+        "max": "73400",
+        "allowed": true
+       }
+      ]
+     }
+    ],
+    "suffix": [
+     {
+      "stat": "TurretRotationRate",
+      "operation": "Multiply",
+      "pool": "Turret",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "66846",
+        "max": "68812",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "67502",
+        "max": "70123",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "68157",
+        "max": "72744",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "68812",
+        "max": "74711",
+        "allowed": true
+       }
+      ]
+     },
+     {
+      "stat": "TurretRange",
+      "operation": "Multiply",
+      "pool": "Turret",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "66846",
+        "max": "68157",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "67502",
+        "max": "69468",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "68157",
+        "max": "70123",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "68812",
+        "max": "72089",
+        "allowed": true
+       }
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "moduleType": "Shield",
+   "modifiers": {
+    "prefix": [
+     {
+      "stat": "BarrierMaxHP",
+      "operation": "Multiply",
+      "pool": "Shield",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "67502",
+        "max": "70123",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "68812",
+        "max": "72744",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "70123",
+        "max": "74711",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "68812",
+        "max": "76021",
+        "allowed": true
+       }
+      ]
+     },
+     {
+      "stat": "HeatDissipationRate",
+      "operation": "Multiply",
+      "pool": "Shield",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "67502",
+        "max": "68812",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "68157",
+        "max": "70123",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "68812",
+        "max": "71434",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "69468",
+        "max": "73400",
+        "allowed": true
+       }
+      ]
+     }
+    ],
+    "suffix": [
+     {
+      "stat": "BarrierRegenRate",
+      "operation": "Multiply",
+      "pool": "Shield",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "67502",
+        "max": "69468",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "68157",
+        "max": "70778",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "68812",
+        "max": "72089",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "69468",
+        "max": "74711",
+        "allowed": true
+       }
+      ]
+     },
+     {
+      "stat": "SensorRange",
+      "operation": "Multiply",
+      "pool": "Shield",
+      "group": 0,
+      "augmentedOnly": false,
+      "onlyOnModule": null,
+      "tiers": [
+       {
+        "tier": 1,
+        "min": "66846",
+        "max": "68812",
+        "allowed": true
+       },
+       {
+        "tier": 2,
+        "min": "67502",
+        "max": "70123",
+        "allowed": true
+       },
+       {
+        "tier": 3,
+        "min": "68157",
+        "max": "71434",
+        "allowed": true
+       },
+       {
+        "tier": 4,
+        "min": "68812",
+        "max": "72744",
+        "allowed": true
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "artifacts": [
+  {
+   "def": "275107089619583858",
+   "name": "OATH BRINGER",
+   "item": "1442637265074437522",
+   "modifiers": [
+    {
+     "stat": "MaxHeat",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "76021",
+     "max": "83886"
+    },
+    {
+     "stat": "MaxArmor",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "93716",
+     "max": "115343"
+    },
+    {
+     "stat": "Mass",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "93716",
+     "max": "115343"
+    },
+    {
+     "stat": "SignatureRadius",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "340787",
+     "max": "504627"
+    }
+   ],
+   "scaledStat": null,
+   "pointRating": 3850,
+   "patinaMax": 0
+  },
+  {
+   "def": "278460097613111756",
+   "name": "YELLOWJACKET",
+   "item": "1426216244610980278",
+   "modifiers": [
+    {
+     "stat": "MissileDamage",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "72089",
+     "max": "76677"
+    },
+    {
+     "stat": "MissileRechargeTime",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "55051",
+     "max": "58983"
+    },
+    {
+     "stat": "MissileRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "47186",
+     "max": "55051"
+    }
+   ],
+   "scaledStat": null,
+   "pointRating": 300,
+   "patinaMax": 0
+  },
+  {
+   "def": "358841703442488635",
+   "name": "EREBOS",
+   "item": "1326187971131623458",
+   "modifiers": [
+    {
+     "stat": "HeatDissipationRate",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "76021",
+     "max": "83886"
+    },
+    {
+     "stat": "TurretRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "77332",
+     "max": "87818"
+    },
+    {
+     "stat": "ECMMaxRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "93716",
+     "max": "115343"
+    },
+    {
+     "stat": "MaxHull",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "33424",
+     "max": "45220"
+    }
+   ],
+   "scaledStat": {
+    "rule": "462345323116144043",
+    "min": "65536",
+    "max": "131072"
+   },
+   "pointRating": 3250,
+   "patinaMax": 0
+  }
+ ],
+ "regalia": [
+  {
+   "def": "270456803905027437",
+   "name": "CULMINAR'S JUDGEMENT",
+   "item": "1530715940003253209",
+   "set": "319623611465924437",
+   "modifiers": [
+    {
+     "stat": "TurretDamage",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "69468",
+     "max": "72744"
+    }
+   ],
+   "scaledStat": null
+  },
+  {
+   "def": "272157818179065936",
+   "name": "KETHANE'S BORE",
+   "item": "1360870965396795462",
+   "set": "509085837970584151",
+   "modifiers": [
+    {
+     "stat": "MiningSpeed",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "74055",
+     "max": "81264"
+    },
+    {
+     "stat": "SalvageLuck",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "70123",
+     "max": "74711"
+    }
+   ],
+   "scaledStat": null
+  }
+ ],
+ "hereticalSpecials": [
+  {
+   "def": "268945908987856069",
+   "name": "VIGIL",
+   "heresy": "Vigil",
+   "ascended": false,
+   "moduleTypes": [
+    "Drone"
+   ]
+  },
+  {
+   "def": "271857800551874815",
+   "name": "UNTIRING",
+   "heresy": "Vigil",
+   "ascended": true,
+   "moduleTypes": [
+    "Drone"
+   ]
+  }
+ ],
+ "harmonicSets": [
+  {
+   "def": "328586449861078631",
+   "name": "LODESTAR ASSAY",
+   "description": "THE ASSAYERS CALLED IT A LUCKY SEAM. THEN THE CACHES STARTED COMING UP IN PAIRS, AND THEY STOPPED CALLING IT ANYTHING.",
+   "moduleTypes": [
+    "Utility"
+   ],
+   "ciphers": [
+    "1396584369443491429",
+    "1506846116601213923",
+    "1312995956356181288"
+   ],
+   "pointRating": 1500
+  },
+  {
+   "def": "355563483137070958",
+   "name": "SALVAGE SHROUD",
+   "description": "TETHER CONTACT SUPPRESSES EMISSION. BUILDER LOGISTICS RAN SILENT DURING RECOVERY OPS. GRAB AND GO QUIET.",
+   "moduleTypes": [
+    "Utility"
+   ],
+   "ciphers": [
+    "1506846116601213923",
+    "1506846116601213923"
+   ],
+   "pointRating": 1000
+  }
+ ],
+ "ciphers": [
+  {
+   "def": "1283267483210613362",
+   "name": "DRUX",
+   "stat": "DroneOutput",
+   "operation": "Multiply",
+   "value": "75366",
+   "pointRating": 350
+  },
+  {
+   "def": "1305220033100729446",
+   "name": "SYN",
+   "stat": "Thrust",
+   "operation": "Multiply",
+   "value": "78643",
+   "pointRating": 150
+  }
+ ],
+ "affinity": {
+  "maxLevel": 30,
+  "maxPointsPerCategory": 20,
+  "maxPointsPerBonus": 15,
+  "levelXp": [
+   0,
+   458,
+   960,
+   1510,
+   2164,
+   2879,
+   3671,
+   4605,
+   5626,
+   6766,
+   8100,
+   9555,
+   11199,
+   13101,
+   15176,
+   17542,
+   20257,
+   23216,
+   26623,
+   30496,
+   34714,
+   39621,
+   45147,
+   51159,
+   58225,
+   66108,
+   74676,
+   84850,
+   96095,
+   108305
+  ],
+  "ratingByPoints": [
+   0,
+   30,
+   62,
+   98,
+   136,
+   179,
+   225,
+   275,
+   329,
+   388,
+   453,
+   523,
+   599,
+   683,
+   773,
+   872,
+   980,
+   1097,
+   1224,
+   1363,
+   1514,
+   1679,
+   1858,
+   2053,
+   2265,
+   2497,
+   2748,
+   3022,
+   3321,
+   3646,
+   4000
+  ],
+  "types": [
+   {
+    "moduleType": "Turret",
+    "name": "TURRET AFFINITY",
+    "optionName": "TURRET",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "TurretDamage",
+      "operation": "Multiply",
+      "valuePerPoint": "52429",
+      "name": "TURRET DAMAGE",
+      "description": "+0.5% TURRET DAMAGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "TurretRange",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "OPTIMAL RANGE",
+      "description": "+0.5% TURRET OPTIMAL RANGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "TurretCycleDuration",
+      "operation": "Multiply",
+      "valuePerPoint": "-39322",
+      "name": "RATE OF FIRE",
+      "description": "+0.25% RATE OF FIRE PER POINT",
+      "invertDisplaySign": true
+     },
+     {
+      "option": 3,
+      "stat": "TurretRotationRate",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "TRACKING SPEED",
+      "description": "+1% TURRET TRACKING PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "EXTENDED MAGAZINES",
+        "description": "+25% MAX AMMO CAPACITY"
+       },
+       {
+        "option": 1,
+        "name": "QUICK RELOAD",
+        "description": "TURRET MAGAZINES RELOAD 20% FASTER"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "SERVO LOCK",
+        "description": "TRACKING SPEED RAMPS UP TO +35% AFTER 10S ON THE SAME TARGET"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE TURRET STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "MARKSMAN",
+        "description": "-25% TURRET DAMAGE AT 25% OF OPTIMAL RANGE OR CLOSER → +50% AT 125% OR FARTHER"
+       },
+       {
+        "option": 1,
+        "name": "BRAWLER",
+        "description": "+50% TURRET DAMAGE AT 35% OF OPTIMAL RANGE OR CLOSER → -25% AT 125% OR FARTHER"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Shield",
+    "name": "SHIELD AFFINITY",
+    "optionName": "SHIELD",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "BarrierMaxHP",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "BARRIER HP",
+      "description": "+0.5% BARRIER MAX HP PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "BarrierRegenRate",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "BARRIER REGENERATION",
+      "description": "+0.5% BARRIER REGEN RATE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "MaxHeat",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "MAX HEAT",
+      "description": "+1.25% MAX HEAT PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "HeatDissipationRate",
+      "operation": "Multiply",
+      "valuePerPoint": "52429",
+      "name": "HEAT DISSIPATION",
+      "description": "+1% HEAT DISSIPATION PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "FORGE FIELD",
+        "description": "BARRIER REGEN RATE SCALES UP TO +100% WITH SHIP HEAT"
+       },
+       {
+        "option": 1,
+        "name": "INNER KEEP",
+        "description": "+50% MAX HULL"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "THERMAL FLOW",
+        "description": "BARRIERS VENT 1 HEAT PER 10 DAMAGE THEY ABSORB"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE SHIELD STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "HELLFIRE BARRIER",
+        "description": "DESTROYED BARRIERS DETONATE OUT TO 20X THEIR RADIUS FOR DAMAGE EQUAL TO HALF THEIR MAX HP"
+       },
+       {
+        "option": 1,
+        "name": "HOLLOW AEGIS",
+        "description": "MAX ARMOR IS ZEROED; +6% MAX BARRIER HP PER 100 MAX ARMOR YOU HAD"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ },
+ "qualities": [
+  {
+   "quality": "Faction",
+   "multiplier": "55706"
+  },
+  {
+   "quality": "Flawed",
+   "multiplier": "58982"
+  },
+  {
+   "quality": "Standard",
+   "multiplier": "65536"
+  },
+  {
+   "quality": "Superior",
+   "multiplier": "72090"
+  },
+  {
+   "quality": "Masterwork",
+   "multiplier": "78643"
+  }
+ ]
+}
