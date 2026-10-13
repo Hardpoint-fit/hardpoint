@@ -107,3 +107,28 @@ test("withAuthRefusal turns an AuthError into a refusal value and rethrows anyth
     /boom/,
   );
 });
+
+const failing = (what) => async () => {
+  throw new Error(`clerk ${what} down`);
+};
+
+test("Clerk session outage: reads degrade to signed out, writes refuse with 503", async () => {
+  const auth = createAuth(ON, { sessionUserId: failing("session"), profile: async () => null });
+  assert.equal(await auth.currentAuthor(), null);
+  await assert.rejects(auth.requireAuthor(), (e) => e instanceof AuthError && e.status === 503 && e.message === "Sign-in is unavailable right now");
+  await assert.rejects(auth.requireAdmin(), (e) => e.status === 503);
+});
+
+test("Clerk profile outage: reads keep the user as PILOT, writes refuse with 503, admin is false", async () => {
+  const auth = createAuth(ON, { sessionUserId: async () => "user_a", profile: failing("profile") });
+  assert.deepEqual(await auth.currentAuthor(), { userId: "user_a", name: "PILOT" });
+  assert.equal(await auth.isAdmin("user_a"), false);
+  await assert.rejects(auth.requireAuthor(), (e) => e.status === 503);
+  await assert.rejects(auth.requireAdmin(), (e) => e.status === 503);
+});
+
+test("a listed admin is still admin when the profile lookup is down (but the write needs the name, so it refuses)", async () => {
+  const auth = createAuth({ authEnabled: true, adminUserIds: ["user_a"] }, { sessionUserId: async () => "user_a", profile: failing("profile") });
+  assert.equal(await auth.isAdmin("user_a"), true);
+  await assert.rejects(auth.requireAuthor(), (e) => e.status === 503);
+});

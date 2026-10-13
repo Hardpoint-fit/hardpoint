@@ -32,7 +32,7 @@ function clerkAdapter(secretKey: string, publishableKey: string): ClerkAdapter {
   };
 }
 
-/** React's cache() scopes this to one request (render, route handler or server action). */
+/** React's cache() memoizes only during an RSC render; route handlers and server actions get a fresh instance per call, so there the name and role are fetched again. */
 const forRequest = cache(() => {
   const config = getConfig();
   const adapter =

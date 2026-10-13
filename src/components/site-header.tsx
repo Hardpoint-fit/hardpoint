@@ -5,7 +5,7 @@ import { ClerkControls } from "./clerk-controls";
 
 const NAV = [
   { href: "/", label: "Browse" },
-  { href: "/new", label: "New fit" },
+  { href: "/fits/new", label: "New fit" },
 ] as const;
 
 export function SiteHeader() {

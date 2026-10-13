@@ -46,44 +46,70 @@ export type Auth = {
   requireAdmin(): Promise<Author>;
 };
 
+type Outcome<T> = { ok: true; value: T } | { ok: false };
+
+async function attempt<T>(work: () => Promise<T>): Promise<Outcome<T>> {
+  try {
+    return { ok: true, value: await work() };
+  } catch {
+    return { ok: false };
+  }
+}
+
 /**
  * One instance serves one request: the session and profile lookups are memoized on it, so
- * name and role cost one Clerk call however many times callers ask.
+ * name and role cost one Clerk call however many times callers ask. A Clerk failure never
+ * escapes as a plain error: reads degrade (signed out, name "PILOT", not admin) and writes
+ * refuse with a typed 503.
  */
 export function createAuth(settings: AuthSettings, adapter: ClerkAdapter): Auth {
-  const profiles = new Map<string, Promise<ClerkProfile | null>>();
-  let session: Promise<string | null> | undefined;
+  const profiles = new Map<string, Promise<Outcome<ClerkProfile | null>>>();
+  let session: Promise<Outcome<string | null>> | undefined;
 
   const profileOf = (userId: string) => {
     let pending = profiles.get(userId);
-    if (!pending) profiles.set(userId, (pending = adapter.profile(userId)));
+    if (!pending) profiles.set(userId, (pending = attempt(() => adapter.profile(userId))));
     return pending;
+  };
+
+  /** The signed-in author, "signed-out", or "outage" when Clerk failed; `lenient` names a user whose profile failed "PILOT". */
+  const resolve = async (lenient: boolean): Promise<Author | "signed-out" | "outage"> => {
+    const who = await (session ??= attempt(() => adapter.sessionUserId()));
+    if (!who.ok) return "outage";
+    if (!who.value) return "signed-out";
+    const profile = await profileOf(who.value);
+    if (!profile.ok) return lenient ? { userId: who.value, name: FALLBACK_AUTHOR_NAME } : "outage";
+    return { userId: who.value, name: displayName(profile.value) };
   };
 
   const auth: Auth = {
     async currentAuthor() {
       if (!settings.authEnabled) return null;
-      const userId = await (session ??= adapter.sessionUserId());
-      if (!userId) return null;
-      return { userId, name: displayName(await profileOf(userId)) };
+      const result = await resolve(true);
+      return typeof result === "string" ? null : result;
     },
 
     async requireAuthor() {
       if (!settings.authEnabled) throw AuthError.unavailable();
-      const author = await auth.currentAuthor();
-      if (!author) throw AuthError.unauthenticated();
-      return author;
+      const result = await resolve(false);
+      if (result === "outage") throw AuthError.outage();
+      if (result === "signed-out") throw AuthError.unauthenticated();
+      return result;
     },
 
     async isAdmin(userId) {
       if (!settings.authEnabled) return false;
       if (settings.adminUserIds.includes(userId)) return true;
-      return hasAdminRole(await profileOf(userId));
+      const profile = await profileOf(userId);
+      return profile.ok && hasAdminRole(profile.value);
     },
 
     async requireAdmin() {
       const author = await auth.requireAuthor();
-      if (!(await auth.isAdmin(author.userId))) throw AuthError.forbidden();
+      if (settings.adminUserIds.includes(author.userId)) return author;
+      const profile = await profileOf(author.userId);
+      if (!profile.ok) throw AuthError.outage();
+      if (!hasAdminRole(profile.value)) throw AuthError.forbidden();
       return author;
     },
   };

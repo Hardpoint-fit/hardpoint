@@ -4,6 +4,7 @@
 export type AuthErrorStatus = 401 | 403 | 503;
 
 export const SIGN_IN_UNAVAILABLE_MESSAGE = "Sign-in isn't configured on this site yet";
+export const SIGN_IN_OUTAGE_MESSAGE = "Sign-in is unavailable right now";
 export const SIGNED_OUT_MESSAGE = "Sign in to do that.";
 export const NOT_ALLOWED_MESSAGE = "You can't do that.";
 
@@ -36,6 +37,11 @@ export class AuthError extends Error {
 
   static unavailable(): AuthError {
     return new AuthError(503, SIGN_IN_UNAVAILABLE_MESSAGE);
+  }
+
+  /** Clerk is configured but failed to answer. */
+  static outage(): AuthError {
+    return new AuthError(503, SIGN_IN_OUTAGE_MESSAGE);
   }
 }
 
