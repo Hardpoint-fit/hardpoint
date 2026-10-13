@@ -10,7 +10,8 @@ RUN corepack enable
 FROM base AS deps
 WORKDIR /repo/js/projects/theorycrafting
 COPY js/projects/theorycrafting/package.json js/projects/theorycrafting/pnpm-lock.yaml js/projects/theorycrafting/pnpm-workspace.yaml ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# No cache mount: Railway's builder refuses one whose id lacks its per-service prefix.
+RUN pnpm install --frozen-lockfile
 
 FROM base AS build
 WORKDIR /repo
@@ -31,7 +32,8 @@ COPY js/projects/theorycrafting/ ./
 RUN pnpm build
 
 FROM node:24-alpine AS run
-ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000
+# HOSTNAME=:: listens on IPv6 and IPv4 both: Railway's private network is IPv6.
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=:: PORT=3000
 WORKDIR /app
 RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/standalone ./
