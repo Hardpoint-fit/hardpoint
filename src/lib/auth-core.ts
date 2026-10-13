@@ -48,10 +48,22 @@ export type Auth = {
 
 type Outcome<T> = { ok: true; value: T } | { ok: false };
 
-async function attempt<T>(work: () => Promise<T>): Promise<Outcome<T>> {
+// Anything shaped like a session token or a Clerk key, in case an error message quotes one.
+const SECRET = /\b(?:eyJ[\w-]+\.[\w-]+\.[\w-]*|(?:sk|pk)_(?:live|test)_\w+|Bearer\s+\S+)/g;
+
+/** What is logged of a Clerk failure: the error's class and message, tokens and keys redacted. */
+export function describeClerkError(error: unknown): string {
+  const name = error instanceof Error ? error.constructor.name || error.name : typeof error;
+  const message = error instanceof Error ? error.message : "";
+  return `${name}: ${message.replace(SECRET, "[redacted]").slice(0, 300)}`;
+}
+
+async function attempt<T>(what: string, work: () => Promise<T>): Promise<Outcome<T>> {
   try {
     return { ok: true, value: await work() };
-  } catch {
+  } catch (error) {
+    // The adapter boundary: reads degrade and writes refuse, so this line is how an outage is seen.
+    console.error(`clerk ${what} failed:`, describeClerkError(error));
     return { ok: false };
   }
 }
@@ -68,13 +80,13 @@ export function createAuth(settings: AuthSettings, adapter: ClerkAdapter): Auth 
 
   const profileOf = (userId: string) => {
     let pending = profiles.get(userId);
-    if (!pending) profiles.set(userId, (pending = attempt(() => adapter.profile(userId))));
+    if (!pending) profiles.set(userId, (pending = attempt("profile", () => adapter.profile(userId))));
     return pending;
   };
 
   /** The signed-in author, "signed-out", or "outage" when Clerk failed; `lenient` names a user whose profile failed "PILOT". */
   const resolve = async (lenient: boolean): Promise<Author | "signed-out" | "outage"> => {
-    const who = await (session ??= attempt(() => adapter.sessionUserId()));
+    const who = await (session ??= attempt("session", () => adapter.sessionUserId()));
     if (!who.ok) return "outage";
     if (!who.value) return "signed-out";
     const profile = await profileOf(who.value);

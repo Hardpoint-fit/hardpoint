@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { FALLBACK_AUTHOR_NAME, createAuth, displayName } from "./auth-core.ts";
+import { FALLBACK_AUTHOR_NAME, createAuth, describeClerkError, displayName } from "./auth-core.ts";
 import { AuthError, authErrorResponse, withAuthRefusal } from "./auth-errors.ts";
 
 const profile = (over = {}) => ({ username: null, firstName: null, lastName: null, publicMetadata: {}, ...over });
@@ -125,6 +125,23 @@ test("Clerk profile outage: reads keep the user as PILOT, writes refuse with 503
   assert.equal(await auth.isAdmin("user_a"), false);
   await assert.rejects(auth.requireAuthor(), (e) => e.status === 503);
   await assert.rejects(auth.requireAdmin(), (e) => e.status === 503);
+});
+
+test("a Clerk failure is logged by class and message, with tokens and keys redacted", async (t) => {
+  const logged = t.mock.method(console, "error", () => {});
+  class ClerkAPIResponseError extends Error {}
+  const token = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyX2EifQ.c2lnbmF0dXJl";
+  const auth = createAuth(ON, {
+    sessionUserId: async () => {
+      throw new ClerkAPIResponseError(`Unauthorized: token ${token} with sk_live_abc123 rejected`);
+    },
+    profile: async () => null,
+  });
+  assert.equal(await auth.currentAuthor(), null);
+  assert.equal(logged.mock.callCount(), 1);
+  const line = logged.mock.calls[0].arguments.join(" ");
+  assert.match(line, /^clerk session failed: ClerkAPIResponseError: Unauthorized: token \[redacted\] with \[redacted\] rejected$/);
+  assert.equal(describeClerkError("plain"), "string: ");
 });
 
 test("a listed admin is still admin when the profile lookup is down (but the write needs the name, so it refuses)", async () => {

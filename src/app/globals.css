@@ -8,6 +8,16 @@
   --font-family: var(--font-vcr), ui-monospace, monospace;
 }
 
+/* The game font ships one weight (400): nothing asks for bold, and the browser never fakes one. */
+html {
+  font-synthesis: none;
+}
+
+b,
+strong {
+  font-weight: 400;
+}
+
 html,
 body {
   min-height: 100vh;

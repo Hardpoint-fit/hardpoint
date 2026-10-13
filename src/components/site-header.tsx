@@ -12,7 +12,7 @@ export function SiteHeader() {
   const { authEnabled } = getConfig();
   return (
     <header className="flex h-12 items-center gap-6 border-b border-[color:var(--panel-border)] bg-header px-4">
-      <Link href="/" className="text-[length:var(--font-size-header)] font-bold tracking-widest text-primary">
+      <Link href="/" className="text-[length:var(--font-size-header)] tracking-widest text-primary">
         Citadel Fits
       </Link>
       <nav className="flex gap-4 text-[length:var(--font-size-small)] tracking-widest">
