@@ -84,8 +84,9 @@ async function startSite(env) {
 }
 
 const results = [];
-async function check(site, path, { status = 200, has = [], lacks = [], type } = {}) {
-  const response = await fetch(site.url + path, { redirect: "manual" });
+async function check(site, path, { status = 200, has = [], lacks = [], type, encoding } = {}) {
+  const response = await fetch(site.url + path, { redirect: "manual", headers: encoding ? { "accept-encoding": encoding } : {} });
+  if (encoding) assert.equal(response.headers.get("content-encoding"), encoding.split(",")[0].trim(), `${path}: content encoding`);
   const body = type?.startsWith("image/") ? "" : await response.text();
   assert.equal(response.status, status, `${path}: status ${response.status}`);
   if (type) assert.match(response.headers.get("content-type") ?? "", new RegExp(`^${type}`), `${path}: content type`);
@@ -129,6 +130,12 @@ try {
   await check(up, "/fits/new", { has: ["LOADING THE CATALOG"] });
   await check(up, `/fits/new?from=${ids.showcase}`, { has: ["LOADING THE CATALOG"] });
   await check(up, "/api/catalog", { has: ["SCARAB", "OMNI REPAIRER TURRET", "affinity"] });
+  await check(up, "/api/catalog", { encoding: "br", has: ["SCARAB"] });
+  await check(up, "/api/catalog", { encoding: "gzip", has: ["SCARAB"] });
+  // A crafted cursor is the first page; a path that doesn't decode is not found, not a 500.
+  await check(up, `/?sort=new&cursor=${Buffer.from('{"sort":"new","score":0,"at":"never","id":"abcdefghij"}').toString("base64url")}`, { has: ["Scarab cipher brawler"] });
+  await check(up, "/u/%E0%A4%A", { status: 404, has: ["NOTHING HERE"] });
+  await check(up, "/fits/%E0%A4%A", { status: 404 });
   stub.fail(503);
   await check(up, "/api/catalog", { has: ["SCARAB"] });
   stub.fail(null);

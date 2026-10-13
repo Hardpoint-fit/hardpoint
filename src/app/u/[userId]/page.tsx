@@ -13,7 +13,8 @@ const USER_ID = /^[A-Za-z0-9_-]{1,100}$/;
 export const metadata: Metadata = { title: "Pilot fits · Citadel Fits" };
 
 export default async function AuthorPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
-  const userId = decodeURIComponent((await params).userId);
+  // Next hands the segment over decoded; an id is only letters, digits, "_" and "-", so nothing is decoded twice.
+  const userId = (await params).userId;
   if (!USER_ID.test(userId)) notFound();
   const viewer = await pageViewer();
   const data = await loadAuthor(siteDeps(), userId, await searchParams, viewer);

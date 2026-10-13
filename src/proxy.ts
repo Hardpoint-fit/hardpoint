@@ -14,7 +14,19 @@ const withClerk = clerkMiddleware(
   },
 );
 
+/** Whether every %-escape in a path decodes. Next's router throws (a 500) on one that doesn't. */
+export function pathDecodes(pathname: string): boolean {
+  try {
+    decodeURIComponent(pathname);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export default function proxy(request: NextRequest, event: NextFetchEvent) {
+  // No page has a name that doesn't decode: show the not-found page rather than let routing fail.
+  if (!pathDecodes(request.nextUrl.pathname)) return NextResponse.rewrite(new URL("/not-found", request.url), { status: 404 });
   return parseConfig(process.env).authEnabled ? withClerk(request, event) : NextResponse.next();
 }
 
