@@ -13,6 +13,7 @@ import { loadBrowse, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
 import { FitCards } from "./browse-view.tsx";
 import { FitPageView } from "./fit-page-view.tsx";
+import { PublicConfigProvider } from "../../lib/public-config.tsx";
 
 let db;
 let ids;
@@ -39,7 +40,9 @@ const signedIn = (user) => ({ userId: user.userId, isAdmin: false, name: user.na
 async function renderFit(url, id, viewer) {
   const data = await loadFitPage(deps(url), id, viewer);
   assert.equal(data.status, "ok");
-  return renderToStaticMarkup(h(FitPageView, { data, viewer }));
+  // The page's client controls read the public config, as under the root layout.
+  const config = { engineUrl: url, clerkPublishableKey: null, authEnabled: viewer.authEnabled };
+  return renderToStaticMarkup(h(PublicConfigProvider, { config }, h(FitPageView, { data, viewer })));
 }
 
 const count = (html, text) => html.split(text).length - 1;

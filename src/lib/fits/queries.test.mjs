@@ -81,12 +81,12 @@ const rejects = (promise, code) =>
 
 // --- schema and migration -----------------------------------------------------------------------
 
-test("applying the schema again is a no-op, and schema_version records version 1 once", async () => {
+test("applying the schema again is a no-op, and schema_version records each version once", async () => {
   const { applySchema } = await import("./migrate.mjs");
   await applySchema(db);
   await applySchema(db);
-  const { rows } = await db.query("SELECT version FROM schema_version");
-  assert.deepEqual(rows, [{ version: 1 }]);
+  const { rows } = await db.query("SELECT version FROM schema_version ORDER BY version");
+  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }]);
 });
 
 test("concurrent applies on a fresh database all succeed", async () => {
@@ -95,7 +95,7 @@ test("concurrent applies on a fresh database all succeed", async () => {
   const fresh = await PGlite.create();
   await Promise.all([applySchema(fresh), applySchema(fresh), applySchema(fresh)]);
   const { rows } = await fresh.query("SELECT count(*)::int AS n FROM schema_version");
-  assert.equal(rows[0].n, 1);
+  assert.equal(rows[0].n, 2);
   await fresh.close();
 });
 

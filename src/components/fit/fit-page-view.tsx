@@ -7,8 +7,10 @@ import type { FitPageData } from "#/lib/site/loaders";
 import type { PageViewer } from "#/lib/site/server";
 import { FittingGrid } from "#/components/grid/fitting-grid";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
-import { CommentForm, CopyFitStringButton, EditComment, ReplyToggle, ReportButton, VoteButton } from "./controls";
+import { CommentForm, EditComment, ReplyToggle, ReportButton, VoteButton } from "./controls";
 import { StatsTable } from "./stats-table";
+import { CopyFitString } from "./copy-fit-string";
+import { isOpenFit } from "#/lib/engine/open-fit";
 
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
@@ -162,7 +164,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
                 </span>
               )}
             </div>
-            <CopyFitStringButton fitId={fit.id} />
+            {isOpenFit(fit.fit) && <CopyFitString fit={fit.fit} label="COPY FIT STRING" />}
             <span className="flex flex-wrap gap-2">
               <Link className="btn btn--quiet" href={`/fits/new?from=${encodeURIComponent(fit.id)}`}>
                 COPY FIT TO BUILDER

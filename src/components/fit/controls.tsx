@@ -5,7 +5,6 @@
 import { useState, useTransition, type FormEvent } from "react";
 import {
   addCommentAction,
-  copyFitStringAction,
   editCommentAction,
   moderateAction,
   reportAction,
@@ -39,42 +38,6 @@ export function VoteButton({ fitId, votes, voted }: { fitId: string; votes: numb
       <button type="button" className={`btn ${state.voted ? "btn--on" : ""}`} onClick={toggle} disabled={pending} aria-pressed={state.voted}>
         {state.voted ? "UPVOTED" : "UPVOTE"} <span className="rating">{state.votes}</span>
       </button>
-      <Problem message={problem} />
-    </span>
-  );
-}
-
-export function CopyFitStringButton({ fitId }: { fitId: string }) {
-  const [shown, setShown] = useState<string | null>(null);
-  const [label, setLabel] = useState("COPY FIT STRING");
-  const [problem, setProblem] = useState<string | null>(null);
-  const [pending, start] = useTransition();
-  const copy = () =>
-    start(async () => {
-      setProblem(null);
-      const result = await copyFitStringAction(fitId);
-      if (!result.ok) {
-        setProblem(result.message);
-        return;
-      }
-      try {
-        await navigator.clipboard.writeText(result.fitString);
-        setLabel("COPIED");
-        setShown(null);
-      } catch {
-        // No clipboard permission: show it to copy by hand.
-        setShown(result.fitString);
-      }
-    });
-  return (
-    <span className="flex flex-col gap-2">
-      <span className="flex flex-wrap items-center gap-2">
-        <button type="button" className="btn" onClick={copy} disabled={pending}>
-          {pending ? "EXPORTING" : label}
-        </button>
-        <span className="note">PASTE IT INTO THE FITTING PANEL IN GAME</span>
-      </span>
-      {shown && <input className="input w-full normal-case" readOnly value={shown} onFocus={(event) => event.currentTarget.select()} aria-label="Fit string" />}
       <Problem message={problem} />
     </span>
   );

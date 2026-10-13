@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { isEditableFit } from "#/lib/engine/open-fit";
 import { FIT_JSON_MAX_BYTES } from "#/lib/fits/limits";
 import * as core from "#/lib/site/actions-core";
-import { actionDeps, pageViewer } from "#/lib/site/server";
+import { actionDeps } from "#/lib/site/server";
 
 type Refusal = core.ActionRefusal;
 
@@ -56,13 +56,6 @@ export async function resolveReportAction(reportId: unknown): Promise<core.Actio
   const result = await core.resolveReport(actionDeps(), { reportId });
   if (result.ok) revalidatePath("/admin/reports");
   return result;
-}
-
-/** Needs no sign-in: anyone who can see the fit can take it to the game. */
-export async function copyFitStringAction(fitId: unknown): Promise<core.ActionResult<{ fitString: string }>> {
-  if (!isId(fitId)) return BAD_INPUT;
-  const viewer = await pageViewer();
-  return core.copyFitString(actionDeps(), { fitId, viewer });
 }
 
 /** Generous bounds on what the builder sends; the data layer applies the real limits and words them. */

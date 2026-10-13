@@ -3,27 +3,26 @@ import test, { after, before, beforeEach } from "node:test";
 import { SIGN_IN_UNAVAILABLE_MESSAGE } from "../auth-errors.ts";
 import { createAuth } from "../auth-core.ts";
 import { createEngineClient } from "../engine/client.ts";
-import { deadEngineUrl, FIXTURES, startStubEngine } from "../engine/stub-engine.mjs";
-import { ANONYMOUS, getFit, listComments, listOpenReports } from "../fits/queries.ts";
+import { startStubEngine } from "../engine/stub-engine.mjs";
+import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, copyFitString, editComment, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { addComment, editComment, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { WRITE_BUDGETS } from "../fits/write-limits.ts";
 import { ADMIN, ALICE, BOB, seedSite } from "./seed.mjs";
 
 let db;
 let ids;
 let stub;
-let dead;
 before(async () => {
   db = await createTestDb();
   stub = await startStubEngine();
-  dead = createEngineClient({ baseUrl: await deadEngineUrl() });
 });
 after(async () => {
   await stub.close();
   await db.close();
 });
 beforeEach(async () => {
-  await db.exec("TRUNCATE fits, fit_reports CASCADE");
+  await db.exec("TRUNCATE fits, fit_reports, write_budget_windows CASCADE");
   ids = await seedSite(db);
 });
 
@@ -113,11 +112,34 @@ test("without a database a write is a 503 refusal", async () => {
   assert.deepEqual(result, { ok: false, reason: "unavailable", status: 503, message: DATABASE_DOWN_MESSAGE });
 });
 
-test("anyone can copy a visible fit's string; the engine being down is a clear refusal", async () => {
-  const anonymous = deps(authAs(null, { enabled: false }));
-  assert.deepEqual(await copyFitString(anonymous, { fitId: ids.showcase, viewer: ANONYMOUS }), { ok: true, fitString: FIXTURES.exported.fitString });
-  assert.equal((await copyFitString(anonymous, { fitId: ids.draft, viewer: ANONYMOUS })).status, 404, "a draft is its author's");
-  const down = await copyFitString(deps(authAs(null), { engine: dead }), { fitId: ids.showcase, viewer: ANONYMOUS });
-  assert.equal(down.status, 503);
-  assert.match(down.message, /can't be reached/);
+test("a pilot's writes are rate-limited per user, with a typed 429 the controls show", async () => {
+  let now = new Date("2026-10-14T12:00:05Z");
+  const clocked = (userId) => ({ ...deps(authAs(userId)), now: () => now });
+  const bob = clocked(BOB.userId);
+  for (let i = 0; i < WRITE_BUDGETS.vote[0].limit; i++) {
+    assert.equal((await vote(bob, { fitId: ids.pending, voted: i % 2 === 0 })).ok, true);
+  }
+  const limited = await vote(bob, { fitId: ids.pending, voted: true });
+  assert.deepEqual(limited, {
+    ok: false,
+    reason: "rate_limited",
+    status: 429,
+    message: "SLOW DOWN — TRY AGAIN IN 55 SECONDS.",
+    retryAfterMs: 55_000,
+  });
+  assert.equal((await getFit(db, ids.pending)).votes, 0, "the refused vote wrote nothing");
+  assert.equal((await vote(clocked(ALICE.userId), { fitId: ids.pending, voted: true })).ok, true, "budgets are per user");
+  assert.equal((await addComment(bob, { fitId: ids.showcase, parentId: null, body: "other budget" })).ok, true, "budgets are per action");
+  assert.equal((await moderate(clocked(ADMIN.userId), { targetKind: "fit", targetId: ids.showcase, hidden: false })).ok, true);
+  now = new Date("2026-10-14T12:01:00Z");
+  assert.equal((await vote(bob, { fitId: ids.pending, voted: true })).ok, true, "a new window allows it again");
 });
+
+test("comments and reports have their own budgets", async () => {
+  const now = new Date("2026-10-14T12:00:00Z");
+  const bob = { ...deps(authAs(BOB.userId)), now: () => now };
+  for (let i = 0; i < 10; i++) assert.equal((await addComment(bob, { fitId: ids.showcase, parentId: null, body: `c${i}` })).ok, true);
+  assert.equal((await editComment(bob, { id: ids.comment, body: "edit" })).status, 429, "edits spend the comment budget");
+  assert.equal((await report(bob, { targetKind: "fit", targetId: ids.showcase, reason: "spam" })).ok, true);
+});
+

@@ -7,13 +7,14 @@ import type { Author } from "../auth-core";
 import type { EngineClient } from "../engine/client";
 import type { EvaluationIssue, OpenFit } from "../engine/types";
 import type { DatabaseState, Db } from "../fits/db";
+import { spendWriteBudget, type WriteAction } from "../fits/write-limits";
+import { slowDownMessage } from "../slow-down";
 import { publish as publishService, saveDraft, type Refusal } from "../fits/service";
 import {
   FitDataError,
   createComment,
   createReport,
   editComment as editCommentRow,
-  getFit,
   resolveReport as resolveReportRow,
   resolveReportsForTarget,
   setCommentHidden,
@@ -22,33 +23,34 @@ import {
   type Comment,
   type FitStatus,
   type ReportTargetKind,
-  type Viewer,
 } from "../fits/queries";
-import { isOpenFit } from "../engine/open-fit";
 
 export type ActionAuth = { requireAuthor(): Promise<Author>; requireAdmin(): Promise<Author> };
 
 export type ActionDeps = {
   database: () => DatabaseState;
   auth: ActionAuth;
-  engine: Pick<EngineClient, "exportFitString" | "evaluate">;
+  engine: Pick<EngineClient, "evaluate">;
   /** The build of the catalog the server holds: what a draft the engine couldn't check is recorded against. */
   currentBuild?: () => string | null;
+  /** For tests: the clock write budgets count by. */
+  now?: () => Date;
 };
 
 export type ActionRefusal = {
   ok: false;
-  reason: AuthErrorReason | FitDataError["code"] | "unavailable" | "engine" | "invalid_fit" | "error";
+  reason: AuthErrorReason | FitDataError["code"] | "unavailable" | "engine" | "invalid_fit" | "rate_limited" | "error";
   status: number;
   message: string;
   /** Why the engine says the fit isn't valid, when that is the refusal. */
   issues?: EvaluationIssue[];
+  /** rate_limited only: how long until the author's write budget allows this write again. */
+  retryAfterMs?: number;
 };
 
 export type ActionResult<T extends object = object> = ({ ok: true } & T) | ActionRefusal;
 
 export const DATABASE_DOWN_MESSAGE = "Fits are unavailable right now. Try again in a moment.";
-export const ENGINE_DOWN_FOR_EXPORT = "The loadout engine can't be reached right now, so the fit string can't be made.";
 
 const DATA_STATUS: Record<FitDataError["code"], number> = { invalid: 400, not_found: 404, forbidden: 403, not_valid: 409 };
 
@@ -74,33 +76,41 @@ async function run<T extends object>(what: string, work: () => Promise<ActionRes
   }
 }
 
+/**
+ * Runs a signed-in write: authenticates, then spends one from the author's `budget` (write-limits.ts)
+ * before the work, so a refused write changes nothing. Moderation passes `admin` and no budget.
+ */
 async function withAuthor<T extends object>(
   deps: ActionDeps,
   what: string,
+  access: { budget: WriteAction } | { admin: true },
   work: (db: Db, author: Author) => Promise<ActionResult<T>>,
-  admin = false,
 ): Promise<ActionResult<T>> {
   return run(what, async () => {
-    const author = admin ? await deps.auth.requireAdmin() : await deps.auth.requireAuthor();
+    const author = "admin" in access ? await deps.auth.requireAdmin() : await deps.auth.requireAuthor();
     const db = databaseOf(deps);
     if (!db) return refuse("unavailable", 503, DATABASE_DOWN_MESSAGE);
+    if ("budget" in access) {
+      const spent = await spendWriteBudget(db, author.userId, access.budget, deps.now?.());
+      if (!spent.ok) return { ...refuse("rate_limited", 429, slowDownMessage(spent.retryAfterMs)), retryAfterMs: spent.retryAfterMs };
+    }
     return work(db, author);
   });
 }
 
 export function vote(deps: ActionDeps, input: { fitId: string; voted: boolean }): Promise<ActionResult<{ voted: boolean; votes: number }>> {
-  return withAuthor(deps, "vote", async (db, author) => ({ ok: true, ...(await setVote(db, { fitId: input.fitId, userId: author.userId, voted: input.voted })) }));
+  return withAuthor(deps, "vote", { budget: "vote" }, async (db, author) => ({ ok: true, ...(await setVote(db, { fitId: input.fitId, userId: author.userId, voted: input.voted })) }));
 }
 
 export function addComment(deps: ActionDeps, input: { fitId: string; parentId: string | null; body: string }): Promise<ActionResult<{ comment: Comment }>> {
-  return withAuthor(deps, "comment", async (db, author) => ({
+  return withAuthor(deps, "comment", { budget: "comment" }, async (db, author) => ({
     ok: true,
     comment: await createComment(db, { fitId: input.fitId, parentId: input.parentId, authorUserId: author.userId, authorName: author.name, body: input.body }),
   }));
 }
 
 export function editComment(deps: ActionDeps, input: { id: string; body: string }): Promise<ActionResult<{ comment: Comment }>> {
-  return withAuthor(deps, "comment edit", async (db, author) => ({
+  return withAuthor(deps, "comment edit", { budget: "comment" }, async (db, author) => ({
     ok: true,
     comment: await editCommentRow(db, { id: input.id, authorUserId: author.userId, body: input.body }),
   }));
@@ -110,7 +120,7 @@ export function report(
   deps: ActionDeps,
   input: { targetKind: ReportTargetKind; targetId: string; reason: string },
 ): Promise<ActionResult<{ created: boolean }>> {
-  return withAuthor(deps, "report", async (db, author) => {
+  return withAuthor(deps, "report", { budget: "report" }, async (db, author) => {
     const { created } = await createReport(db, { ...input, reporterUserId: author.userId });
     return { ok: true, created };
   });
@@ -121,40 +131,17 @@ export function moderate(
   deps: ActionDeps,
   input: { targetKind: ReportTargetKind; targetId: string; hidden: boolean },
 ): Promise<ActionResult<{ changed: boolean; resolved: number }>> {
-  return withAuthor(
-    deps,
-    "moderation",
-    async (db) => {
-      const changed =
-        input.targetKind === "fit" ? await setFitHidden(db, input.targetId, input.hidden) : await setCommentHidden(db, input.targetId, input.hidden);
-      const resolved = input.hidden ? await resolveReportsForTarget(db, input.targetKind, input.targetId) : 0;
-      return { ok: true, changed, resolved };
-    },
-    true,
-  );
+  return withAuthor(deps, "moderation", { admin: true }, async (db) => {
+    const changed =
+      input.targetKind === "fit" ? await setFitHidden(db, input.targetId, input.hidden) : await setCommentHidden(db, input.targetId, input.hidden);
+    const resolved = input.hidden ? await resolveReportsForTarget(db, input.targetKind, input.targetId) : 0;
+    return { ok: true, changed, resolved };
+  });
 }
 
 /** Admin: closes a report without acting on what it reported. */
 export function resolveReport(deps: ActionDeps, input: { reportId: string }): Promise<ActionResult<{ resolved: boolean }>> {
-  return withAuthor(deps, "report resolve", async (db) => ({ ok: true, resolved: await resolveReportRow(db, input.reportId) }), true);
-}
-
-/** The fit string of a fit the viewer can see, from the engine. Needs no sign-in. */
-export function copyFitString(deps: ActionDeps, input: { fitId: string; viewer: Viewer }): Promise<ActionResult<{ fitString: string }>> {
-  return run("fit string", async () => {
-    const db = databaseOf(deps);
-    if (!db) return refuse("unavailable", 503, DATABASE_DOWN_MESSAGE);
-    const fit = await getFit(db, input.fitId, { viewer: input.viewer });
-    if (!fit) return refuse("not_found", 404, "No such fit.");
-    if (!isOpenFit(fit.fit)) return refuse("invalid", 400, "This fit can't be turned into a fit string.");
-    const result = await deps.engine.exportFitString(fit.fit);
-    if (!result.ok) {
-      return result.error.kind === "rejected"
-        ? refuse("engine", 422, `The engine can't export this fit: ${result.error.message}`)
-        : refuse("engine", 503, ENGINE_DOWN_FOR_EXPORT);
-    }
-    return { ok: true, fitString: result.value.fitString };
-  });
+  return withAuthor(deps, "report resolve", { admin: true }, async (db) => ({ ok: true, resolved: await resolveReportRow(db, input.reportId) }));
 }
 
 /** A fit service refusal as an action result. */
@@ -185,7 +172,7 @@ export function saveFit(
   deps: ActionDeps,
   input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit },
 ): Promise<ActionResult<{ fit: SavedFit }>> {
-  return withAuthor(deps, "fit save", async (db, author) => {
+  return withAuthor(deps, "fit save", { budget: "fit" }, async (db, author) => {
     const result = await saveDraft(
       { db, engine: deps.engine },
       {
@@ -206,7 +193,7 @@ export function saveFit(
 
 /** Publishes the author's saved fit if the engine, asked now, says it is valid; otherwise says why. */
 export function publishFit(deps: ActionDeps, input: { fitId: string }): Promise<ActionResult<{ fitId: string }>> {
-  return withAuthor(deps, "fit publish", async (db, author) => {
+  return withAuthor(deps, "fit publish", { budget: "fit" }, async (db, author) => {
     const result = await publishService({ db, engine: deps.engine }, { fitId: input.fitId, authorUserId: author.userId });
     return result.ok ? { ok: true, fitId: result.fit.id } : serviceRefusal(result);
   });

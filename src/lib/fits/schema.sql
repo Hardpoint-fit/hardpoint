@@ -84,4 +84,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS fit_reports_one_open_idx
   ON fit_reports (reporter_user_id, target_kind, target_id) WHERE resolved_at IS NULL;
 CREATE INDEX IF NOT EXISTS fit_reports_open_idx ON fit_reports (created_at, id) WHERE resolved_at IS NULL;
 
+-- Per-user write budgets (write-limits.ts): one counter per user, budget and fixed window. A user's
+-- ended windows are deleted when they next write; nothing else reads this table.
+CREATE TABLE IF NOT EXISTS write_budget_windows (
+  user_id text NOT NULL,
+  budget text NOT NULL,
+  window_start timestamptz NOT NULL,
+  window_end timestamptz NOT NULL,
+  used integer NOT NULL CHECK (used > 0),
+  PRIMARY KEY (user_id, budget, window_start)
+);
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;

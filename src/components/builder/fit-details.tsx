@@ -10,6 +10,7 @@ import type { OpenFit } from "#/lib/engine/types";
 import { MAX_TAGS, normalizeTags } from "#/lib/fits/filters";
 import { DESCRIPTION_MAX, TITLE_MAX } from "#/lib/fits/limits";
 import { NotConfigured, Panel } from "#/components/ui";
+import { fitStringProblem } from "#/components/fit/copy-fit-string";
 import { normalizeFitString } from "./fit-string";
 import { publishFlow, saveFlow, type FlowResult, type Navigate, type Problem, type SavedState } from "./save-flow";
 import type { BuilderAction, FitMeta } from "./state";
@@ -36,8 +37,6 @@ export function ProblemNote({ problem, moduleName }: { problem: Problem; moduleN
   );
 }
 
-const ENGINE_DOWN_FOR_STRINGS = "THE LOADOUT ENGINE CAN'T BE REACHED, SO FIT STRINGS CAN'T BE MADE OR READ RIGHT NOW.";
-
 /** Reads a pasted fit string (chat wrapping and spaces dropped) into an open fit, through the engine. */
 export function ImportFit({ engine, onImported, onCancel }: { engine: EngineClient; onImported: (fit: OpenFit) => void; onCancel?: () => void }) {
   const [text, setText] = useState("");
@@ -49,7 +48,7 @@ export function ImportFit({ engine, onImported, onCancel }: { engine: EngineClie
       const fitString = normalizeFitString(text);
       if (!fitString) return setProblem("PASTE A FIT STRING FIRST.");
       const result = await engine.importFitString(fitString);
-      if (!result.ok) return setProblem(result.error.kind === "rejected" ? `THAT ISN'T A FIT STRING THE ENGINE CAN READ: ${result.error.message.toUpperCase()}` : ENGINE_DOWN_FOR_STRINGS);
+      if (!result.ok) return setProblem(fitStringProblem(result.error, "THAT ISN'T A FIT STRING THE ENGINE CAN READ"));
       if (!isEditableFit(result.value.fit)) return setProblem("THE ENGINE SENT A FIT THE BUILDER CAN'T OPEN.");
       setText("");
       onImported(result.value.fit);
@@ -86,43 +85,6 @@ export function ImportFit({ engine, onImported, onCancel }: { engine: EngineClie
         </span>
       )}
     </div>
-  );
-}
-
-export function ExportFit({ engine, fit }: { engine: EngineClient; fit: OpenFit }) {
-  const [label, setLabel] = useState("EXPORT FIT STRING");
-  const [shown, setShown] = useState<string | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
-  const [pending, start] = useTransition();
-  const run = () =>
-    start(async () => {
-      setProblem(null);
-      const result = await engine.exportFitString(fit);
-      if (!result.ok) return setProblem(result.error.kind === "rejected" ? `THE ENGINE CAN'T EXPORT THIS FIT: ${result.error.message.toUpperCase()}` : ENGINE_DOWN_FOR_STRINGS);
-      try {
-        await navigator.clipboard.writeText(result.value.fitString);
-        setLabel("COPIED");
-        setShown(null);
-        setTimeout(() => setLabel("EXPORT FIT STRING"), 2000);
-      } catch {
-        setShown(result.value.fitString);
-      }
-    });
-  return (
-    <span className="flex flex-col gap-2">
-      <span className="flex flex-wrap items-center gap-2">
-        <button type="button" className="btn btn--quiet" onClick={run} disabled={pending}>
-          {pending ? "EXPORTING" : label}
-        </button>
-        <span className="note">PASTE IT INTO THE FITTING PANEL IN GAME</span>
-      </span>
-      {shown && <input className="input w-full normal-case" readOnly value={shown} onFocus={(event) => event.currentTarget.select()} aria-label="Fit string" />}
-      {problem && (
-        <span className="note note--error" role="alert">
-          {problem}
-        </span>
-      )}
-    </span>
   );
 }
 

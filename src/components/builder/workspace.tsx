@@ -13,10 +13,11 @@ import { Panel, buildLabel } from "#/components/ui";
 import { StatsTable } from "#/components/fit/stats-table";
 import type { EvaluationResponse } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
+import { CopyFitString } from "#/components/fit/copy-fit-string";
 import type { BuilderStart } from "#/lib/site/loaders";
 import { AffinityPanel } from "./affinity-panel";
 import { autosave, bootDraft, browserStorage, clearDraft, draftSlot } from "./draft-storage";
-import { ExportFit, FitDetails, ImportFit, type BuilderAuth, type Navigate, type SavedState } from "./fit-details";
+import { FitDetails, ImportFit, type BuilderAuth, type Navigate, type SavedState } from "./fit-details";
 import { HullPicker } from "./hull-picker";
 import { Inspector } from "./inspector";
 import { enumWords, roleName } from "./labels";
@@ -383,7 +384,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
             navigate={navigate}
           />
           <Panel title="FIT STRING">
-            <ExportFit engine={engine} fit={fit} />
+            <CopyFitString fit={fit} label="EXPORT FIT STRING" quiet />
           </Panel>
         </div>
       </div>
