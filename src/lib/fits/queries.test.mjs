@@ -553,6 +553,26 @@ test("recordEvaluation upserts, and ignores a verdict on content edited since", 
   await rejects(recordEvaluation(db, fit.id, { ...good, rating: NaN }), "invalid");
 });
 
+test("a stale verdict never replaces the one an edit stored for the same build", async () => {
+  const fit = await published();
+  const fresh = sampleFit("1000");
+  // The job reads the fit, then the author edits it and the edit stores its own verdict for the build.
+  const [stale] = await fitsNeedingEvaluation(db, SHA2);
+  await updateFit(db, { id: fit.id, authorUserId: ALICE.userId, content: fresh, evaluation: { ...good, buildSha: SHA2, rating: 9 } });
+  assert.equal(await recordEvaluation(db, fit.id, { ...bad, buildSha: SHA2 }, { revision: stale.revision }), false);
+  assert.equal((await getFit(db, fit.id, { buildSha: SHA2 })).evaluation.rating, 9);
+
+  // Interleaved in either order, the edit's verdict is the one left.
+  const again = await getFitForEvaluation(db, fit.id);
+  await Promise.all([
+    recordEvaluation(db, fit.id, { ...bad, buildSha: SHA2 }, { revision: again.revision }),
+    updateFit(db, { id: fit.id, authorUserId: ALICE.userId, content: sampleFit("1000"), evaluation: { ...good, buildSha: SHA2, rating: 11 } }),
+  ]);
+  const { evaluation } = await getFit(db, fit.id, { buildSha: SHA2 });
+  assert.equal(evaluation.valid, true);
+  assert.equal(evaluation.rating, 11);
+});
+
 test("evaluations keep the engine's stats and issues verbatim", async () => {
   const fit = await published();
   const stats = { Speed: "1500", nested: { a: [1, 2] } };

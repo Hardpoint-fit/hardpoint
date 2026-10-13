@@ -860,31 +860,23 @@ export async function fitsNeedingEvaluation(db: Queryable, buildSha: string, lim
  * Stores (or replaces) the engine's verdict for one fit on one build. With `revision` from
  * fitsNeedingEvaluation, a fit edited since is left alone and this returns false, so a slow batch can't
  * cache a verdict for content that no longer exists. False too when the fit is gone.
+ *
+ * The fit row is read FOR SHARE: an edit in flight (updateFit holds the row FOR UPDATE) is waited for and
+ * its revision is the one compared, and no edit can start until this verdict is stored. So a stale verdict
+ * can't replace the fresh one an edit stored for the same build, on insert or on conflict.
  */
 export async function recordEvaluation(
-  db: Queryable,
+  db: Db,
   fitId: string,
   evaluation: EvaluationInput,
   options: { revision?: string } = {},
 ): Promise<boolean> {
   validateEvaluation(evaluation);
-  const { rows } = await db.query(
-    `INSERT INTO fit_evaluations (fit_id, build_sha, valid, rating, stats, issues)
-     SELECT id, $2, $3, $4, $5::jsonb, $6::jsonb FROM fits
-     WHERE id = $1 AND ($7::text IS NULL OR updated_at::text = $7::text)
-     ON CONFLICT (fit_id, build_sha) DO UPDATE
-       SET valid = EXCLUDED.valid, rating = EXCLUDED.rating, stats = EXCLUDED.stats,
-           issues = EXCLUDED.issues, evaluated_at = now()
-     RETURNING fit_id`,
-    [
-      fitId,
-      evaluation.buildSha,
-      evaluation.valid,
-      evaluation.rating,
-      JSON.stringify(evaluation.stats ?? {}),
-      JSON.stringify(evaluation.issues ?? []),
-      options.revision ?? null,
-    ],
-  );
-  return rows.length > 0;
+  return db.transaction(async (tx) => {
+    const { rows } = await tx.query<Row>(`SELECT updated_at::text AS revision FROM fits WHERE id = $1 FOR SHARE`, [fitId]);
+    const current = rows[0];
+    if (!current || (options.revision !== undefined && current.revision !== options.revision)) return false;
+    await insertEvaluation(tx, fitId, evaluation);
+    return true;
+  });
 }
