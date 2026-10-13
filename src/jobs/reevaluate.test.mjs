@@ -211,3 +211,45 @@ test("a run past its time budget stops and leaves the rest", async () => {
   const done = (await rows(NEW)).length;
   assert.ok(done > 0 && done < 5, `stored ${done}`);
 });
+
+test("a uniform refusal stores nothing and ends the run as an engine problem", async () => {
+  for (let i = 0; i < 8; i++) await publishedFit(`Fit ${i}`);
+  engineAt(NEW, (req, res) => json(res, 400, { error: "bad request" }));
+  const lines = [];
+  const summary = await run({ maxInFlight: 1, log: (l) => lines.push(l) });
+  assert.equal(summary.outcome, "engine");
+  assert.equal(summary.rejected, 0);
+  assert.deepEqual(await rows(NEW), []);
+  assert.ok(lines.includes("reevaluate: engine-unavailable"));
+});
+
+test("one bad fit among good ones is stored invalid with the engine's message", async () => {
+  const bad = await publishedFit("Bad", { Unreadable: true });
+  for (let i = 0; i < 4; i++) await publishedFit(`Good ${i}`);
+  engineAt(NEW, (req, res, body) =>
+    body.fit.Unreadable ? json(res, 400, { error: "module 3 is unreadable" }) : json(res, 200, { ...FIXTURES.evaluateValid, buildSha: NEW }),
+  );
+  const summary = await run();
+  assert.equal(summary.outcome, "done");
+  assert.equal(summary.rejected, 1);
+  const issues = (await db.query(`SELECT issues FROM fit_evaluations WHERE fit_id = $1 AND build_sha = $2`, [bad.id, NEW])).rows[0].issues;
+  assert.match(issues[0].message, /module 3 is unreadable/);
+});
+
+test("workers that hit one rate limit share a single wait", async () => {
+  for (let i = 0; i < 4; i++) await publishedFit(`Fit ${i}`);
+  let limited = 4;
+  engineAt(NEW, (req, res) =>
+    limited-- > 0 ? json(res, 429, {}, { "retry-after": "1" }) : json(res, 200, { ...FIXTURES.evaluateValid, buildSha: NEW }),
+  );
+  const waits = [];
+  const summary = await run({
+    sleep: async (ms) => {
+      waits.push(ms);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    },
+  });
+  assert.equal(summary.evaluated, 4);
+  assert.equal(summary.rateLimitWaits, 1);
+  assert.equal(waits.length, 1);
+});

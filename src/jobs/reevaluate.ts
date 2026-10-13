@@ -18,6 +18,9 @@ export const MAX_IN_FLIGHT = 4;
 export const MAX_RUN_MS = 10 * 60_000;
 /** Rate-limit waits one run tolerates before giving the rest to the next run. */
 export const MAX_RATE_LIMIT_WAITS = 5;
+/** Rejections with no success this run that mean the engine, not the fits, is the problem. */
+export const REJECTION_TRIP_COUNT = 5;
+export const REJECTION_SAMPLE = 10;
 const MAX_WAIT_MS = 60_000;
 const DEFAULT_WAIT_MS = 5_000;
 
@@ -69,6 +72,8 @@ export async function runReevaluation(options: JobOptions): Promise<JobSummary> 
   const summary: JobSummary = { outcome: "done", buildSha: null, evaluated: 0, superseded: 0, rejected: 0, rateLimitWaits: 0 };
   const stop = (outcome: JobOutcome): JobSummary => {
     summary.outcome = outcome;
+    // A distinct line for the runs that exit 0 because of the engine, so they can be alerted on.
+    if (outcome === "engine") log("reevaluate: engine-unavailable");
     return summary;
   };
 
@@ -83,17 +88,53 @@ export async function runReevaluation(options: JobOptions): Promise<JobSummary> 
   // Set when a worker meets a failure that should end the run; the others finish their current fit.
   let halted: JobOutcome | null = null;
 
-  async function waitForRateLimit(error: EngineError): Promise<boolean> {
-    if (summary.rateLimitWaits >= maxRateLimitWaits) return false;
+  // Workers that hit the same 429 share one wait (and one count): an episode, not a request.
+  let episode: Promise<boolean> | null = null;
+  function waitForRateLimit(error: EngineError): Promise<boolean> {
+    if (episode !== null) return episode;
+    if (summary.rateLimitWaits >= maxRateLimitWaits) return Promise.resolve(false);
     summary.rateLimitWaits += 1;
     const wait = Math.min(error.retryAfterMs ?? DEFAULT_WAIT_MS, MAX_WAIT_MS);
-    if (now() + wait >= deadline) return false;
+    if (now() + wait >= deadline) return Promise.resolve(false);
     log(`reevaluate: rate limited; waiting ${wait} ms`);
-    await sleep(wait);
-    return true;
+    const current = sleep(wait).then(
+      () => true,
+      () => false,
+    );
+    episode = current;
+    void current.then(() => {
+      if (episode === current) episode = null;
+    });
+    return current;
   }
 
-  async function one(fitId: string): Promise<"stored" | "superseded" | "rejected" | "retry" | "halt"> {
+  // Fits the engine refused, held until the engine has shown it accepts others this run. A uniform
+  // refusal means a bad request or a broken engine; storing it would mark every fit invalid for this build.
+  const pending: { id: string; revision: string; message: string }[] = [];
+  let attempts = 0;
+  let refusals = 0;
+  const tripped = () =>
+    (summary.evaluated === 0 && refusals >= REJECTION_TRIP_COUNT) ||
+    (attempts >= REJECTION_SAMPLE && refusals * 2 > attempts);
+  async function flushRefused() {
+    if (summary.evaluated === 0) return 0;
+    let stored = 0;
+    for (const fit of pending.splice(0)) {
+      const ok = await recordEvaluation(
+        db,
+        fit.id,
+        { buildSha, valid: false, rating: null, stats: {}, issues: [{ moduleIndex: -1, kind: "Rejected", message: fit.message }] },
+        { revision: fit.revision },
+      );
+      if (ok) {
+        summary.rejected += 1;
+        stored += 1;
+      } else summary.superseded += 1;
+    }
+    return stored;
+  }
+
+  async function one(fitId: string): Promise<"stored" | "superseded" | { rejected: string } | "halt"> {
     for (;;) {
       if (halted !== null) return "halt";
       const result = await reevaluate({ db, engine }, fitId);
@@ -106,7 +147,7 @@ export async function runReevaluation(options: JobOptions): Promise<JobSummary> 
         halted ??= "engine";
         return "halt";
       }
-      if (kind === "rejected" || kind === "tooLarge") return "rejected";
+      if (kind === "rejected" || kind === "tooLarge") return { rejected: result.engineError.message };
       halted ??= "engine";
       return "halt";
     }
@@ -123,25 +164,23 @@ export async function runReevaluation(options: JobOptions): Promise<JobSummary> 
       while (halted === null && next < batch.length && now() < deadline) {
         const fit = batch[next++];
         const outcome = await one(fit.id);
-        if (outcome === "stored") summary.evaluated += 1;
-        else if (outcome === "superseded") summary.superseded += 1;
-        else if (outcome === "rejected") {
-          // The engine will never accept this fit; a stored verdict is what stops it coming back every run.
-          const stored = await recordEvaluation(
-            db,
-            fit.id,
-            { buildSha, valid: false, rating: null, stats: {}, issues: [{ moduleIndex: -1, kind: "Unreadable", message: "The engine could not read this fit." }] },
-            { revision: fit.revision },
-          );
-          if (stored) summary.rejected += 1;
-          else summary.superseded += 1;
+        if (outcome === "stored") {
+          summary.evaluated += 1;
+          attempts += 1;
+          progress += 1;
+        } else if (outcome === "superseded") summary.superseded += 1;
+        else if (outcome !== "halt") {
+          attempts += 1;
+          refusals += 1;
+          pending.push({ id: fit.id, revision: fit.revision, message: outcome.rejected });
+          if (tripped()) halted ??= "engine";
         }
-        if (outcome === "stored" || outcome === "rejected") progress += 1;
       }
     };
     await Promise.all(Array.from({ length: Math.min(maxInFlight, batch.length) }, worker));
 
     if (halted !== null) return stop(halted);
+    progress += await flushRefused();
     if (now() >= deadline) return stop("time");
     // A whole batch that stored nothing (every fit edited meanwhile) would repeat forever.
     if (progress === 0) break;
