@@ -1,0 +1,223 @@
+/* The fitting grid, after the game's FittingGridPanel.uss cells and ModuleOverlay tiles: 48px cells
+   whose slot box is inset 3px, typed cells outlined, modules filled in their tier's surface palette
+   (--tier-*-surface-*) with one outline around the whole footprint. Colours that are not tokens
+   (conduit, invalid, regalia weld, hazard tape) come from the exported fixture as --fg-* properties. */
+
+.fg {
+  --cell: 48px;
+  --inset: 3px;
+  position: relative;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* No scroll container: one would clip the module tooltips. Narrow screens draw the grid smaller. */
+.fg-scroll {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-md) 0;
+}
+
+@media (max-width: 640px) {
+  .fg-scroll .fg {
+    zoom: 0.62;
+  }
+}
+
+/* ---- Cells ---------------------------------------------------------------------------------- */
+
+.fg-cell {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+}
+
+.fg-cell__slot {
+  position: absolute;
+  inset: var(--inset);
+  border: 1px solid rgba(107, 122, 122, 0.72);
+  background: rgba(83, 96, 96, 0.12);
+}
+
+.fg-cell--hardpoint .fg-cell__slot {
+  border-color: rgba(107, 122, 122, 0.9);
+}
+
+.fg-cell__icon {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  translate: -12px -12px;
+  fill: var(--text-primary);
+  opacity: 0.4;
+}
+
+.fg-cell--highlight .fg-cell__slot {
+  border-color: rgba(255, 153, 0, 0.6);
+  background: rgba(255, 153, 0, 0.08);
+}
+
+.fg-cell--drop-valid .fg-cell__slot {
+  border-color: rgba(0, 255, 128, 0.8);
+  background: rgba(0, 255, 128, 0.12);
+}
+
+.fg-cell--drop-invalid .fg-cell__slot {
+  border-color: rgba(255, 64, 64, 0.8);
+  background: rgba(255, 64, 64, 0.12);
+}
+
+/* ---- Modules -------------------------------------------------------------------------------- */
+
+.fg-module {
+  position: absolute;
+  pointer-events: none;
+  outline: none;
+}
+
+.fg-module__tile {
+  position: absolute;
+  box-sizing: border-box;
+  border: 0 solid var(--tile-edge);
+  background: var(--tile-bg);
+  pointer-events: auto;
+}
+
+.fg-module__tile::after {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  content: "";
+}
+
+.fg-module:hover .fg-module__tile::after,
+.fg-module:focus-visible .fg-module__tile::after,
+.fg-module--selected .fg-module__tile::after {
+  background: var(--tile-scrim);
+}
+
+.fg-module:hover,
+.fg-module:focus-visible,
+.fg-module.fg-module--selected {
+  --tile-edge: var(--tile-edge-hover);
+}
+
+.fg-module__art-edge {
+  fill: var(--tile-edge);
+}
+
+.fg-module__art-fill {
+  fill: var(--tile-bg-solid, var(--tile-bg));
+}
+
+.fg-module__art-cut {
+  fill: var(--panel-bg);
+}
+
+.fg-module--standard { --tile-bg: var(--tier-standard-surface-bg); --tile-edge: var(--tier-standard-surface-base-border); --tile-edge-hover: var(--tier-standard-surface-border); --tile-scrim: var(--tier-standard-surface-scrim); --tile-text: var(--tier-standard-base); }
+.fg-module--augmented { --tile-bg: var(--tier-augmented-surface-bg); --tile-edge: var(--tier-augmented-surface-base-border); --tile-edge-hover: var(--tier-augmented-surface-border); --tile-scrim: var(--tier-augmented-surface-scrim); --tile-text: var(--tier-augmented-base); }
+.fg-module--prototype { --tile-bg: var(--tier-prototype-surface-bg); --tile-edge: var(--tier-prototype-surface-base-border); --tile-edge-hover: var(--tier-prototype-surface-border); --tile-scrim: var(--tier-prototype-surface-scrim); --tile-text: var(--tier-prototype-base); }
+.fg-module--artifact { --tile-bg: var(--tier-artifact-surface-bg); --tile-edge: var(--tier-artifact-surface-base-border); --tile-edge-hover: var(--tier-artifact-surface-border); --tile-scrim: var(--tier-artifact-surface-scrim); --tile-text: var(--tier-artifact-base); }
+.fg-module--regalia { --tile-bg: var(--tier-regalia-surface-bg); --tile-edge: var(--tier-regalia-surface-base-border); --tile-edge-hover: var(--tier-regalia-surface-border); --tile-scrim: var(--tier-regalia-surface-scrim); --tile-text: var(--tier-regalia-base); }
+.fg-module--harmonic { --tile-bg: var(--tier-harmonic-surface-bg); --tile-edge: var(--tier-harmonic-surface-base-border); --tile-edge-hover: var(--tier-harmonic-surface-border); --tile-scrim: var(--tier-harmonic-surface-scrim); --tile-text: var(--tier-harmonic-base); }
+.fg-module--heretical { --tile-bg: var(--tier-heretical-surface-bg); --tile-edge: var(--tier-heretical-surface-base-border); --tile-edge-hover: var(--tier-heretical-surface-border); --tile-scrim: var(--tier-heretical-surface-scrim); --tile-text: var(--tier-heretical-base); }
+
+/* A conduit with a live link wears the game's conduit-connected outline. */
+.fg-module--linked {
+  --tile-edge: var(--fg-conduit);
+  --tile-edge-hover: var(--fg-conduit);
+}
+
+/* The engine named a problem with this module. */
+.fg-module--issue {
+  --tile-edge: var(--fg-invalid-border);
+  --tile-edge-hover: var(--fg-invalid);
+}
+
+.fg-module--issue .fg-module__tile::after {
+  background: var(--fg-invalid-fill);
+}
+
+/* An item the current build doesn't have: hazard tape over its one known cell. */
+.fg-module--unknown {
+  --tile-bg: repeating-linear-gradient(-45deg, var(--fg-hazard-base) 0 5px, var(--fg-hazard-red) 5px 10px);
+  --tile-edge: var(--fg-invalid);
+  --tile-edge-hover: var(--fg-invalid);
+}
+
+.fg-module__label {
+  position: absolute;
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  color: var(--tile-text);
+  font-size: 7px;
+  letter-spacing: 0;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-align: center;
+  pointer-events: none;
+}
+
+.fg-module--unknown .fg-module__label {
+  background: var(--fg-hazard-base);
+  color: var(--fg-invalid);
+  inset: calc(var(--inset) + 6px);
+}
+
+.fg-module__ports {
+  position: absolute;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fg-module__marker {
+  position: absolute;
+  display: flex;
+  width: 12px;
+  height: 12px;
+  align-items: center;
+  justify-content: center;
+  background: var(--fg-invalid);
+  color: #000;
+  font-size: 9px;
+  pointer-events: none;
+}
+
+.fg-module__count {
+  position: absolute;
+  padding: 0 2px;
+  background: var(--fg-conduit);
+  color: #000;
+  font-size: 8px;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  pointer-events: none;
+}
+
+/* Regalia welds: a bar across the gutter wherever two pieces of one set meet. */
+.fg-weld {
+  position: absolute;
+  background: var(--fg-weld);
+  pointer-events: none;
+}
+
+.fg-module .tip {
+  top: 0;
+  left: calc(100% + 6px);
+}
+
+.fg-module--tip-left .tip {
+  right: calc(100% + 6px);
+  left: auto;
+}
+
+.fg-module:hover,
+.fg-module:focus-visible,
+.fg-module:focus-within {
+  z-index: 20;
+}

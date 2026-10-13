@@ -1,0 +1,302 @@
+// The fitting grid, read-only by default. It draws a GridModel (model.ts): the hull's typed cells,
+// modules in their tier colours with one outline per footprint, port notches and Tek Cipher cells in
+// the game's own geometry, conduit links, regalia welds and the engine's issue markers. It holds no
+// state and uses no hooks, so it renders on the server for the fit page; the builder passes the
+// optional handlers and drag state from a client component.
+import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
+import art from "./fitting-art.generated.json";
+import { boundsOf, cellKey, directionOffset, oppositeDirection, outerEdges, visibleBounds, type Bounds, type Cell, type Direction } from "./geometry";
+import { moduleCells, type GridModel, type GridModule } from "./model";
+import { ModuleTooltip } from "./module-tooltip";
+import "./fitting-grid.css";
+
+type Rect = { x: number; y: number; width: number; height: number };
+type PortArt = { body: Rect; bridge: Rect; borders: Rect[] };
+const ART = art as {
+  cellSize: number;
+  slotInset: number;
+  ports: Record<"FemaleOpen" | "MaleAttached" | "Expansion", PortArt[]>;
+  hardpoints: Record<string, { viewBox: string; paths: string[] }>;
+  colors: Record<string, string>;
+};
+
+const CELL = ART.cellSize;
+const INSET = ART.slotInset;
+const SLOT = CELL - 2 * INSET;
+const DIRECTION_INDEX: Record<Direction, number> = { Up: 0, Down: 1, Left: 2, Right: 3 };
+
+export type FittingGridProps = {
+  model: GridModel;
+  /** Draw only the hull's enabled cells with a one-cell margin (default), or the whole grid. */
+  crop?: boolean;
+  /** A module drawn as selected (its hover look, held). */
+  selected?: number | null;
+  /** Cells drawn with the game's orange highlight. */
+  highlight?: readonly Cell[];
+  /** A drag preview: these cells drawn green (valid) or red (invalid). */
+  drop?: { cells: readonly Cell[]; valid: boolean } | null;
+  /** A module's tooltip; defaults to ModuleTooltip. Return null for none. */
+  tooltip?: (module: GridModule) => ReactNode;
+  onModulePointerDown?: (module: GridModule, event: ReactPointerEvent<HTMLElement>) => void;
+  onModuleContextMenu?: (module: GridModule, event: ReactMouseEvent<HTMLElement>) => void;
+  onCellPointerDown?: (cell: Cell, event: ReactPointerEvent<HTMLElement>) => void;
+  onCellPointerEnter?: (cell: Cell, event: ReactPointerEvent<HTMLElement>) => void;
+  className?: string;
+  /** Accessible name of the grid. */
+  label?: string;
+};
+
+const px = (cells: number) => cells * CELL;
+
+/** The part of the grid drawn: cropped bounds that also take in every module cell. */
+export function gridBounds(model: GridModel, crop = true): Bounds {
+  if (!crop) return { minRow: 0, minCol: 0, rows: model.rows, cols: model.cols };
+  return visibleBounds(model.slots, model, model.modules.flatMap(moduleCells));
+}
+
+function HardpointIcon({ slot }: { slot: string }) {
+  const icon = ART.hardpoints[slot];
+  if (!icon) return null;
+  return (
+    <svg className="fg-cell__icon" viewBox={icon.viewBox} aria-hidden="true">
+      {icon.paths.map((d, i) => (
+        <path key={i} d={d} />
+      ))}
+    </svg>
+  );
+}
+
+function PortPaint({ geometry, at, body }: { geometry: PortArt; at: { x: number; y: number }; body: "fill" | "cut" }) {
+  const fill = [geometry.body, geometry.bridge].filter((rect) => rect.width > 0 && rect.height > 0);
+  return (
+    <g transform={`translate(${at.x} ${at.y})`}>
+      {fill.map((rect, i) => (
+        <rect key={`f${i}`} className={body === "cut" ? "fg-module__art-cut" : "fg-module__art-fill"} {...rect} />
+      ))}
+      {geometry.borders.map((rect, i) => (
+        <rect key={`b${i}`} className="fg-module__art-edge" {...rect} />
+      ))}
+    </g>
+  );
+}
+
+function ModuleView({
+  module,
+  view,
+  selected,
+  tooltip,
+  tipLeft,
+  onPointerDown,
+  onContextMenu,
+}: {
+  module: GridModule;
+  view: Bounds;
+  selected: boolean;
+  tooltip: ReactNode;
+  tipLeft: boolean;
+  onPointerDown?: FittingGridProps["onModulePointerDown"];
+  onContextMenu?: FittingGridProps["onModuleContextMenu"];
+}) {
+  const all = moduleCells(module);
+  const box = boundsOf(all)!;
+  const local = (cell: Cell) => ({ x: px(cell.col - box.minCol), y: px(cell.row - box.minRow) });
+  const shapeEdges = outerEdges(module.cells);
+  const classes = [
+    "fg-module",
+    "tip-anchor",
+    `fg-module--${module.tier}`,
+    module.known ? "" : "fg-module--unknown",
+    module.conduitConnections !== null && module.conduitConnections > 0 ? "fg-module--linked" : "",
+    module.issues.length > 0 ? "fg-module--issue" : "",
+    selected ? "fg-module--selected" : "",
+    tipLeft ? "fg-module--tip-left" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const labelBox = boundsOf(module.cells)!;
+  const first = module.cells[0]!;
+  const firstAt = local(first);
+  return (
+    <div
+      className={classes}
+      style={{ left: px(box.minCol - view.minCol), top: px(box.minRow - view.minRow), width: px(box.cols), height: px(box.rows) }}
+      tabIndex={0}
+      role="img"
+      aria-label={`${module.name}${module.issues.length ? `: ${module.issues.map((issue) => issue.message).join(" ")}` : ""}`}
+      data-module={module.index}
+      onPointerDown={onPointerDown ? (event) => onPointerDown(module, event) : undefined}
+      onContextMenu={onContextMenu ? (event) => onContextMenu(module, event) : undefined}
+    >
+      {module.cells.map((cell) => {
+        const edges = shapeEdges.get(cellKey(cell))!;
+        const at = local(cell);
+        const left = edges.left ? INSET : 0;
+        const top = edges.top ? INSET : 0;
+        const style: CSSProperties = {
+          left: at.x + left,
+          top: at.y + top,
+          width: CELL - left - (edges.right ? INSET : 0),
+          height: CELL - top - (edges.bottom ? INSET : 0),
+          borderTopWidth: edges.top ? 1 : 0,
+          borderRightWidth: edges.right ? 1 : 0,
+          borderBottomWidth: edges.bottom ? 1 : 0,
+          borderLeftWidth: edges.left ? 1 : 0,
+        };
+        return <div key={cellKey(cell)} className="fg-module__tile" style={style} />;
+      })}
+      {module.expansions.map((cell) => {
+        const at = local(cell);
+        return <div key={`x${cellKey(cell)}`} className="fg-module__tile" style={{ left: at.x + INSET, top: at.y + INSET, width: SLOT, height: SLOT }} />;
+      })}
+      {module.ports.length > 0 && (
+        <svg className="fg-module__ports" style={{ left: 0, top: 0, width: px(box.cols), height: px(box.rows) }} aria-hidden="true">
+          {module.ports.map((port) => {
+            if (port.expansion) {
+              const at = local(port.expansion);
+              const geometry = ART.ports.Expansion[DIRECTION_INDEX[oppositeDirection(port.direction)]]!;
+              return <PortPaint key={port.index} geometry={geometry} at={{ x: at.x + INSET, y: at.y + INSET }} body="fill" />;
+            }
+            const at = local(port.cell);
+            const geometry = ART.ports.FemaleOpen[DIRECTION_INDEX[port.direction]]!;
+            return <PortPaint key={port.index} geometry={geometry} at={{ x: at.x + INSET, y: at.y + INSET }} body="cut" />;
+          })}
+        </svg>
+      )}
+      <span
+        className="fg-module__label"
+        style={{
+          left: px(labelBox.minCol - box.minCol) + INSET,
+          top: px(labelBox.minRow - box.minRow) + INSET,
+          width: px(labelBox.cols) - 2 * INSET,
+          height: px(labelBox.rows) - 2 * INSET,
+        }}
+      >
+        {module.name}
+      </span>
+      {module.issues.length > 0 && (
+        <span className="fg-module__marker" style={{ left: firstAt.x + CELL - INSET - 12, top: firstAt.y + INSET }} aria-hidden="true">
+          !
+        </span>
+      )}
+      {module.conduitConnections !== null && module.conduitConnections > 0 && (
+        <span className="fg-module__count" style={{ left: firstAt.x + INSET + 1, top: firstAt.y + CELL - INSET - 12 }} aria-hidden="true">
+          x{module.conduitConnections}
+        </span>
+      )}
+      {tooltip !== null && <div className="tip">{tooltip}</div>}
+    </div>
+  );
+}
+
+/** Bars across the gutter wherever cells of two modules of one regalia group touch. */
+function regaliaWelds(model: GridModel, view: Bounds): { key: string; style: CSSProperties }[] {
+  const owner = new Map<string, GridModule>();
+  for (const module of model.modules) if (module.regalia) for (const cell of module.cells) owner.set(cellKey(cell), module);
+  const welds: { key: string; style: CSSProperties }[] = [];
+  for (const [key, module] of owner) {
+    const [row, col] = key.split(",").map(Number) as [number, number];
+    for (const direction of ["Right", "Down"] as const) {
+      const offset = directionOffset(direction);
+      const neighbour = owner.get(cellKey({ row: row + offset.row, col: col + offset.col }));
+      if (!neighbour || neighbour === module || neighbour.regalia!.set !== module.regalia!.set) continue;
+      const x = px(col - view.minCol);
+      const y = px(row - view.minRow);
+      const style: CSSProperties =
+        direction === "Right"
+          ? { left: x + CELL - INSET - 1, top: y + CELL / 2 - 8, width: 2 * INSET + 2, height: 16 }
+          : { left: x + CELL / 2 - 8, top: y + CELL - INSET - 1, width: 16, height: 2 * INSET + 2 };
+      welds.push({ key: `${key}${direction}`, style });
+    }
+  }
+  return welds;
+}
+
+export function FittingGrid({
+  model,
+  crop = true,
+  selected = null,
+  highlight = [],
+  drop = null,
+  tooltip,
+  onModulePointerDown,
+  onModuleContextMenu,
+  onCellPointerDown,
+  onCellPointerEnter,
+  className,
+  label,
+}: FittingGridProps) {
+  const view = gridBounds(model, crop);
+  const highlighted = new Set(highlight.map(cellKey));
+  const dropCells = new Set((drop?.cells ?? []).map(cellKey));
+  const occupied = new Set(model.modules.flatMap(moduleCells).map(cellKey));
+  const colors = ART.colors;
+  const style = {
+    width: px(view.cols),
+    height: px(view.rows),
+    "--fg-conduit": colors.ConduitConnected,
+    "--fg-invalid": colors.InvalidRed,
+    "--fg-invalid-border": colors.InvalidRedBorder,
+    "--fg-invalid-fill": colors.InvalidRedFill,
+    "--fg-weld": colors.RegaliaWeldGreen,
+    "--fg-hazard-base": colors.HazardTapeBase,
+    "--fg-hazard-red": colors.HazardTapeRed,
+  } as CSSProperties;
+
+  const cells: ReactNode[] = [];
+  for (let row = view.minRow; row < view.minRow + view.rows; row++) {
+    for (let col = view.minCol; col < view.minCol + view.cols; col++) {
+      const slot = model.slots[row * model.cols + col] ?? "None";
+      const key = `${row},${col}`;
+      const dropped = dropCells.has(key);
+      if (slot === "None" && !dropped && !highlighted.has(key)) continue;
+      const hardpoint = slot in ART.hardpoints;
+      const cell = { row, col };
+      const classes = [
+        "fg-cell",
+        hardpoint ? "fg-cell--hardpoint" : "",
+        highlighted.has(key) ? "fg-cell--highlight" : "",
+        dropped ? (drop!.valid ? "fg-cell--drop-valid" : "fg-cell--drop-invalid") : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      cells.push(
+        <div
+          key={key}
+          className={classes}
+          style={{ left: px(col - view.minCol), top: px(row - view.minRow) }}
+          data-slot={slot}
+          onPointerDown={onCellPointerDown ? (event) => onCellPointerDown(cell, event) : undefined}
+          onPointerEnter={onCellPointerEnter ? (event) => onCellPointerEnter(cell, event) : undefined}
+        >
+          <div className="fg-cell__slot" />
+          {hardpoint && !occupied.has(key) && <HardpointIcon slot={slot} />}
+        </div>,
+      );
+    }
+  }
+
+  const renderTooltip = tooltip ?? ((module: GridModule) => <ModuleTooltip module={module} />);
+  return (
+    <div className={["fg", className].filter(Boolean).join(" ")} style={style} role="group" aria-label={label ?? `${model.hullName} fitting grid`}>
+      {cells}
+      {model.modules.map((module) => {
+        const box = boundsOf(moduleCells(module))!;
+        return (
+          <ModuleView
+            key={module.index}
+            module={module}
+            view={view}
+            selected={selected === module.index}
+            tooltip={renderTooltip(module)}
+            tipLeft={box.minCol - view.minCol > view.cols / 2}
+            onPointerDown={onModulePointerDown}
+            onContextMenu={onModuleContextMenu}
+          />
+        );
+      })}
+      {regaliaWelds(model, view).map((weld) => (
+        <span key={weld.key} className="fg-weld" style={weld.style} aria-hidden="true" />
+      ))}
+    </div>
+  );
+}
