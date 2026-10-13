@@ -585,6 +585,38 @@ test("recordEvaluation upserts, and ignores a verdict on content edited since", 
   await rejects(recordEvaluation(db, fit.id, { ...good, rating: NaN }), "invalid");
 });
 
+test("a reply under a hidden comment isn't counted, as it isn't listed", async () => {
+  const fit = await published();
+  const top = await createComment(db, { fitId: fit.id, authorUserId: "u1", authorName: "n", body: "top" });
+  await createComment(db, { fitId: fit.id, parentId: top.id, authorUserId: "u2", authorName: "m", body: "reply" });
+  await createComment(db, { fitId: fit.id, authorUserId: "u3", authorName: "o", body: "other" });
+  assert.equal((await getFit(db, fit.id)).comments, 3);
+  await setCommentHidden(db, top.id, true);
+  const listed = (await listComments(db, fit.id)).reduce((n, thread) => n + 1 + thread.replies.length, 0);
+  assert.equal(listed, 1);
+  assert.equal((await getFit(db, fit.id)).comments, listed);
+  assert.equal((await browse("sort=discussed")).fits.find((f) => f.id === fit.id).comments, listed);
+});
+
+test("a report resolved between the insert and the read back is filed again", async () => {
+  const fit = await published();
+  const input = { targetKind: "fit", targetId: fit.id, reporterUserId: "user_bob", reason: "x" };
+  const first = await createReport(db, input);
+  let resolvedOnce = false;
+  const racing = {
+    async query(text, params) {
+      if (!resolvedOnce && text.includes("SELECT id::text AS id FROM fit_reports")) {
+        resolvedOnce = true;
+        await db.query("UPDATE fit_reports SET resolved_at = now() WHERE id = $1::bigint", [first.id]);
+      }
+      return db.query(text, params);
+    },
+  };
+  const again = await createReport(racing, input);
+  assert.equal(again.created, true);
+  assert.notEqual(again.id, first.id);
+});
+
 test("a stale verdict never replaces the one an edit stored for the same build", async () => {
   const fit = await published();
   const fresh = sampleFit("1000");

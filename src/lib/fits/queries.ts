@@ -245,7 +245,9 @@ const EVALUATION_JSON = `jsonb_build_object('buildSha', e.build_sha, 'valid', e.
   'stats', e.stats, 'issues', e.issues, 'evaluatedAt', e.evaluated_at)`;
 
 const VOTES_SQL = `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id)`;
-const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden)`;
+// What listComments shows the public: visible comments, less replies under a hidden comment.
+const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden
+  AND NOT EXISTS (SELECT 1 FROM fit_comments p WHERE p.id = c.parent_id AND p.hidden))`;
 
 function summaryColumns(shaRef: string, viewerRef: string): string {
   return `f.id, f.author_user_id, f.author_name, f.title, f.hull_item, f.tags, f.status,
@@ -761,18 +763,22 @@ export async function createReport(
   if (target.length === 0) throw new FitDataError("not_found", "That no longer exists.");
 
   const values = [input.targetKind, input.targetId, input.reporterUserId, reason];
-  const inserted = await db.query<{ id: string }>(
-    `INSERT INTO fit_reports (target_kind, target_id, reporter_user_id, reason)
-     VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id::text AS id`,
-    values,
-  );
-  if (inserted.rows[0]) return { id: inserted.rows[0].id, created: true };
-  const { rows } = await db.query<{ id: string }>(
-    `SELECT id::text AS id FROM fit_reports
-     WHERE target_kind = $1 AND target_id = $2 AND reporter_user_id = $3 AND resolved_at IS NULL`,
-    values.slice(0, 3),
-  );
-  return { id: rows[0]!.id, created: false };
+  // The open report that blocked the insert can be resolved before it is read back; then insert again.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const inserted = await db.query<{ id: string }>(
+      `INSERT INTO fit_reports (target_kind, target_id, reporter_user_id, reason)
+       VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id::text AS id`,
+      values,
+    );
+    if (inserted.rows[0]) return { id: inserted.rows[0].id, created: true };
+    const { rows } = await db.query<{ id: string }>(
+      `SELECT id::text AS id FROM fit_reports
+       WHERE target_kind = $1 AND target_id = $2 AND reporter_user_id = $3 AND resolved_at IS NULL`,
+      values.slice(0, 3),
+    );
+    if (rows[0]) return { id: rows[0].id, created: false };
+  }
+  throw new Error("The report was resolved and reopened under it three times running.");
 }
 
 /** Open reports, oldest first, with a preview of the reported thing. Page with `afterId`. */
