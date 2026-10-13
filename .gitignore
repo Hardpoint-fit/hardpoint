@@ -8,3 +8,4 @@ src/app/game-tokens.generated.css
 src/app/fonts/
 src/components/grid/fitting-art.generated.json
 src/lib/fits/stat-text.generated.json
+src/lib/engine/progression-layout.generated.json

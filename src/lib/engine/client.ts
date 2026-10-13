@@ -11,7 +11,9 @@ export type EngineErrorKind =
   /** The engine refused the input (400). `message` is the engine's, safe to show. */
   | "rejected"
   | "rateLimited"
-  | "tooLarge";
+  | "tooLarge"
+  /** The caller aborted the request (a newer edit superseded it). */
+  | "cancelled";
 
 export type EngineError = { kind: EngineErrorKind; message: string };
 export type EngineResult<T> = { ok: true; value: T } | { ok: false; error: EngineError };
@@ -34,7 +36,8 @@ export type EngineClient = {
   health(): Promise<EngineResult<HealthResponse>>;
   /** Pass the etag of a catalog you hold to get `notModified` when it is still current. */
   catalog(options?: { ifNoneMatch?: string | null }): Promise<EngineResult<CatalogResponse>>;
-  evaluate(fit: OpenFit): Promise<EngineResult<EvaluationResponse>>;
+  /** `signal` cancels the request; it then resolves with a "cancelled" error. */
+  evaluate(fit: OpenFit, options?: { signal?: AbortSignal }): Promise<EngineResult<EvaluationResponse>>;
   importFitString(fitString: string): Promise<EngineResult<FitBody>>;
   exportFitString(fit: OpenFit): Promise<EngineResult<FitStringBody>>;
 };
@@ -69,7 +72,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     path: string,
     timeoutMs: number,
     guard: (value: unknown) => value is T,
-    extra: { body?: unknown; headers?: Record<string, string> } = {},
+    extra: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal } = {},
   ): Promise<Raw<T>> {
     if (options.baseUrl === null) return fail("unavailable", "The loadout engine isn't configured.");
     try {
@@ -83,7 +86,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
         },
         body: extra.body === undefined ? undefined : JSON.stringify(extra.body),
         cache: "no-store",
-        signal: AbortSignal.timeout(timeoutMs),
+        signal: extra.signal ? AbortSignal.any([extra.signal, AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs),
       });
 
       if (response.status === 304) return { ok: true, notModified: true };
@@ -100,6 +103,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       if (!guard(body)) return fail("unavailable", "The loadout engine sent an answer the site doesn't understand.");
       return { ok: true, notModified: false, value: body, etag: response.headers.get("etag") };
     } catch (error) {
+      if (extra.signal?.aborted) return fail("cancelled", "The request was cancelled.");
       if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
         return fail("timeout", "The loadout engine took too long to answer.");
       }
@@ -127,8 +131,8 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       if (result.notModified) return { ok: true, value: { status: "notModified" } };
       return { ok: true, value: { status: "ok", catalog: result.value, etag: result.etag } };
     },
-    async evaluate(fit) {
-      return plain(await call("POST", "/v1/evaluate", timeouts.evaluateMs, isEvaluation, { body: { fit } }));
+    async evaluate(fit, opts = {}) {
+      return plain(await call("POST", "/v1/evaluate", timeouts.evaluateMs, isEvaluation, { body: { fit }, signal: opts.signal }));
     },
     async importFitString(fitString) {
       return plain(await call("POST", "/v1/fits/import", timeouts.fitStringMs, isFitBody, { body: { fitString } }));

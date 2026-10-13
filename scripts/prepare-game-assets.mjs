@@ -28,14 +28,19 @@ const HARDPOINT_ICONS = ["Battery", "Subsystem", "Propulsion", "Harpoon", "Repai
 const STAT_TEXT = join(assets, "Scripts/Runtime/Common/Stats/StatTypeText.cs");
 const STAT_RULES = join(assets, "Scripts/Simulation/LootGeneration/StatTypeRules.cs");
 const STAT_TYPES = join(assets, "Scripts/Simulation/Modules/Modules.qtn");
+// How an open fit's affinity progression is laid out (ShipProgression's fixed arrays): slot counts per
+// module type and the "no choice" marker of a threshold.
+const AFFINITY_BOUNDS = join(assets, "Scripts/Simulation/Effects.qtn");
+const THRESHOLD_RESOLVER = join(assets, "Scripts/Simulation/AffinityThresholdResolver.cs");
 
-export const SOURCES = [...TOKEN_SHEETS, FONT, FITTING_FIXTURE, INVENTORY_FIXTURE, ...HARDPOINT_ICONS.map(([, file]) => file), STAT_TEXT, STAT_RULES, STAT_TYPES];
+export const SOURCES = [...TOKEN_SHEETS, FONT, FITTING_FIXTURE, INVENTORY_FIXTURE, ...HARDPOINT_ICONS.map(([, file]) => file), STAT_TEXT, STAT_RULES, STAT_TYPES, AFFINITY_BOUNDS, THRESHOLD_RESOLVER];
 
 const OUTPUTS = {
   tokens: join(appRoot, "src/app/game-tokens.generated.css"),
   font: join(appRoot, "src/app/fonts/VCROSDNEUE.ttf"),
   fittingArt: join(appRoot, "src/components/grid/fitting-art.generated.json"),
   statText: join(appRoot, "src/lib/fits/stat-text.generated.json"),
+  progressionLayout: join(appRoot, "src/lib/engine/progression-layout.generated.json"),
 };
 
 /** USS is a CSS subset: keep the custom properties, drop what only Unity understands. */
@@ -142,6 +147,33 @@ export function buildStatText(text = readFileSync(STAT_TEXT, "utf8"), rules = re
   return { labels, integer: statsIn("IsIntegerValued"), lowerIsBetter: statsIn("IsLowerBetter"), inverted };
 }
 
+/**
+ * Where an open fit's progression keeps each value (AffinitySystem's slot indices): an allocation at
+ * `moduleTypes[type] * optionsPerType + option`, a threshold choice at `moduleTypes[type] * tiersPerType
+ * + tier`, with `selectionUnset` for a tier with no choice.
+ */
+export function buildProgressionLayout(types = readFileSync(STAT_TYPES, "utf8"), bounds = readFileSync(AFFINITY_BOUNDS, "utf8"), resolver = readFileSync(THRESHOLD_RESOLVER, "utf8")) {
+  const enumBody = types.match(/enum ModuleType \{([\s\S]*?)\n\}/)?.[1];
+  if (!enumBody) throw new Error("ModuleType is missing from Modules.qtn.");
+  const moduleTypes = Object.fromEntries([...enumBody.replace(/\/\/.*$/gm, "").matchAll(/\b(\w+)\s*=\s*(\d+)/g)].map(([, name, value]) => [name, Number(value)]));
+  const define = (name) => {
+    const value = bounds.match(new RegExp(`#define ${name} (\\d+)`))?.[1];
+    if (!value) throw new Error(`${name} is missing from Effects.qtn.`);
+    return Number(value);
+  };
+  const unset = resolver.match(/const byte SelectionUnset = (\d+);/)?.[1];
+  if (!unset) throw new Error("SelectionUnset is missing from AffinityThresholdResolver.cs.");
+  if (Object.keys(moduleTypes).length === 0) throw new Error("ModuleType has no values.");
+  return {
+    moduleTypes,
+    optionsPerType: define("maxAffinityOptions"),
+    tiersPerType: define("maxThresholdTiers"),
+    allocationSlots: define("maxAffinityAllocationSlots"),
+    thresholdSlots: define("maxAffinityThresholdSlots"),
+    selectionUnset: Number(unset),
+  };
+}
+
 function readJson(file) {
   return JSON.parse(readFileSync(file, "utf8"));
 }
@@ -155,6 +187,7 @@ export function prepare() {
   copyFileSync(FONT, OUTPUTS.font);
   writeFileSync(OUTPUTS.fittingArt, `${JSON.stringify(buildFittingArt(), null, 1)}\n`);
   writeFileSync(OUTPUTS.statText, `${JSON.stringify(buildStatText(), null, 1)}\n`);
+  writeFileSync(OUTPUTS.progressionLayout, `${JSON.stringify(buildProgressionLayout(), null, 1)}\n`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) prepare();

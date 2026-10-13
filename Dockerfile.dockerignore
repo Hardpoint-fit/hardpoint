@@ -9,6 +9,8 @@
 !src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/StatTypeText.cs
 !src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/StatTypeRules.cs
 !src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn
+!src/Citadel.Unity/Assets/Scripts/Simulation/Effects.qtn
+!src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs
 **/node_modules
 **/.next
 js/projects/theorycrafting/src/app/fonts

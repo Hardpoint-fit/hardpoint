@@ -24,6 +24,7 @@ COPY src/Citadel.Unity/Assets/UI/Elements/Resources/Icon/hardpoint-*.svg src/Cit
 COPY src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/StatTypeText.cs src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/StatTypeRules.cs src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Modules/
+COPY src/Citadel.Unity/Assets/Scripts/Simulation/Effects.qtn src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs src/Citadel.Unity/Assets/Scripts/Simulation/
 WORKDIR /repo/js/projects/theorycrafting
 COPY --from=deps /repo/js/projects/theorycrafting/node_modules ./node_modules
 COPY js/projects/theorycrafting/ ./

@@ -21,7 +21,7 @@ import {
   type ReportTargetKind,
   type Viewer,
 } from "../fits/queries";
-import { isOpenFit } from "./loaders";
+import { isOpenFit } from "../engine/open-fit";
 
 export type ActionAuth = { requireAuthor(): Promise<Author>; requireAdmin(): Promise<Author> };
 
@@ -149,3 +149,4 @@ export function copyFitString(deps: ActionDeps, input: { fitId: string; viewer: 
     return { ok: true, fitString: result.value.fitString };
   });
 }
+

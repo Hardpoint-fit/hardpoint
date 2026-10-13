@@ -43,8 +43,13 @@ export function formatStatValue(stat: string, operation: string, value: number):
     return `${signed(formatNumber(shown), shown)}%`;
   }
   if (operation === "DamageReduction") return `${signed(formatNumber(value * 100), value)}%`;
-  const shown = TEXT.integer.includes(stat) ? Math.round(value) : value;
+  const shown = isIntegerValued(stat) ? Math.round(value) : value;
   return signed(formatNumber(shown), shown);
+}
+
+/** StatTypeRules.IsIntegerValued: an Add of this stat rolls and shows whole numbers. */
+export function isIntegerValued(stat: string): boolean {
+  return TEXT.integer.includes(stat);
 }
 
 /** Whether a change is good for the ship: higher is better unless the game says the stat is lower-better. */

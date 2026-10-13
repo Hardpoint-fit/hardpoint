@@ -36,6 +36,7 @@ The Unity files own all of these; the site holds no copy of their values.
 - `src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf`: copied to `src/app/fonts/` and loaded with `next/font/local`.
 - `FittingPanel.fixture.json`, `InventoryGrid.fixture.json` (exported by Unity for the UI prototype), the `hardpoint-*.svg` icons and the tier tokens: written to `src/components/grid/fitting-art.generated.json` (port notch rectangles at the game's 48px cell, hardpoint glyphs, grid state colours, tier values for the share card).
 - `StatTypeText.cs`, `StatTypeRules.cs`, `Modules.qtn`: written to `src/lib/fits/stat-text.generated.json` (each stat's label, whole-number, lower-is-better and inverted-sign rules). A stat without copy fails the build.
+- `Modules.qtn` (`ModuleType`), `Effects.qtn` (the affinity bounds) and `AffinityThresholdResolver.cs` (`SelectionUnset`): written to `src/lib/engine/progression-layout.generated.json`, where an open fit's affinity progression keeps each point and threshold choice. The builder edits progressions through it.
 
 All outputs are git-ignored. Change the Unity files, never the outputs. `globals.css` binds `--font-family` to the loaded font; `game-ui.css` holds the game-UI primitives (chamfered panel, tooltip plate, buttons, tier accents).
 

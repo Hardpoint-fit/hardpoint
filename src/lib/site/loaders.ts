@@ -21,6 +21,7 @@ import {
 } from "../fits/queries";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
+import { isOpenFit } from "../engine/open-fit";
 
 export type SiteDeps = {
   database: () => DatabaseState;
@@ -57,7 +58,7 @@ async function guarded<T>(what: string, read: () => Promise<T>): Promise<T | nul
   }
 }
 
-function databaseOf(deps: SiteDeps): Queryable | null {
+function databaseOf(deps: Pick<SiteDeps, "database">): Queryable | null {
   const database = deps.database();
   return database.status === "ready" ? database.db : null;
 }
@@ -177,26 +178,6 @@ export type FitPageData =
       grid: GridState;
       comments: CommentThread[];
     };
-
-const isObject = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
-
-/** Enough of an open fit's shape to draw it; the engine owns the rest. */
-export function isOpenFit(value: unknown): value is OpenFit {
-  if (!isObject(value) || !isObject(value.hull) || typeof value.hull.def !== "string") return false;
-  if (!Array.isArray(value.modules) || !Array.isArray(value.ammo) || !Array.isArray(value.slotOverrides)) return false;
-  return value.modules.every(
-    (module) =>
-      isObject(module) &&
-      isObject(module.item) &&
-      typeof module.item.def === "string" &&
-      isObject(module.item.roll) &&
-      Array.isArray(module.item.roll.ports) &&
-      Array.isArray(module.item.roll.modifiers) &&
-      Number.isInteger(module.row) &&
-      Number.isInteger(module.col) &&
-      Number.isInteger(module.rotation),
-  );
-}
 
 export function gridFor(fit: FitDetail, catalog: Catalog | null, shown: Shown): GridState {
   const open = fit.fit;

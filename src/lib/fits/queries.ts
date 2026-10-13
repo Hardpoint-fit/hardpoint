@@ -16,6 +16,7 @@ import {
   type BrowseQuery,
 } from "./filters.ts";
 import type { Db, Queryable } from "./db.ts";
+import { COMMENT_MAX, DESCRIPTION_MAX, FIT_JSON_MAX_BYTES, REPORT_REASON_MAX, TITLE_MAX } from "./limits.ts";
 
 // ---------------------------------------------------------------------------------------------------
 // Types
@@ -128,11 +129,6 @@ export class FitDataError extends Error {
 // ---------------------------------------------------------------------------------------------------
 // Limits and validation
 
-export const TITLE_MAX = 80;
-export const DESCRIPTION_MAX = 10_000;
-export const COMMENT_MAX = 2_000;
-export const REPORT_REASON_MAX = 1_000;
-export const FIT_JSON_MAX_BYTES = 200_000;
 export const DEFAULT_PAGE_SIZE = 24;
 export const MAX_PAGE_SIZE = 100;
 

@@ -44,3 +44,14 @@ test("stat wording is read from the game and covers every displayable stat", asy
     /without display copy: B/,
   );
 });
+
+test("the affinity progression layout is read from the game's enum, bounds and unset marker", async () => {
+  const { buildProgressionLayout } = await import("./prepare-game-assets.mjs");
+  const layout = buildProgressionLayout();
+  assert.equal(layout.moduleTypes.Turret, 1);
+  assert.equal(layout.moduleTypes.Utility, 10);
+  assert.equal(layout.optionsPerType * Object.keys(layout.moduleTypes).length, layout.allocationSlots);
+  assert.equal(layout.tiersPerType * Object.keys(layout.moduleTypes).length, layout.thresholdSlots);
+  assert.equal(layout.selectionUnset, 255);
+  assert.throws(() => buildProgressionLayout("enum ModuleType {\n  None = 0,\n}", "", "const byte SelectionUnset = 255;"), /maxAffinityOptions is missing/);
+});
