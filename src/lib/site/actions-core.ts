@@ -32,6 +32,8 @@ export type ActionDeps = {
   database: () => DatabaseState;
   auth: ActionAuth;
   engine: Pick<EngineClient, "exportFitString" | "evaluate">;
+  /** The build of the catalog the server holds: what a draft the engine couldn't check is recorded against. */
+  currentBuild?: () => string | null;
 };
 
 export type ActionRefusal = {
@@ -181,7 +183,7 @@ export type SavedFit = {
  */
 export function saveFit(
   deps: ActionDeps,
-  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit; buildSha: string | null },
+  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit },
 ): Promise<ActionResult<{ fit: SavedFit }>> {
   return withAuthor(deps, "fit save", async (db, author) => {
     const result = await saveDraft(
@@ -194,7 +196,7 @@ export function saveFit(
         description: input.description,
         tags: input.tags,
         fit: input.fit,
-        buildSha: input.buildSha,
+        buildSha: deps.currentBuild?.() ?? null,
       },
     );
     if (!result.ok) return serviceRefusal(result);

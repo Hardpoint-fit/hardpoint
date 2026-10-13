@@ -6,21 +6,16 @@ import { useState, useTransition, type Dispatch } from "react";
 import { publishFitAction, saveFitAction } from "#/app/actions";
 import type { EngineClient } from "#/lib/engine/client";
 import { isEditableFit } from "#/lib/engine/open-fit";
-import type { EvaluationIssue, OpenFit } from "#/lib/engine/types";
+import type { OpenFit } from "#/lib/engine/types";
 import { MAX_TAGS, normalizeTags } from "#/lib/fits/filters";
 import { DESCRIPTION_MAX, TITLE_MAX } from "#/lib/fits/limits";
 import { NotConfigured, Panel } from "#/components/ui";
 import { normalizeFitString } from "./fit-string";
+import { publishFlow, saveFlow, type FlowResult, type Navigate, type Problem, type SavedState } from "./save-flow";
 import type { BuilderAction, FitMeta } from "./state";
 
 export type BuilderAuth = { enabled: boolean; signedIn: boolean };
-
-/** Where the builder goes after a save or a publish (the app router, or a stand-in in tests). */
-export type Navigate = { replace(url: string): void; push(url: string): void };
-
-export type SavedState = { fitId: string | null; status: "draft" | "published" | "hidden" | null; updatedAt: string | null };
-
-type Problem = { message: string; issues?: EvaluationIssue[] } | null;
+export type { Navigate, SavedState };
 
 export function ProblemNote({ problem, moduleName }: { problem: Problem; moduleName: (index: number) => string | null }) {
   if (!problem) return null;
@@ -138,7 +133,6 @@ export function FitDetails({
   auth,
   saved,
   dirty,
-  buildSha,
   moduleName,
   onSaved,
   navigate,
@@ -149,7 +143,6 @@ export function FitDetails({
   auth: BuilderAuth;
   saved: SavedState;
   dirty: boolean;
-  buildSha: string | null;
   moduleName: (index: number) => string | null;
   /** After a save: the new saved state (and the snapshot that is now clean). */
   onSaved: (saved: SavedState) => void;
@@ -161,41 +154,24 @@ export function FitDetails({
   const [pending, start] = useTransition();
   const published = saved.status === "published";
 
-  const save = async (): Promise<SavedState | null> => {
-    const result = await saveFitAction(saved.fitId, meta, fit, buildSha);
-    if (!result.ok) {
-      setProblem({ message: result.message, issues: result.issues });
-      return null;
-    }
-    const next: SavedState = { fitId: result.fit.fitId, status: result.fit.status, updatedAt: result.fit.updatedAt };
-    onSaved(next);
-    setNotice(result.fit.evaluation === "skipped" ? "SAVED. THE ENGINE COULDN'T CHECK IT; IT IS CHECKED AGAIN BEFORE PUBLISHING." : "SAVED.");
-    return next;
+  const steps = {
+    saved,
+    dirty,
+    save: (fitId: string | null) => saveFitAction(fitId, meta, fit),
+    publish: (fitId: string) => publishFitAction(fitId),
+    onSaved,
+    navigate,
   };
-
-  const onSave = () =>
+  const run = (flow: () => Promise<FlowResult>) =>
     start(async () => {
       setProblem(null);
       setNotice(null);
-      const next = await save();
-      if (next && saved.fitId === null) navigate.replace(`/fits/${next.fitId}/edit`);
+      const result = await flow();
+      setProblem(result.problem);
+      setNotice(result.notice);
     });
-
-  const onPublish = () =>
-    start(async () => {
-      setProblem(null);
-      setNotice(null);
-      const current = dirty || saved.fitId === null ? await save() : saved;
-      if (!current?.fitId) return;
-      const result = await publishFitAction(current.fitId);
-      if (!result.ok) {
-        setNotice(null);
-        setProblem({ message: result.message, issues: result.issues });
-        if (saved.fitId === null) navigate.replace(`/fits/${current.fitId}/edit`);
-        return;
-      }
-      navigate.push(`/fits/${result.fitId}`);
-    });
+  const onSave = () => run(() => saveFlow(steps));
+  const onPublish = () => run(() => publishFlow(steps));
 
   return (
     <Panel title="FIT DETAILS" aside={saved.status ? <span className={`badge badge--${saved.status}`}>{saved.status.toUpperCase()}</span> : undefined}>

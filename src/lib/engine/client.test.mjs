@@ -127,3 +127,23 @@ test("a custom fetch that throws something odd still yields a result", async () 
   });
   assert.equal(err(await weird.health()).kind, "unavailable");
 });
+
+test("a 429's Retry-After (seconds or a date) comes back as retryAfterMs", async () => {
+  const { parseRetryAfter } = await import("./client.ts");
+  assert.equal(parseRetryAfter("3"), 3000);
+  assert.equal(parseRetryAfter(new Date(10_000).toUTCString(), 4_000), 6000);
+  assert.equal(parseRetryAfter(null), undefined);
+  assert.equal(parseRetryAfter("soon"), undefined);
+  const stub = await startStubEngine({
+    "POST /v1/evaluate": (req, res) => {
+      res.writeHead(429, { "retry-after": "2", "content-type": "application/json" });
+      res.end("{}");
+    },
+  });
+  try {
+    const result = await createEngineClient({ baseUrl: stub.url }).evaluate(FIXTURES.fit);
+    assert.deepEqual(result.error, { kind: "rateLimited", message: "Too many requests. Wait a moment and try again.", retryAfterMs: 2000 });
+  } finally {
+    await stub.close();
+  }
+});

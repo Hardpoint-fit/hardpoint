@@ -79,10 +79,11 @@ function isMeta(value: unknown): value is { title: string; description: string; 
   );
 }
 
-export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown, buildSha: unknown): Promise<core.ActionResult<{ fit: core.SavedFit }>> {
-  if ((fitId !== null && !isId(fitId)) || !isMeta(meta) || (buildSha !== null && !text(buildSha, 100))) return BAD_INPUT;
+/** The build a draft is recorded against when the engine can't check it comes from the server's catalog, not the browser. */
+export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown): Promise<core.ActionResult<{ fit: core.SavedFit }>> {
+  if ((fitId !== null && !isId(fitId)) || !isMeta(meta)) return BAD_INPUT;
   if (!isEditableFit(fit) || JSON.stringify(fit).length > FIT_JSON_MAX_BYTES) return BAD_INPUT;
-  const result = await core.saveFit(actionDeps(), { fitId, ...meta, fit, buildSha });
+  const result = await core.saveFit(actionDeps(), { fitId, ...meta, fit });
   if (result.ok) revalidatePath(`/fits/${result.fit.fitId}`);
   return result;
 }

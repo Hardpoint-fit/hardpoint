@@ -14,7 +14,7 @@ export function siteDeps(): SiteDeps {
 
 /** The real dependencies of the server actions. */
 export function actionDeps(): ActionDeps {
-  return { database: getDatabase, auth: { requireAuthor, requireAdmin }, engine: getEngine() };
+  return { database: getDatabase, auth: { requireAuthor, requireAdmin }, engine: getEngine(), currentBuild: () => getServerCatalog().peek()?.buildSha ?? null };
 }
 
 /** Who is reading this page. Never throws: Clerk trouble reads as signed out. */

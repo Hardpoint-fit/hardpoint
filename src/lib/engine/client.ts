@@ -15,7 +15,21 @@ export type EngineErrorKind =
   /** The caller aborted the request (a newer edit superseded it). */
   | "cancelled";
 
-export type EngineError = { kind: EngineErrorKind; message: string };
+export type EngineError = {
+  kind: EngineErrorKind;
+  message: string;
+  /** rateLimited only: how long the engine asked to wait (Retry-After), when it said. */
+  retryAfterMs?: number;
+};
+
+/** Retry-After as seconds or an HTTP date, in milliseconds from `now`; undefined when absent or unreadable. */
+export function parseRetryAfter(value: string | null, now = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) return Number(trimmed) * 1000;
+  const at = Date.parse(trimmed);
+  return Number.isNaN(at) ? undefined : Math.max(0, at - now);
+}
 export type EngineResult<T> = { ok: true; value: T } | { ok: false; error: EngineError };
 
 export type CatalogResponse = { status: "ok"; catalog: Catalog; etag: string | null } | { status: "notModified" };
@@ -91,7 +105,10 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
 
       if (response.status === 304) return { ok: true, notModified: true };
       if (response.status === 413) return fail("tooLarge", "That fit is too large for the engine.");
-      if (response.status === 429) return fail("rateLimited", "Too many requests. Wait a moment and try again.");
+      if (response.status === 429) {
+        const retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
+        return { ok: false, error: { kind: "rateLimited", message: "Too many requests. Wait a moment and try again.", ...(retryAfterMs === undefined ? {} : { retryAfterMs }) } };
+      }
       if (response.status === 400) {
         const body: unknown = await response.json().catch(() => null);
         const message = isObject(body) && typeof (body as Partial<ErrorBody>).error === "string" ? (body as ErrorBody).error : "The engine rejected the request.";

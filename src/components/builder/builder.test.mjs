@@ -48,7 +48,8 @@ const authAs = (userId, enabled = true) =>
     { authEnabled: enabled, adminUserIds: [] },
     { sessionUserId: async () => userId, profile: async (id) => (profiles[id] ? { username: profiles[id].name, firstName: null, lastName: null, publicMetadata: {} } : null) },
   );
-const actionDeps = (auth, engineUrl = stub.url) => ({ database: () => ({ status: "ready", db }), auth, engine: createEngineClient({ baseUrl: engineUrl }) });
+const HELD_BUILD = "held0build";
+const actionDeps = (auth, engineUrl = stub.url) => ({ database: () => ({ status: "ready", db }), auth, engine: createEngineClient({ baseUrl: engineUrl }), currentBuild: () => HELD_BUILD });
 
 test("the builder pages load a new fit, a copy, and an edit for its author only", async () => {
   const fresh = await loadBuilder(ready(), {}, viewer(null));
@@ -124,7 +125,7 @@ async function buildAFit() {
 
 test("save refuses with 503 while sign-in is off, then saves and publishes for a signed-in author", async () => {
   const state = await buildAFit();
-  const input = { fitId: null, ...state.meta, fit: state.fit, buildSha: FIXTURES.catalog.buildSha };
+  const input = { fitId: null, ...state.meta, fit: state.fit };
 
   const off = await saveFit(actionDeps(authAs(ALICE.userId, false)), input);
   assert.deepEqual(off, { ok: false, reason: "auth_unavailable", status: 503, message: SIGN_IN_UNAVAILABLE_MESSAGE });
@@ -149,7 +150,7 @@ test("publish is refused with the engine's reasons for an invalid fit, and savin
   const state = await buildAFit();
   // Two modules on one anchor: the stub engine (like the real one) answers Overlap.
   const overlapping = { ...state.fit, modules: [...state.fit.modules, state.fit.modules[0]] };
-  const draft = await saveFit(actionDeps(authAs(ALICE.userId)), { fitId: null, ...state.meta, fit: overlapping, buildSha: null });
+  const draft = await saveFit(actionDeps(authAs(ALICE.userId)), { fitId: null, ...state.meta, fit: overlapping });
   assert.equal(draft.ok, true, "an invalid fit saves as a draft");
   const refused = await publishFit(actionDeps(authAs(ALICE.userId)), { fitId: draft.fit.fitId });
   assert.equal(refused.ok, false);
@@ -157,9 +158,10 @@ test("publish is refused with the engine's reasons for an invalid fit, and savin
   assert.equal(refused.status, 409);
   assert.ok(refused.issues.some((issue) => issue.kind === "Overlap"));
 
-  const offline = await saveFit(actionDeps(authAs(ALICE.userId), deadUrl), { fitId: null, ...state.meta, fit: state.fit, buildSha: FIXTURES.catalog.buildSha });
+  const offline = await saveFit(actionDeps(authAs(ALICE.userId), deadUrl), { fitId: null, ...state.meta, fit: state.fit });
   assert.equal(offline.ok, true);
   assert.equal(offline.fit.evaluation, "skipped");
+  assert.equal((await getFit(db, offline.fit.fitId, { viewer: viewer(ALICE) })).createdBuildSha, HELD_BUILD, "the build is the server's, never the browser's");
   const notNow = await publishFit(actionDeps(authAs(ALICE.userId), deadUrl), { fitId: offline.fit.fitId });
   assert.deepEqual([notNow.ok, notNow.reason, notNow.status], [false, "engine", 503]);
 });

@@ -3,12 +3,14 @@
 // The builder page's client root: loads the catalog the server holds (/api/catalog), then hands it to
 // the workspace. Everything below works in the browser alone; only saving and the engine calls leave it.
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Catalog } from "#/lib/engine/types";
 import type { BuilderStart } from "#/lib/site/loaders";
 import { Panel } from "#/components/ui";
+import { browserStorage, clearDraft, draftSlot } from "./draft-storage";
 import { indexCatalog } from "./rules";
 import type { BuilderAuth } from "./fit-details";
+import { inPlaceNavigate } from "./save-flow";
 import { Workspace } from "./workspace";
 import "./builder.css";
 
@@ -56,5 +58,43 @@ export function Builder({ start, auth }: { start: BuilderStart; auth: BuilderAut
       </main>
     );
   }
-  return <Workspace cat={cat} start={start} auth={auth} navigate={router} />;
+  return (
+    <DraftGuard start={start}>
+      <Workspace cat={cat} start={start} auth={auth} navigate={inPlaceNavigate(router, window.history)} />
+    </DraftGuard>
+  );
+}
+
+/**
+ * If the workspace fails to render (a saved draft this build can't draw, say), the draft that caused it
+ * is dropped and the builder offers to start again, rather than the page staying broken on every visit.
+ */
+class DraftGuard extends Component<{ start: BuilderStart; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch() {
+    const { start } = this.props;
+    const storage = browserStorage();
+    clearDraft(storage, draftSlot(start.fitId, start.copiedFrom?.id ?? null));
+  }
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    return (
+      <main className="page">
+        <Panel title="FIT BUILDER">
+          <div className="empty-state" role="alert">
+            <span>THE BUILDER COULDN&apos;T OPEN THIS FIT. THE CHANGES KEPT IN THIS BROWSER WERE DROPPED.</span>
+            <button type="button" className="btn" onClick={() => window.location.reload()}>
+              START AGAIN
+            </button>
+          </div>
+        </Panel>
+      </main>
+    );
+  }
 }

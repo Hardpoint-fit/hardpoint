@@ -21,7 +21,7 @@ import {
 } from "../fits/queries";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
-import { isOpenFit } from "../engine/open-fit";
+import { isEditableFit, isOpenFit } from "../engine/open-fit";
 
 export type SiteDeps = {
   database: () => DatabaseState;
@@ -235,7 +235,13 @@ export type BuilderStart = {
   note: string | null;
 };
 
-export type BuilderData = { status: "ok"; start: BuilderStart } | { status: "not_found" } | { status: "forbidden" } | { status: "unavailable" };
+export type BuilderData =
+  | { status: "ok"; start: BuilderStart }
+  | { status: "not_found" }
+  | { status: "forbidden" }
+  | { status: "unavailable" }
+  /** The stored fit lacks what the builder needs to edit it (it can still be read on its page). */
+  | { status: "unreadable" };
 
 const NEW_START: BuilderStart = { fitId: null, fit: null, meta: { title: "", description: "", tags: [] }, status: null, updatedAt: null, copiedFrom: null, note: null };
 export const COPY_UNAVAILABLE = "THAT FIT CAN'T BE COPIED RIGHT NOW. START FROM A HULL INSTEAD.";
@@ -256,14 +262,14 @@ export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { f
       return reachable ? { status: "not_found" } : { status: "unavailable" };
     }
     if (fit.authorUserId !== viewer.userId) return { status: "forbidden" };
-    if (!isOpenFit(fit.fit)) return { status: "not_found" };
+    if (!isEditableFit(fit.fit)) return { status: "unreadable" };
     return {
       status: "ok",
       start: { ...NEW_START, fitId: fit.id, fit: fit.fit, meta: { title: fit.title, description: fit.description, tags: fit.tags }, status: fit.status, updatedAt: fit.updatedAt },
     };
   }
   const source = db ? await guarded("builder copy", () => getFit(db, request.copyFrom!, { viewer })) : null;
-  if (!source || !isOpenFit(source.fit)) return { status: "ok", start: { ...NEW_START, note: COPY_UNAVAILABLE } };
+  if (!source || !isEditableFit(source.fit)) return { status: "ok", start: { ...NEW_START, note: COPY_UNAVAILABLE } };
   return {
     status: "ok",
     start: { ...NEW_START, fit: source.fit, meta: { title: "", description: "", tags: source.tags }, copiedFrom: { id: source.id, title: source.title } },

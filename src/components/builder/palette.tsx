@@ -103,6 +103,7 @@ export function Palette({
             <button
               type="button"
               className={`palette-item ${heldDef === item.def ? "palette-item--held" : ""}`}
+              data-palette-item=""
               onPointerDown={(event) => {
                 if (event.button === 0) onPointerPick(item.def, event);
               }}

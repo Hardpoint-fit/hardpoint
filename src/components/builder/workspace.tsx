@@ -15,7 +15,7 @@ import type { EvaluationResponse } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
 import type { BuilderStart } from "#/lib/site/loaders";
 import { AffinityPanel } from "./affinity-panel";
-import { browserStorage, clearDraft, readDraft, writeDraft } from "./draft-storage";
+import { autosave, bootDraft, browserStorage, clearDraft, draftSlot } from "./draft-storage";
 import { ExportFit, FitDetails, ImportFit, type BuilderAuth, type Navigate, type SavedState } from "./fit-details";
 import { HullPicker } from "./hull-picker";
 import { Inspector } from "./inspector";
@@ -27,23 +27,22 @@ import type { BuilderCatalog } from "./rules";
 import { initialState, reduce, type BuilderAction, type BuilderState } from "./state";
 
 
-const ENGINE_RETRY_MS = 5_000;
-
 type Boot = { state: BuilderState; restored: boolean };
 
 /** The start the server chose, or this browser's autosave of it when that is newer work on the same fit. */
 function boot(start: BuilderStart): Boot {
-  if (!start.copiedFrom) {
-    const draft = readDraft(browserStorage(), start.fitId);
-    if (draft && (start.fitId === null || draft.base === start.updatedAt)) return { state: initialState(draft.fit, draft.meta), restored: true };
-  }
-  return { state: initialState(start.fit, start.meta), restored: false };
+  const draft = bootDraft(browserStorage(), start);
+  return draft ? { state: initialState(draft.fit, draft.meta), restored: true } : { state: initialState(start.fit, start.meta), restored: false };
 }
 
 const snapshot = (state: Pick<BuilderState, "fit" | "meta">) => JSON.stringify({ fit: state.fit, meta: state.meta });
 
 const isTyping = (target: EventTarget | null) =>
   target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+const onControl = (target: EventTarget | null) =>
+  target instanceof HTMLElement && target.closest("button, a, input, select, textarea, [contenteditable]") !== null;
+const isPaletteItem = (target: EventTarget | null) => target instanceof HTMLElement && target.closest("[data-palette-item]") !== null;
 
 type Drag = { mode: "palette" | "module"; index?: number } | { mode: "pending"; index: number; x: number; y: number; cell: { row: number; col: number } | null };
 
@@ -62,16 +61,15 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   const fit = state.fit;
   const current = snapshot(state);
   const dirty = current !== clean;
+  // The slot this session autosaves to: the unsaved one until the first save, then the fit's own.
+  const [unsavedSlot] = useState(() => draftSlot(start.fitId, start.copiedFrom?.id ?? null));
+  const slot = saved.fitId ?? unsavedSlot;
 
   // ---- Autosave to this browser ---------------------------------------------------------------
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const storage = browserStorage();
-      if (!fit || (!dirty && saved.fitId !== null)) clearDraft(storage, saved.fitId);
-      else writeDraft(storage, saved.fitId, { fit, meta: state.meta, base: saved.updatedAt });
-    }, 400);
+    const timer = setTimeout(() => autosave(browserStorage(), slot, { fit, meta: state.meta, dirty, base: saved.updatedAt }), 400);
     return () => clearTimeout(timer);
-  }, [fit, state.meta, dirty, saved]);
+  }, [fit, state.meta, dirty, saved, slot]);
 
   // ---- Live evaluation --------------------------------------------------------------------------
   const [evaluation, setEvaluation] = useState<LiveEvaluation>(IDLE);
@@ -84,15 +82,8 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   useEffect(() => {
     evaluator.current?.request(fit);
   }, [fit, engine]);
-  // While the engine is down, ask again every few seconds so the result returns with it.
-  useEffect(() => {
-    if (evaluation.status !== "down") return;
-    const timer = setTimeout(() => evaluator.current?.request(fit), ENGINE_RETRY_MS);
-    return () => clearTimeout(timer);
-  }, [evaluation.status, fit]);
   const key = useMemo(() => (fit ? fitKey(fit) : null), [fit]);
   const result = evaluation.result && evaluation.result.key === key ? evaluation.result.response : null;
-  const buildSha = evaluation.result?.response.buildSha ?? cat.catalog.buildSha;
 
   // ---- The grid ---------------------------------------------------------------------------------
   const hull = fit ? cat.hulls.get(fit.hull.def) : undefined;
@@ -162,6 +153,9 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if (isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
+      // On a control, these keys are the control's own (press, delete text): never remove or drop.
+      // A palette item is the exception for Enter and Space, which place what it put in hand.
+      if (onControl(event.target) && ["Backspace", "Delete", " ", "Enter"].includes(event.key) && !(isPaletteItem(event.target) && event.key !== "Backspace" && event.key !== "Delete")) return;
       const held = live.current.held;
       const arrows: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
       if (event.key === "r" || event.key === "R") {
@@ -204,7 +198,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   const startOver = () => {
     if (!confirmReset) return setConfirmReset(true);
     setConfirmReset(false);
-    clearDraft(browserStorage(), saved.fitId);
+    clearDraft(browserStorage(), slot);
     dispatch({ type: "reset" });
   };
   const onImported = (imported: typeof fit) => {
@@ -296,10 +290,16 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
 
         <div className="builder-layout__main">
           <Panel title="FIT" aside={<span className={`badge badge--${status.badge}`}>{status.label}</span>}>
-            {evaluation.engineDown && (
+            {evaluation.outage === "down" && (
               <div className="banner" role="status">
                 <span>CAN&apos;T EVALUATE RIGHT NOW.</span>
                 <small>THE LOADOUT ENGINE ISN&apos;T ANSWERING. EDITING STILL WORKS AND THIS FIT IS KEPT IN THIS BROWSER.</small>
+              </div>
+            )}
+            {evaluation.outage === "limited" && (
+              <div className="banner banner--quiet" role="status">
+                <span>CHECKING PAUSED — TOO MANY CHECKS, RETRYING.</span>
+                <small>EDITING STILL WORKS. THE LATEST CHANGE IS CHECKED WHEN THE ENGINE ALLOWS.</small>
               </div>
             )}
             {evaluation.status === "rejected" && (
@@ -374,10 +374,9 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
             auth={auth}
             saved={saved}
             dirty={dirty}
-            buildSha={buildSha}
             moduleName={moduleName}
             onSaved={(next) => {
-              if (saved.fitId === null) clearDraft(browserStorage(), null);
+              if (saved.fitId === null) clearDraft(browserStorage(), unsavedSlot);
               setSaved(next);
               setClean(current);
             }}
@@ -410,7 +409,8 @@ function BuilderTitle({ title, eyebrow, actions }: { title: string; eyebrow: str
 }
 
 function statusOf(evaluation: LiveEvaluation, result: { valid: boolean } | null): { label: string; badge: string } {
-  if (evaluation.engineDown) return { label: "CAN'T EVALUATE RIGHT NOW", badge: "outdated" };
+  if (evaluation.outage === "down") return { label: "CAN'T EVALUATE RIGHT NOW", badge: "outdated" };
+  if (evaluation.outage === "limited") return { label: "CHECKING PAUSED", badge: "pending" };
   if (evaluation.status === "rejected") return { label: "UNREADABLE", badge: "invalid" };
   if (result) return result.valid ? { label: "VALID", badge: "current" } : { label: "NOT VALID", badge: "invalid" };
   return { label: "CHECKING", badge: "pending" };
@@ -445,12 +445,13 @@ function StatsPanel({
         ) : undefined
       }
     >
-      {evaluation.engineDown && <p className="note note--error">CAN&apos;T EVALUATE RIGHT NOW. STATS RETURN WHEN THE LOADOUT ENGINE DOES.</p>}
+      {evaluation.outage === "down" && <p className="note note--error">CAN&apos;T EVALUATE RIGHT NOW. STATS RETURN WHEN THE LOADOUT ENGINE DOES.</p>}
+      {evaluation.outage === "limited" && <p className="note">CHECKING PAUSED — TOO MANY CHECKS, RETRYING.</p>}
       {!shown ? (
-        <p className="note">{evaluation.engineDown ? "NO STATS YET." : "CHECKING THE FIT."}</p>
+        <p className="note">{evaluation.outage ? "NO STATS YET." : "CHECKING THE FIT."}</p>
       ) : (
         <>
-          {stale && !evaluation.engineDown && <p className="note">UPDATING</p>}
+          {stale && !evaluation.outage && <p className="note">UPDATING</p>}
           {shown.valid ? null : <p className="note">AN INVALID FIT HAS NO STATS OR RATING. FIX THE ISSUES ON THE GRID.</p>}
           {shown.regaliaSets.length > 0 && (
             <ul className="set-list" aria-label="Regalia sets">

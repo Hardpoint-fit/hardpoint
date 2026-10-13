@@ -18,7 +18,15 @@ export type StoredDraft = {
 
 export type DraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-export const draftKey = (fitId: string | null) => `${PREFIX}${fitId ?? "new"}`;
+/**
+ * The slot a builder session autosaves to: the saved fit's id, a copy's own slot (so opening a copy
+ * never touches an unsaved new fit), or "new".
+ */
+export function draftSlot(fitId: string | null, copiedFrom: string | null = null): string {
+  return fitId ?? (copiedFrom ? `copy-${copiedFrom}` : "new");
+}
+
+export const draftKey = (slot: string) => `${PREFIX}${slot}`;
 
 const isMeta = (value: unknown): value is FitMeta => {
   const meta = value as Partial<FitMeta> | null;
@@ -32,9 +40,9 @@ const isMeta = (value: unknown): value is FitMeta => {
   );
 };
 
-export function readDraft(storage: DraftStorage | null, fitId: string | null): StoredDraft | null {
+export function readDraft(storage: DraftStorage | null, slot: string): StoredDraft | null {
   if (!storage) return null;
-  const key = draftKey(fitId);
+  const key = draftKey(slot);
   try {
     const text = storage.getItem(key);
     if (text === null) return null;
@@ -51,19 +59,19 @@ export function readDraft(storage: DraftStorage | null, fitId: string | null): S
   return null;
 }
 
-export function writeDraft(storage: DraftStorage | null, fitId: string | null, draft: Omit<StoredDraft, "savedAt">, now = new Date()): boolean {
+export function writeDraft(storage: DraftStorage | null, slot: string, draft: Omit<StoredDraft, "savedAt">, now = new Date()): boolean {
   if (!storage) return false;
   try {
-    storage.setItem(draftKey(fitId), JSON.stringify({ version: DRAFT_VERSION, savedAt: now.toISOString(), ...draft }));
+    storage.setItem(draftKey(slot), JSON.stringify({ version: DRAFT_VERSION, savedAt: now.toISOString(), ...draft }));
     return true;
   } catch {
     return false;
   }
 }
 
-export function clearDraft(storage: DraftStorage | null, fitId: string | null): void {
+export function clearDraft(storage: DraftStorage | null, slot: string): void {
   try {
-    storage?.removeItem(draftKey(fitId));
+    storage?.removeItem(draftKey(slot));
   } catch {}
 }
 
@@ -74,4 +82,19 @@ export function browserStorage(): DraftStorage | null {
   } catch {
     return null;
   }
+}
+
+/** What a session starts from: the server's start, or this browser's autosave of the same slot when newer. */
+export function bootDraft(
+  storage: DraftStorage | null,
+  start: { fitId: string | null; copiedFrom: { id: string } | null; updatedAt: string | null },
+): StoredDraft | null {
+  const draft = readDraft(storage, draftSlot(start.fitId, start.copiedFrom?.id ?? null));
+  return draft && (start.fitId === null || draft.base === start.updatedAt) ? draft : null;
+}
+
+/** Keeps the slot in step with the session: the fit while it has unsaved changes, nothing otherwise. */
+export function autosave(storage: DraftStorage | null, slot: string, session: { fit: OpenFit | null; meta: FitMeta; dirty: boolean; base: string | null }): void {
+  if (!session.fit || !session.dirty) clearDraft(storage, slot);
+  else writeDraft(storage, slot, { fit: session.fit, meta: session.meta, base: session.base });
 }

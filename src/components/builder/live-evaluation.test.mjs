@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createEngineClient } from "../../lib/engine/client.ts";
 import { FIXTURES, deadEngineUrl, startStubEngine } from "../../lib/engine/stub-engine.mjs";
-import { EVALUATION_DELAY_MS, createLiveEvaluator, fitKey } from "./live-evaluation.ts";
+import { EVALUATION_DELAY_MS, RETRY_MS, createLiveEvaluator, fitKey } from "./live-evaluation.ts";
 import { indexCatalog } from "./rules.ts";
 import { initialState, reduce } from "./state.ts";
 import { SCARAB } from "./test-catalog.mjs";
@@ -75,21 +75,54 @@ test("changes within 150 ms make one request, for the last fit", async () => {
   assert.equal(evaluator.current().result.key, fitKey(fit(3)));
 });
 
-test("a newer change aborts the request in flight and its late answer is dropped", async () => {
-  const { timers, calls, evaluator } = harness();
+test("changes while a request is in flight queue; only the newest is sent, when the answer arrives", async () => {
+  const { timers, calls, evaluator, states } = harness();
   evaluator.request(fit(1));
   timers.tick(EVALUATION_DELAY_MS);
   assert.equal(evaluator.current().status, "checking");
   evaluator.request(fit(2));
-  assert.equal(calls[0].signal.aborted, true, "the stale request is cancelled");
+  evaluator.request(fit(3));
+  timers.tick(EVALUATION_DELAY_MS * 4);
+  assert.equal(calls.length, 1, "no second request while one is out");
+  assert.equal(calls[0].signal.aborted, false, "the request in flight isn't cancelled");
   calls[0].resolve(ok({ ...FIXTURES.evaluateValid, rating: 1 }));
   await settle();
-  assert.notEqual(evaluator.current().status, "ready", "the old fit's answer is not shown");
-  timers.tick(EVALUATION_DELAY_MS);
+  assert.equal(calls.length, 2, "the newest change goes as soon as the answer arrives");
+  assert.equal(calls[1].fit.progression.affinityXp, 3, "fit 2 was skipped");
+  assert.equal(evaluator.current().status, "checking");
+  assert.equal(evaluator.current().result.key, fitKey(fit(1)), "the older answer is kept, keyed to its fit");
   calls[1].resolve(ok());
   await settle();
-  assert.equal(evaluator.current().result.key, fitKey(fit(2)));
-  assert.equal(evaluator.current().result.response.rating, FIXTURES.evaluateValid.rating);
+  assert.equal(evaluator.current().status, "ready");
+  assert.equal(evaluator.current().result.key, fitKey(fit(3)));
+  assert.ok(states.every((state) => state.status !== "down"));
+});
+
+test("a 429 pauses checks, says so, and retries the newest fit after Retry-After (else 5 s)", async () => {
+  const { timers, calls, evaluator } = harness();
+  evaluator.request(fit(1));
+  timers.tick(EVALUATION_DELAY_MS);
+  calls[0].resolve({ ok: false, error: { kind: "rateLimited", message: "Too many requests.", retryAfterMs: 2000 } });
+  await settle();
+  assert.deepEqual([evaluator.current().status, evaluator.current().outage], ["paused", "limited"]);
+  evaluator.request(fit(2));
+  timers.tick(EVALUATION_DELAY_MS);
+  assert.equal(calls.length, 1, "an edit doesn't jump the pause");
+  timers.tick(2000 - EVALUATION_DELAY_MS - 1);
+  assert.equal(calls.length, 1);
+  timers.tick(1);
+  assert.equal(calls.length, 2, "retried after Retry-After");
+  assert.equal(calls[1].fit.progression.affinityXp, 2, "with the newest fit");
+  assert.equal(evaluator.current().outage, "limited", "still shown as paused while the retry runs");
+  calls[1].resolve({ ok: false, error: { kind: "rateLimited", message: "Too many requests." } });
+  await settle();
+  timers.tick(RETRY_MS - 1);
+  assert.equal(calls.length, 2);
+  timers.tick(1);
+  assert.equal(calls.length, 3, "no Retry-After: 5 s");
+  calls[2].resolve(ok());
+  await settle();
+  assert.deepEqual([evaluator.current().status, evaluator.current().outage], ["ready", null]);
 });
 
 test("asking again for the fit already answered doesn't call the engine", async () => {
@@ -103,22 +136,25 @@ test("asking again for the fit already answered doesn't call the engine", async 
   assert.equal(calls.length, 1);
 });
 
-test("an engine that is down is reported, keeps the last answer, and recovers", async () => {
+test("an engine that is down is reported, keeps the last answer, and is retried every 5 s", async () => {
   let up = false;
-  const { timers, evaluator } = harness(async () => (up ? ok() : { ok: false, error: { kind: "unavailable", message: "The loadout engine can't be reached." } }));
+  const { timers, calls, evaluator } = harness(async () => (up ? ok() : { ok: false, error: { kind: "unavailable", message: "The loadout engine can't be reached." } }));
   evaluator.request(fit(1));
   timers.tick(EVALUATION_DELAY_MS);
   await settle();
   assert.equal(evaluator.current().status, "down");
   assert.equal(evaluator.current().message, "The loadout engine can't be reached.");
-  assert.equal(evaluator.current().engineDown, true);
+  assert.equal(evaluator.current().outage, "down");
+  timers.tick(RETRY_MS);
+  await settle();
+  assert.equal(calls.length, 2, "retried on its own");
   up = true;
   evaluator.request(fit(2));
-  assert.equal(evaluator.current().engineDown, true, "still down while the retry waits");
-  timers.tick(EVALUATION_DELAY_MS);
+  assert.equal(evaluator.current().outage, "down", "still down while the retry waits");
+  timers.tick(RETRY_MS);
   await settle();
-  assert.equal(evaluator.current().status, "ready");
-  assert.equal(evaluator.current().engineDown, false);
+  assert.equal(calls[2].fit.progression.affinityXp, 2);
+  assert.deepEqual([evaluator.current().status, evaluator.current().outage], ["ready", null]);
 });
 
 test("a fit the engine can't read is 'rejected' with its message; dispose stops everything", async () => {

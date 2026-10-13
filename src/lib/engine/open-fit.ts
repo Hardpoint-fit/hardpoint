@@ -26,13 +26,64 @@ export function isOpenFit(value: unknown): value is OpenFit {
   );
 }
 
-/** An open fit the builder can edit: drawable, with a hull roll and a progression. */
+const isString = (value: unknown): value is string => typeof value === "string";
+const isRef = (value: unknown) => value === null || isString(value);
+const isInt = (value: unknown) => Number.isInteger(value);
+const isBool = (value: unknown) => typeof value === "boolean";
+
+function isModifier(value: unknown): boolean {
+  return (
+    isObject(value) &&
+    isString(value.stat) &&
+    isString(value.operation) &&
+    isInt(value.tier) &&
+    isString(value.value) &&
+    isInt(value.slot) &&
+    isBool(value.isInverted) &&
+    isBool(value.isFractured)
+  );
+}
+
+const isPort = (value: unknown) => isObject(value) && isInt(value.row) && isInt(value.col) && isString(value.direction) && isRef(value.cipher);
+
+const isScaledStat = (value: unknown) => value === null || (isObject(value) && isRef(value.rule) && isString(value.strength));
+
+/** Every field of a roll the builder reads, with the right type. */
+function isEditableRoll(value: unknown): boolean {
+  return (
+    isObject(value) &&
+    isString(value.quality) &&
+    isString(value.rarity) &&
+    Array.isArray(value.modifiers) &&
+    value.modifiers.every(isModifier) &&
+    Array.isArray(value.ports) &&
+    value.ports.every(isPort) &&
+    isRef(value.artifact) &&
+    isRef(value.regalia) &&
+    isRef(value.heretical) &&
+    isRef(value.moduleTypeOverride) &&
+    isRef(value.harmonicSet) &&
+    isBool(value.isIdentified) &&
+    isBool(value.isHarmonized) &&
+    isBool(value.isMirrored) &&
+    isScaledStat(value.scaledStat)
+  );
+}
+
+const isEditableItem = (value: unknown) => isObject(value) && isString(value.def) && isEditableRoll(value.roll) && isInt(value.patina);
+
+/**
+ * An open fit the builder can edit: every field it reads (rolls, ports, modifiers, progression, ammo,
+ * slot overrides) present with its type. For drafts from a browser and fits read back for editing.
+ */
 export function isEditableFit(value: unknown): value is OpenFit {
   if (!isOpenFit(value)) return false;
   const fit = value as unknown as Record<string, unknown> & { hull: Record<string, unknown> };
   const progression = fit.progression;
   return (
-    isRoll(fit.hull.roll) &&
+    isEditableItem(fit.hull) &&
+    value.modules.every((module) => isEditableItem(module.item)) &&
+    value.slotOverrides.every((override) => isObject(override) && isInt(override.cell) && isString(override.slotType)) &&
     isObject(progression) &&
     typeof progression.affinityType === "string" &&
     Number.isInteger(progression.affinityXp) &&
