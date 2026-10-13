@@ -86,6 +86,8 @@ const cases = [
   ["export.json", "FitStringBody"],
   ["import.json", "FitBody"],
   ["error.json", "ErrorBody"],
+  ["item-facts-request.json", "ItemBody"],
+  ["item-facts.json", "FactsBody"],
 ];
 const byName = {
   "health.json": FIXTURES.health,
@@ -100,6 +102,8 @@ const byName = {
   "export.json": FIXTURES.exported,
   "import.json": FIXTURES.imported,
   "error.json": FIXTURES.error,
+  "item-facts-request.json": FIXTURES.itemFactsRequest,
+  "item-facts.json": FIXTURES.itemFacts,
 };
 
 for (const [file, typeName] of cases) {

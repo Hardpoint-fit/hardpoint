@@ -460,5 +460,495 @@
    ]
   }
  ],
- "rating": 5332
+ "rating": 5332,
+ "sections": [
+  {
+   "id": "defense",
+   "label": "DEFENSE",
+   "rows": [
+    {
+     "id": "effective-health",
+     "label": "EFFECTIVE HEALTH",
+     "primary": {
+      "text": "3,644",
+      "unit": "HP",
+      "number": 3644.41
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "EFFECTIVE HEALTH",
+      "text": "COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE."
+     }
+    },
+    {
+     "id": "max-armor",
+     "label": "MAX ARMOR",
+     "primary": {
+      "text": "2,115",
+      "unit": "HP",
+      "number": 2115.0054
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "MAX ARMOR",
+      "text": "TOTAL ARMOR HIT POINTS WHEN FULLY REPAIRED. ARMOR ABSORBS DAMAGE BEFORE HULL HP IS TOUCHED."
+     }
+    },
+    {
+     "id": "max-hull",
+     "label": "MAX HULL",
+     "primary": {
+      "text": "649",
+      "unit": "HP",
+      "number": 648.89923
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "MAX HULL",
+      "text": "STRUCTURAL INTEGRITY OF THE SHIP. WHEN HULL REACHES ZERO, THE SHIP IS DESTROYED."
+     }
+    },
+    {
+     "id": "armor-repair",
+     "label": "ARMOR REPAIR",
+     "primary": {
+      "text": "45.5",
+      "unit": "/S",
+      "number": 45.499573
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "ARMOR REPAIR",
+      "text": "RATE AT WHICH ARMOR IS RESTORED PER SECOND DURING COMBAT."
+     }
+    },
+    {
+     "id": "sustain",
+     "label": "SUSTAIN",
+     "primary": {
+      "text": "45.5",
+      "unit": "/S",
+      "number": 45.499573
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "SUSTAIN",
+      "text": "COMBINED DEFENSIVE RECOVERY PER SECOND FROM ARMOR REPAIR AND BARRIER REGENERATION."
+     }
+    },
+    {
+     "id": "armor-resist-kinetic",
+     "label": "KINETIC RESIST",
+     "primary": {
+      "text": "24",
+      "unit": "",
+      "number": 24.00055
+     },
+     "secondary": {
+      "text": "21",
+      "unit": "%",
+      "number": 20.960999
+     },
+     "primaryTone": "Neutral",
+     "secondaryTone": "Negative",
+     "help": {
+      "title": "KINETIC RESIST",
+      "text": "PERCENT OF INCOMING KINETIC DAMAGE PREVENTED BY ARMOR."
+     }
+    },
+    {
+     "id": "armor-resist-explosive",
+     "label": "EXPLOSIVE RESIST",
+     "primary": {
+      "text": "20",
+      "unit": "%",
+      "number": 19.999695
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "EXPLOSIVE RESIST",
+      "text": "PERCENT OF INCOMING EXPLOSIVE DAMAGE PREVENTED BY ARMOR."
+     }
+    },
+    {
+     "id": "armor-resist-acid",
+     "label": "ACID RESIST",
+     "primary": {
+      "text": "40",
+      "unit": "%",
+      "number": 39.99939
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "ACID RESIST",
+      "text": "PERCENT OF INCOMING ACID DAMAGE PREVENTED BY ARMOR."
+     }
+    }
+   ]
+  },
+  {
+   "id": "offense",
+   "label": "OFFENSE",
+   "rows": [
+    {
+     "id": "damage-per-second",
+     "label": "DPS",
+     "primary": {
+      "text": "0",
+      "unit": "",
+      "number": 0
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "DPS",
+      "text": "TOTAL DAMAGE PER SECOND FROM ALL FITTED OFFENSIVE SOURCES."
+     }
+    }
+   ]
+  },
+  {
+   "id": "reactor",
+   "label": "REACTOR",
+   "rows": [
+    {
+     "id": "time-to-scram",
+     "label": "TIME TO SCRAM",
+     "primary": {
+      "text": "STABLE",
+      "unit": "",
+      "number": null
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "TIME TO SCRAM",
+      "text": "HOW LONG UNTIL THE REACTOR OVERHEATS AND SHUTS DOWN UNDER FULL LOAD. STABLE MEANS DISSIPATION EXCEEDS GENERATION."
+     }
+    },
+    {
+     "id": "max-heat",
+     "label": "MAX HEAT CAPACITY",
+     "primary": {
+      "text": "628",
+      "unit": "GJ",
+      "number": 627.53906
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "MAX HEAT CAPACITY",
+      "text": "TOTAL HEAT THE REACTOR CAN ABSORB BEFORE TRIGGERING A SCRAM. HIGHER CAPACITY GIVES MORE TIME UNDER HEAVY LOAD."
+     }
+    },
+    {
+     "id": "heat-dissipation",
+     "label": "HEAT DISSIPATION",
+     "primary": {
+      "text": "4.7",
+      "unit": "/S",
+      "number": 4.6799774
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "HEAT DISSIPATION",
+      "text": "HEAT VENTED PER SECOND. IF THIS EXCEEDS HEAT GENERATION, THE REACTOR IS THERMALLY STABLE."
+     }
+    },
+    {
+     "id": "heat-generation",
+     "label": "HEAT GENERATION",
+     "primary": {
+      "text": "2.5",
+      "unit": "/S",
+      "number": 2.5
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "HEAT GENERATION",
+      "text": "HEAT PRODUCED PER SECOND BY FITTED MODULES WHEN ACTIVE. IT MUST STAY BELOW HEAT DISSIPATION TO AVOID EVENTUAL SCRAM."
+     }
+    },
+    {
+     "id": "net-heat",
+     "label": "NET HEAT",
+     "primary": {
+      "text": "-2.2",
+      "unit": "/S",
+      "number": -2.1799774
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "NET HEAT",
+      "text": "HEAT GENERATED PER SECOND AFTER DISSIPATION UNDER FULL FITTED LOAD."
+     }
+    }
+   ]
+  },
+  {
+   "id": "agility",
+   "label": "AGILITY",
+   "rows": [
+    {
+     "id": "mass",
+     "label": "MASS",
+     "primary": {
+      "text": "4.3",
+      "unit": "T",
+      "number": 4.261261
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "MASS",
+      "text": "TOTAL MASS OF HULL PLUS FITTED MODULES. HIGHER MASS REDUCES ACCELERATION AND TURN RATE FOR THE SAME THRUST AND TORQUE."
+     }
+    },
+    {
+     "id": "thrust",
+     "label": "THRUST",
+     "primary": {
+      "text": "130",
+      "unit": "N",
+      "number": 130
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "THRUST",
+      "text": "FORWARD FORCE PRODUCED BY PROPULSION MODULES. COMBINED WITH MASS TO DETERMINE ACCELERATION."
+     }
+    },
+    {
+     "id": "acceleration",
+     "label": "ACCELERATION",
+     "primary": {
+      "text": "72",
+      "unit": "M/S\u00b2",
+      "number": 72.04727
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "ACCELERATION",
+      "text": "HOW QUICKLY THE SHIP REACHES MAX VELOCITY. DERIVED FROM THRUST DIVIDED BY MASS."
+     }
+    },
+    {
+     "id": "turn-acceleration",
+     "label": "TURN ACCELERATION",
+     "primary": {
+      "text": "62.7",
+      "unit": "\u00b0/S\u00b2",
+      "number": 62.73021
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "TURN ACCELERATION",
+      "text": "HOW QUICKLY STEERING CHANGES THE SHIP'S TURN RATE."
+     }
+    },
+    {
+     "id": "turn-rate",
+     "label": "TURN RATE",
+     "primary": {
+      "text": "26.1",
+      "unit": "\u00b0/S",
+      "number": 26.137878
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "TURN RATE",
+      "text": "THE AUTHORED STEERING ANGULAR-SPEED CAP. COLLISION IMPULSES ARE NOT CLAMPED TO IT."
+     }
+    },
+    {
+     "id": "max-speed",
+     "label": "MAX VELOCITY",
+     "primary": {
+      "text": "345",
+      "unit": "M/S",
+      "number": 345.00357
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "MAX VELOCITY",
+      "text": "TOP SPEED THE SHIP CAN REACH UNDER NORMAL PROPULSION."
+     }
+    }
+   ]
+  },
+  {
+   "id": "targeting",
+   "label": "TARGETING",
+   "rows": [
+    {
+     "id": "sensor-range",
+     "label": "SENSOR RANGE",
+     "primary": {
+      "text": "5.29",
+      "unit": "KM",
+      "number": 5.2947474
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "SENSOR RANGE",
+      "text": "MAXIMUM DISTANCE AT WHICH A CONTACT WITH CLEAR LINE OF SIGHT IS IDENTIFIED AND CAN BE TARGETED."
+     }
+    },
+    {
+     "id": "signature-radius",
+     "label": "SIGNATURE RADIUS",
+     "primary": {
+      "text": "1,263",
+      "unit": "M",
+      "number": 1262.8113
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "SIGNATURE RADIUS",
+      "text": "YOUR SHIP'S TARGETING PROFILE. LARGER SIGNATURES ARE EASIER FOR HOSTILE TURRETS TO TRACK."
+     }
+    }
+   ]
+  },
+  {
+   "id": "utility",
+   "label": "UTILITY",
+   "rows": [
+    {
+     "id": "battery-hardpoints",
+     "label": "BATTERY HARDPOINTS",
+     "primary": {
+      "text": "4",
+      "unit": "",
+      "number": 4
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "BATTERY HARDPOINTS",
+      "text": "NUMBER OF TURRET SLOTS AVAILABLE ON THIS HULL."
+     }
+    },
+    {
+     "id": "subsystem-hardpoints",
+     "label": "SUBSYSTEM HARDPOINTS",
+     "primary": {
+      "text": "3",
+      "unit": "",
+      "number": 3
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "SUBSYSTEM HARDPOINTS",
+      "text": "NUMBER OF SUBSYSTEM MODULE SLOTS AVAILABLE ON THIS HULL."
+     }
+    },
+    {
+     "id": "propulsion-hardpoints",
+     "label": "PROPULSION HARDPOINTS",
+     "primary": {
+      "text": "3",
+      "unit": "",
+      "number": 3
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "PROPULSION HARDPOINTS",
+      "text": "NUMBER OF PROPULSION MODULE SLOTS AVAILABLE ON THIS HULL."
+     }
+    },
+    {
+     "id": "core-slots",
+     "label": "CORE SLOTS",
+     "primary": {
+      "text": "23",
+      "unit": "",
+      "number": 23
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "CORE SLOTS",
+      "text": "NUMBER OF CORE MODULE SLOTS AVAILABLE ON THIS HULL."
+     }
+    },
+    {
+     "id": "safety-hold-slots",
+     "label": "SAFETY HOLD SLOTS",
+     "primary": {
+      "text": "4",
+      "unit": "",
+      "number": 4
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "SAFETY HOLD SLOTS",
+      "text": "NUMBER OF CARGO SLOTS PROTECTED FROM LOSS ON DESTRUCTION."
+     }
+    },
+    {
+     "id": "salvage-luck",
+     "label": "SALVAGE LUCK",
+     "primary": {
+      "text": "8",
+      "unit": "%",
+      "number": 7.998657
+     },
+     "secondary": null,
+     "primaryTone": "Neutral",
+     "secondaryTone": "Neutral",
+     "help": {
+      "title": "SALVAGE LUCK",
+      "text": "MULTIPLIER AFFECTING THE QUALITY AND QUANTITY OF SALVAGE FROM WRECKS."
+     }
+    }
+   ]
+  }
+ ]
 }

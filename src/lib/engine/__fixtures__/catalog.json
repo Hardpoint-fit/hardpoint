@@ -4,6 +4,7 @@
   {
    "def": "1274722114706556685",
    "name": "SCARAB",
+   "path": "Content/SessionDestinations/Shared/Quantum/Ships/SCARAB/SCARAB HullEntityPrototype",
    "shipClass": "Cruiser",
    "role": "Destroyer",
    "rows": 15,
@@ -429,6 +430,7 @@
   {
    "def": "1421202711594240286",
    "name": "SERAPH",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/ShipItem/Seraph HullEntityPrototype",
    "shipClass": "Cruiser",
    "role": "Interceptor",
    "rows": 15,
@@ -864,6 +866,34 @@
   {
    "def": "1276464883135659217",
    "name": "COOLANT RESERVOIR",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Coolant ReservoirEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "MAX HEAT CAPACITY",
+     "value": "+15%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "HEAT DISSIPATION",
+     "value": "+4%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MASS",
+     "value": "+3%",
+     "unit": null,
+     "tone": "Negative"
+    },
+    {
+     "label": "CARGO CAPACITY",
+     "value": "-4",
+     "unit": null,
+     "tone": "Negative"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
@@ -1153,6 +1183,28 @@
   {
    "def": "1278500398224355069",
    "name": "SURVEY SCANNER",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Survey ScannerEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "SENSOR RANGE",
+     "value": "+18%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "ECM MAX RANGE",
+     "value": "+8%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "SALVAGE LUCK",
+     "value": "+8%",
+     "unit": null,
+     "tone": "Positive"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
@@ -1442,6 +1494,52 @@
   {
    "def": "1284176030826467319",
    "name": "OMNI REPAIRER TURRET",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Turrets/Repairer Variants/OmniRepairerTurretEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "REPAIR PER VOLLEY",
+     "value": "35",
+     "unit": "HP",
+     "tone": "Neutral"
+    },
+    {
+     "label": "TRACKING SPEED",
+     "value": "87.7",
+     "unit": "°/S",
+     "tone": "Neutral"
+    },
+    {
+     "label": "OPTIMAL RANGE",
+     "value": "1.1",
+     "unit": "KM",
+     "tone": "Neutral"
+    },
+    {
+     "label": "MAX RANGE",
+     "value": "2.5",
+     "unit": "KM",
+     "tone": "Neutral"
+    },
+    {
+     "label": "FULL RELOAD",
+     "value": "0",
+     "unit": "S",
+     "tone": "Neutral"
+    },
+    {
+     "label": "MAGAZINE SIZE",
+     "value": "1",
+     "unit": null,
+     "tone": "Neutral"
+    },
+    {
+     "label": "FIRE RATE",
+     "value": "1",
+     "unit": "S",
+     "tone": "Neutral"
+    }
+   ],
    "category": "Module",
    "slotType": "Battery",
    "slotSize": "ONExONE",
@@ -1702,6 +1800,34 @@
   {
    "def": "1285107459712062168",
    "name": "AUTO VENTING",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Actives/Self/Auto VentingEntityPrototype",
+   "description": "AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY.",
+   "facts": [
+    {
+     "label": "HEAT DISSIPATION",
+     "value": "+1,200%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "CYCLE DURATION",
+     "value": "3",
+     "unit": "S",
+     "tone": "Neutral"
+    },
+    {
+     "label": "DEACTIVATION COOLDOWN",
+     "value": "30",
+     "unit": "S",
+     "tone": "Neutral"
+    },
+    {
+     "label": "TURN RATE",
+     "value": "-50%",
+     "unit": null,
+     "tone": "Negative"
+    }
+   ],
    "category": "Module",
    "slotType": "Subsystem",
    "slotSize": "ONExTWO",
@@ -1991,6 +2117,52 @@
   {
    "def": "1297320276078073896",
    "name": "OMNI REPAIRER TURRET",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Turrets/Repairer Variants/NPC/OmniRepairerTurretEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "REPAIR PER VOLLEY",
+     "value": "10.5",
+     "unit": "HP",
+     "tone": "Neutral"
+    },
+    {
+     "label": "TRACKING SPEED",
+     "value": "87.7",
+     "unit": "°/S",
+     "tone": "Neutral"
+    },
+    {
+     "label": "OPTIMAL RANGE",
+     "value": "1.1",
+     "unit": "KM",
+     "tone": "Neutral"
+    },
+    {
+     "label": "MAX RANGE",
+     "value": "2.5",
+     "unit": "KM",
+     "tone": "Neutral"
+    },
+    {
+     "label": "FULL RELOAD",
+     "value": "0",
+     "unit": "S",
+     "tone": "Neutral"
+    },
+    {
+     "label": "MAGAZINE SIZE",
+     "value": "1",
+     "unit": null,
+     "tone": "Neutral"
+    },
+    {
+     "label": "FIRE RATE",
+     "value": "1",
+     "unit": "S",
+     "tone": "Neutral"
+    }
+   ],
    "category": "Module",
    "slotType": "Battery",
    "slotSize": "ONExONE",
@@ -2251,6 +2423,28 @@
   {
    "def": "1304164571492635706",
    "name": "ARMOR HARDENER",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Actives/Self/ArmorHardenerEntityPrototype",
+   "description": "BOOSTS YOUR ARMOR'S KINETIC AND EXPLOSIVE RESISTANCE WHILE ACTIVE.",
+   "facts": [
+    {
+     "label": "ARMOR EXPLOSIVE RESIST",
+     "value": "+15%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "ARMOR KINETIC RESIST",
+     "value": "+35%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "HEAT GENERATION",
+     "value": "9.5",
+     "unit": "GJ/S",
+     "tone": "Neutral"
+    }
+   ],
    "category": "Module",
    "slotType": "Subsystem",
    "slotSize": "ONExTHREE",
@@ -2562,6 +2756,28 @@
   {
    "def": "1304467395283315534",
    "name": "LIGHTFRAME THRUSTERS",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/2x1/Lightframe ThrustersEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "MAX HEAT CAPACITY",
+     "value": "-7%",
+     "unit": null,
+     "tone": "Negative"
+    },
+    {
+     "label": "MASS",
+     "value": "-6%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MAX VELOCITY",
+     "value": "+7%",
+     "unit": null,
+     "tone": "Positive"
+    }
+   ],
    "category": "Module",
    "slotType": "Propulsion",
    "slotSize": "ONExTWO",
@@ -2851,6 +3067,22 @@
   {
    "def": "1309670480061494117",
    "name": "INCENDIARY SALVO",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/2x1/Incendiary SalvoEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "MISSILE DAMAGE",
+     "value": "+10%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MAX HEAT CAPACITY",
+     "value": "-8%",
+     "unit": null,
+     "tone": "Negative"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
@@ -3137,6 +3369,28 @@
   {
    "def": "1329495787612835751",
    "name": "SLIP COATING",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Slip CoatingEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "ARMOR KINETIC RESIST",
+     "value": "-4%",
+     "unit": null,
+     "tone": "Negative"
+    },
+    {
+     "label": "MASS",
+     "value": "-2%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "SIGNATURE RADIUS",
+     "value": "-18%",
+     "unit": null,
+     "tone": "Positive"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
@@ -3423,6 +3677,28 @@
   {
    "def": "1340739176998289780",
    "name": "TRACER ROUNDS",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/2x1/Tracer RoundsEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "TRACKING SPEED",
+     "value": "+10%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "TURRET RANGE",
+     "value": "+14%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "SIGNATURE RADIUS",
+     "value": "+10%",
+     "unit": null,
+     "tone": "Negative"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
@@ -3715,6 +3991,28 @@
   {
    "def": "1343056967634011071",
    "name": "BARRIER RACK",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Defensive/2x1/Barrier RackEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "ARMOR HP",
+     "value": "-6%",
+     "unit": null,
+     "tone": "Negative"
+    },
+    {
+     "label": "BARRIER HP",
+     "value": "+22%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MASS",
+     "value": "-4%",
+     "unit": null,
+     "tone": "Positive"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
@@ -4001,6 +4299,28 @@
   {
    "def": "1387039041809030747",
    "name": "PROPULSION CONDUIT",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/1x1/Propulsion ConduitEntityPrototype",
+   "description": "Connects to ports of propulsion type modules to increase effectiveness. Regalia pieces of the same set that connect to it are linked.",
+   "facts": [
+    {
+     "label": "MAX VELOCITY",
+     "value": "+2%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "CONNECTED MODULES",
+     "value": "0",
+     "unit": null,
+     "tone": "Neutral"
+    },
+    {
+     "label": "THROUGHPUT",
+     "value": "50",
+     "unit": "%",
+     "tone": "Neutral"
+    }
+   ],
    "category": "Conduit",
    "slotType": "Core",
    "slotSize": "ONExONE",
@@ -4211,6 +4531,22 @@
   {
    "def": "1442753905704368467",
    "name": "INERTIA COUPLER",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/1x1/Inertia CouplerEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "TURN RATE",
+     "value": "+8%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MAX VELOCITY",
+     "value": "+2%",
+     "unit": null,
+     "tone": "Positive"
+    }
+   ],
    "category": "Module",
    "slotType": "Propulsion",
    "slotSize": "ONExONE",
@@ -4488,6 +4824,34 @@
   {
    "def": "1493464852498204501",
    "name": "HEATSINK MAGAZINE",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/L/Heatsink MagazineEntityPrototype",
+   "description": null,
+   "facts": [
+    {
+     "label": "MAX AMMO COUNT",
+     "value": "+25%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MAX HEAT CAPACITY",
+     "value": "+15%",
+     "unit": null,
+     "tone": "Positive"
+    },
+    {
+     "label": "MASS",
+     "value": "+2%",
+     "unit": null,
+     "tone": "Negative"
+    },
+    {
+     "label": "CARGO CAPACITY",
+     "value": "-2",
+     "unit": null,
+     "tone": "Negative"
+    }
+   ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "L_TRIOMINO",

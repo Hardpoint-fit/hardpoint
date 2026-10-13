@@ -1,0 +1,46 @@
+{
+ "facts": [
+  {
+   "label": "REPAIR PER VOLLEY",
+   "value": "35",
+   "unit": "HP",
+   "tone": "Neutral"
+  },
+  {
+   "label": "TRACKING SPEED",
+   "value": "87.7",
+   "unit": "°/S",
+   "tone": "Neutral"
+  },
+  {
+   "label": "OPTIMAL RANGE",
+   "value": "1.1",
+   "unit": "KM",
+   "tone": "Neutral"
+  },
+  {
+   "label": "MAX RANGE",
+   "value": "2.5",
+   "unit": "KM",
+   "tone": "Neutral"
+  },
+  {
+   "label": "FULL RELOAD",
+   "value": "0",
+   "unit": "S",
+   "tone": "Neutral"
+  },
+  {
+   "label": "MAGAZINE SIZE",
+   "value": "1",
+   "unit": null,
+   "tone": "Neutral"
+  },
+  {
+   "label": "FIRE RATE",
+   "value": "1",
+   "unit": "S",
+   "tone": "Neutral"
+  }
+ ]
+}

@@ -22,6 +22,9 @@ export const FIXTURES = {
   exported: fixture("export.json"),
   imported: fixture("import.json"),
   error: fixture("error.json"),
+  /** A rolled module from fit.json, and the engine's facts for it. */
+  itemFactsRequest: fixture("item-facts-request.json"),
+  itemFacts: fixture("item-facts.json"),
 };
 
 const MAX_BODY = 262_144;
@@ -102,6 +105,14 @@ export async function startStubEngine(overrides = {}, port = 0) {
     if (req.method === "POST" && path === "/v1/evaluate") {
       if (!body.json?.fit) return send(res, 400, { error: "Body must be { fit }." });
       return send(res, 200, evaluate(body.json.fit));
+    }
+    if (req.method === "POST" && path === "/v1/item-facts") {
+      const item = body.json?.item;
+      if (!item) return send(res, 400, { error: "Body must be { item }." });
+      if (JSON.stringify(item) === JSON.stringify(FIXTURES.itemFactsRequest.item)) return send(res, 200, FIXTURES.itemFacts);
+      // Any other known item answers with its catalog facts (the plainest roll's); an unknown one is refused.
+      const known = FIXTURES.catalog.items.find((entry) => entry.def === item.def);
+      return known ? send(res, 200, { facts: known.facts }) : send(res, 400, { error: "item: not a fittable item in this build" });
     }
     if (req.method === "POST" && path === "/v1/fits/import") {
       return body.json?.fitString === FIXTURES.exported.fitString

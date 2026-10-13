@@ -1,5 +1,5 @@
 // The loadout engine's JSON, mirrored from its C# records (tools/loadout-engine/Citadel.LoadoutEngine:
-// OpenFit.cs, Evaluator.cs, CatalogBuilder.cs, Program.cs). The engine writes camelCase with enums as
+// OpenFit.cs, Evaluator.cs, CatalogBuilder.cs, ItemFacts.cs, Program.cs). The engine writes camelCase with enums as
 // their C# names. GUIDs are decimal strings and FP values are raw decimal strings. types.test.mjs checks
 // these shapes against real engine responses recorded in __fixtures__, so keep them in step with the C#.
 
@@ -72,6 +72,8 @@ export type EvaluationResponse = {
   regaliaSets: RegaliaGroup[];
   stats: StatLine[];
   rating: number;
+  /** The game's Hull Specs panel for the fit; empty when the fit is invalid. */
+  sections: SpecSection[];
 };
 
 /** `moduleIndex` is -1 for the hull and for fit-wide issues. */
@@ -99,12 +101,46 @@ export type StatSource = {
   isStackingExempt: boolean;
 };
 
+/**
+ * A section of the game's Hull Specs panel (HullSpecSection), in the panel's order: defense, offense,
+ * each guided weapon by name, reactor, agility, targeting, utility.
+ */
+export type SpecSection = { id: string; label: string; rows: SpecRow[] };
+
+/**
+ * A Hull Specs row as the game shows it. With a `secondary` value the row compares: `primary` (shown
+ * without its unit) is the stat before and `secondary` the stat now. Tones are "Neutral", "Positive"
+ * or "Negative".
+ */
+export type SpecRow = {
+  id: string;
+  label: string;
+  primary: SpecValue;
+  secondary: SpecValue | null;
+  primaryTone: string;
+  secondaryTone: string;
+  help: SpecHelp;
+};
+
+/** `text` then `unit` is what the game shows; `number` is the shown number in that unit, null for a word (STABLE, ∞). */
+export type SpecValue = { text: string; unit: string; number: number | null };
+
+export type SpecHelp = { title: string; text: string };
+
+// ---- Item facts (ItemFacts.cs) -------------------------------------------------------------------
+
+/** A line of the game's item tooltip facts: `value` then `unit`, toned "Neutral", "Positive" or "Negative". */
+export type FactRow = { label: string; value: string | null; unit: string | null; tone: string };
+
 // ---- Request and response bodies (Program.cs) --------------------------------------------------
 
 export type HealthResponse = { buildSha: string };
 export type FitBody = { fit: OpenFit };
 export type FitStringBody = { fitString: string };
 export type ErrorBody = { error: string };
+/** POST /v1/item-facts: a rolled item, validated as /v1/evaluate validates a module. */
+export type ItemBody = { item: OpenItem };
+export type FactsBody = { facts: FactRow[] };
 
 // ---- Catalog v2 (CatalogBuilder.cs) ------------------------------------------------------------
 
@@ -127,6 +163,8 @@ export type Catalog = {
 export type CatalogHull = {
   def: string;
   name: string;
+  /** The hull item prototype's asset path (Identifier.Path), which keys its art. */
+  path: string;
   shipClass: string;
   /** The ShipRole of the ship the hull unlocks; "None" when it has none. */
   role: string;
@@ -140,6 +178,12 @@ export type CatalogHull = {
 export type CatalogItem = {
   def: string;
   name: string;
+  /** The item prototype's asset path (Identifier.Path), which keys its art. */
+  path: string;
+  /** The module's authored description, trimmed; null when it has none. Plain text, may hold newlines. */
+  description: string | null;
+  /** The item tooltip's facts for a Standard-quality, Normal-rarity roll. */
+  facts: FactRow[];
   category: string;
   slotType: string;
   slotSize: string;
