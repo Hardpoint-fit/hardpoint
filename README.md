@@ -31,7 +31,7 @@ All optional, read at run time by `src/lib/config.ts` (through the server-only `
 | --- | --- |
 | `LOADOUT_ENGINE_URL` | Public engine URL. Browsers call it; also the server's fallback. |
 | `LOADOUT_ENGINE_INTERNAL_URL` | Engine URL for the server (Railway private network). |
-| `DATABASE_URL` | Fits database. |
+| `DATABASE_URL` | Fits database (Postgres). `node src/lib/fits/migrate.mjs` applies `src/lib/fits/schema.sql` and runs before the server in the container. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Sign-in. `authEnabled` is true only when both are set. |
 | `SITE_ADMIN_USER_IDS` | Comma-separated Clerk user ids that may moderate, besides the Clerk `admin` role. |
 | `PORT` | Listen port (default 3000). |

@@ -1,0 +1,882 @@
+// Every read and write on the fits database. Server code only (nothing here imports a client), but
+// pure of Next so node --test can run it against pglite. Takes a `Db`; see db.ts for the real one.
+//
+// Rules this module owns:
+//  - hidden fits and comments never come back from a public read; an admin viewer sees them, and an
+//    author also sees their own drafts;
+//  - a vote is one row per (fit, user): counts are computed by query, nothing is stored;
+//  - fit_evaluations is a cache of the engine's verdict on the stored JSON for one build; changing a
+//    fit's content drops its cached rows, and a published fit can't hold content the engine rejected.
+import { randomBytes } from "node:crypto";
+import {
+  decodeCursor,
+  encodeCursor,
+  normalizeTag,
+  MAX_TAGS,
+  type BrowseQuery,
+} from "./filters.ts";
+import type { Db, Queryable } from "./db.ts";
+
+// ---------------------------------------------------------------------------------------------------
+// Types
+
+export type FitStatus = "draft" | "published" | "hidden";
+
+/** Who is asking. Anonymous readers pass nothing. */
+export type Viewer = { userId: string | null; isAdmin: boolean };
+export const ANONYMOUS: Viewer = { userId: null, isAdmin: false };
+
+/** Hull item GUID (decimal string) to the catalog's class and role. Comes from the engine; never stored. */
+export type HullLookup = ReadonlyMap<string, { hullClass: string; role: string }>;
+
+export type Evaluation = {
+  buildSha: string;
+  valid: boolean;
+  rating: number | null;
+  stats: unknown;
+  issues: unknown;
+  evaluatedAt: string;
+};
+
+export type EvaluationInput = {
+  buildSha: string;
+  valid: boolean;
+  rating: number | null;
+  stats: unknown;
+  issues: unknown;
+};
+
+export type FitSummary = {
+  id: string;
+  authorUserId: string;
+  authorName: string;
+  title: string;
+  hullItem: string;
+  tags: string[];
+  status: FitStatus;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  votes: number;
+  comments: number;
+  viewerVoted: boolean;
+  /** The verdict for the build asked about (`buildSha`), or null when that build hasn't evaluated it. */
+  evaluation: Evaluation | null;
+  /** The newest valid verdict on any build: what an outdated fit still shows for reference. */
+  lastValidEvaluation: Evaluation | null;
+};
+
+export type FitDetail = FitSummary & {
+  /** Markdown source; render with renderMarkdown. */
+  description: string;
+  /** The open fit JSON, as stored. */
+  fit: unknown;
+  createdBuildSha: string;
+};
+
+export type FitPage = { fits: FitSummary[]; nextCursor: string | null };
+
+export type Comment = {
+  id: string;
+  fitId: string;
+  parentId: string | null;
+  authorUserId: string;
+  authorName: string;
+  /** Markdown source; render with renderMarkdown. */
+  body: string;
+  createdAt: string;
+  editedAt: string | null;
+  hidden: boolean;
+};
+
+export type CommentThread = Comment & { replies: Comment[] };
+
+export type ReportTargetKind = "fit" | "comment";
+
+export type Report = {
+  id: string;
+  targetKind: ReportTargetKind;
+  targetId: string;
+  reporterUserId: string;
+  reason: string;
+  createdAt: string;
+  resolvedAt: string | null;
+  /** What was reported, for the queue; null when it no longer exists. */
+  target: { fitId: string; preview: string; hidden: boolean } | null;
+};
+
+export type FitNeedingEvaluation = {
+  id: string;
+  hullItem: string;
+  fit: unknown;
+  /** Pass back to recordEvaluation so a verdict on content the author has since changed is dropped. */
+  revision: string;
+};
+
+export type FitDataErrorCode = "invalid" | "not_found" | "forbidden" | "not_valid";
+
+/** A refused write. `invalid` carries a message safe to show; the others map to 400/404/403/409. */
+export class FitDataError extends Error {
+  code: FitDataErrorCode;
+  constructor(code: FitDataErrorCode, message: string) {
+    super(message);
+    this.name = "FitDataError";
+    this.code = code;
+  }
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Limits and validation
+
+export const TITLE_MAX = 80;
+export const DESCRIPTION_MAX = 10_000;
+export const COMMENT_MAX = 2_000;
+export const REPORT_REASON_MAX = 1_000;
+export const FIT_JSON_MAX_BYTES = 200_000;
+export const DEFAULT_PAGE_SIZE = 24;
+export const MAX_PAGE_SIZE = 100;
+
+const GUID = /^\d{1,20}$/;
+const ID = /^[0-9A-Za-z]{10}$/;
+const NUMERIC_ID = /^\d{1,15}$/;
+
+function length(text: string): number {
+  return [...text].length;
+}
+
+function invalid(message: string): never {
+  throw new FitDataError("invalid", message);
+}
+
+export function validateTitle(raw: string): string {
+  const title = raw.trim();
+  if (title === "") invalid("Give the fit a title.");
+  if (/\p{Cc}/u.test(title)) invalid("The title must be a single line of plain text.");
+  if (length(title) > TITLE_MAX) invalid(`The title can be at most ${TITLE_MAX} characters.`);
+  return title;
+}
+
+function cleanBody(raw: string): string {
+  return raw.replace(/\u0000/g, "").replace(/\r\n?/g, "\n");
+}
+
+export function validateDescription(raw: string): string {
+  const description = cleanBody(raw).trim();
+  if (length(description) > DESCRIPTION_MAX) invalid(`The description can be at most ${DESCRIPTION_MAX} characters.`);
+  return description;
+}
+
+export function validateComment(raw: string): string {
+  const body = cleanBody(raw).trim();
+  if (body === "") invalid("Write something first.");
+  if (length(body) > COMMENT_MAX) invalid(`A comment can be at most ${COMMENT_MAX} characters.`);
+  return body;
+}
+
+export function validateTags(raw: readonly string[]): string[] {
+  const tags: string[] = [];
+  for (const value of raw) {
+    const tag = normalizeTag(value);
+    if (tag === null) invalid(`"${value.slice(0, 30)}" isn't a valid tag (letters, digits and dashes, up to 24).`);
+    if (!tags.includes(tag)) tags.push(tag);
+  }
+  if (tags.length > MAX_TAGS) invalid(`A fit can have at most ${MAX_TAGS} tags.`);
+  return tags;
+}
+
+function validateContent(hullItem: string, fit: unknown): { hullItem: string; json: string } {
+  if (!GUID.test(hullItem)) invalid("The hull is not valid.");
+  if (typeof fit !== "object" || fit === null || Array.isArray(fit)) invalid("The fit is not valid.");
+  const json = JSON.stringify(fit);
+  if (json.length > FIT_JSON_MAX_BYTES) invalid("The fit is too large.");
+  return { hullItem, json };
+}
+
+function validateEvaluation(input: EvaluationInput): void {
+  if (!input.buildSha || input.buildSha.length > 100) invalid("The build is not valid.");
+  if (input.rating !== null && !Number.isFinite(input.rating)) invalid("The rating is not valid.");
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Helpers
+
+const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+/** A 10-character URL-safe id (~59 bits). Rejection sampling keeps the alphabet uniform. */
+export function generateFitId(): string {
+  let id = "";
+  while (id.length < 10) {
+    for (const byte of randomBytes(16)) {
+      if (byte < 248 && id.length < 10) id += BASE62[byte % 62];
+    }
+  }
+  return id;
+}
+
+function iso(value: unknown): string {
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+function isoOrNull(value: unknown): string | null {
+  return value === null || value === undefined ? null : iso(value);
+}
+
+function sqlParams() {
+  const values: unknown[] = [];
+  return {
+    values,
+    add(value: unknown): string {
+      values.push(value);
+      return `$${values.length}`;
+    },
+  };
+}
+
+function errorCode(error: unknown): string | undefined {
+  return typeof error === "object" && error !== null && "code" in error ? String((error as { code: unknown }).code) : undefined;
+}
+
+type Row = Record<string, any>;
+
+function pageSize(limit: number | undefined): number {
+  return Math.min(Math.max(Math.trunc(limit ?? DEFAULT_PAGE_SIZE), 1), MAX_PAGE_SIZE);
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Fit reads
+
+const EVALUATION_JSON = `jsonb_build_object('buildSha', e.build_sha, 'valid', e.valid, 'rating', e.rating,
+  'stats', e.stats, 'issues', e.issues, 'evaluatedAt', e.evaluated_at)`;
+
+const VOTES_SQL = `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id)`;
+const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden)`;
+
+function summaryColumns(shaRef: string, viewerRef: string): string {
+  return `f.id, f.author_user_id, f.author_name, f.title, f.hull_item, f.tags, f.status,
+    f.created_at, f.updated_at, f.published_at,
+    ${VOTES_SQL} AS votes,
+    ${COMMENTS_SQL} AS comments,
+    EXISTS (SELECT 1 FROM fit_votes v WHERE v.fit_id = f.id AND v.user_id = ${viewerRef}::text) AS viewer_voted,
+    (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = ${shaRef}::text) AS evaluation,
+    (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.valid
+       ORDER BY e.evaluated_at DESC, e.build_sha DESC LIMIT 1) AS last_valid_evaluation`;
+}
+
+function mapEvaluation(value: unknown): Evaluation | null {
+  if (value === null || value === undefined) return null;
+  const e = value as Row;
+  return {
+    buildSha: e.buildSha,
+    valid: e.valid,
+    rating: e.rating ?? null,
+    stats: e.stats,
+    issues: e.issues,
+    evaluatedAt: iso(e.evaluatedAt),
+  };
+}
+
+function mapSummary(row: Row): FitSummary {
+  return {
+    id: row.id,
+    authorUserId: row.author_user_id,
+    authorName: row.author_name,
+    title: row.title,
+    hullItem: row.hull_item,
+    tags: row.tags,
+    status: row.status,
+    createdAt: iso(row.created_at),
+    updatedAt: iso(row.updated_at),
+    publishedAt: isoOrNull(row.published_at),
+    votes: row.votes,
+    comments: row.comments,
+    viewerVoted: row.viewer_voted,
+    evaluation: mapEvaluation(row.evaluation),
+    lastValidEvaluation: mapEvaluation(row.last_valid_evaluation),
+  };
+}
+
+export type GetFitOptions = { viewer?: Viewer; buildSha?: string | null };
+
+/**
+ * One fit, or null when it doesn't exist or this viewer may not see it. Published fits are public; the
+ * author also sees their drafts; an admin sees everything, hidden included.
+ */
+export async function getFit(db: Queryable, id: string, options: GetFitOptions = {}): Promise<FitDetail | null> {
+  if (!ID.test(id)) return null;
+  const viewer = options.viewer ?? ANONYMOUS;
+  const { rows } = await db.query<Row>(
+    `SELECT ${summaryColumns("$2", "$3")}, f.description, f.fit, f.created_build_sha
+     FROM fits f
+     WHERE f.id = $1
+       AND (f.status = 'published' OR $4::boolean OR (f.status = 'draft' AND f.author_user_id = $3::text))`,
+    [id, options.buildSha ?? null, viewer.userId, viewer.isAdmin],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  return { ...mapSummary(row), description: row.description, fit: row.fit, createdBuildSha: row.created_build_sha };
+}
+
+export type BrowseOptions = {
+  query: BrowseQuery;
+  /** The opaque cursor from the previous page's `nextCursor`. A cursor made for another sort is ignored. */
+  cursor?: string;
+  limit?: number;
+  /** The engine's current build. Needed for "works on current build" and for each fit's `evaluation`. */
+  buildSha?: string | null;
+  /** Needed to filter by hull class or role (both are derived from the hull, never stored). */
+  hulls?: HullLookup;
+  viewer?: Viewer;
+  /** For tests: the clock "top this week" counts back from. */
+  now?: Date;
+};
+
+/**
+ * Published fits (plus the viewer's own drafts when they browse their own author page), filtered and
+ * sorted. Every sort orders by (score desc, time desc, id desc), a total order, so paging by cursor
+ * neither repeats nor skips a fit that wasn't changed between requests.
+ */
+export async function browseFits(db: Queryable, options: BrowseOptions): Promise<FitPage> {
+  const { query } = options;
+  const viewer = options.viewer ?? ANONYMOUS;
+  const size = pageSize(options.limit);
+  const p = sqlParams();
+  const sha = p.add(options.buildSha ?? null);
+  const viewerRef = p.add(viewer.userId);
+
+  const where: string[] = [];
+  const own = viewer.userId !== null && query.author === viewer.userId;
+  where.push(own ? `(f.status = 'published' OR f.status = 'draft')` : `f.status = 'published'`);
+
+  if (query.author) where.push(`f.author_user_id = ${p.add(query.author)}`);
+  if (query.hull) where.push(`f.hull_item = ${p.add(query.hull)}`);
+  if (query.tags.length > 0) where.push(`f.tags @> ${p.add(query.tags)}::text[]`);
+
+  if (query.hullClass || query.role) {
+    const hulls = [...(options.hulls ?? [])]
+      .filter(([, h]) => (!query.hullClass || h.hullClass === query.hullClass) && (!query.role || h.role === query.role))
+      .map(([item]) => item);
+    where.push(`f.hull_item = ANY(${p.add(hulls)}::text[])`);
+  }
+
+  if (query.currentBuild) {
+    where.push(
+      options.buildSha
+        ? `EXISTS (SELECT 1 FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = ${sha}::text AND e.valid)`
+        : `false`,
+    );
+  }
+
+  const scoreSql =
+    query.sort === "top-all"
+      ? VOTES_SQL
+      : query.sort === "discussed"
+        ? COMMENTS_SQL
+        : query.sort === "new"
+          ? `0`
+          : `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id
+               AND v.created_at > ${p.add((options.now ?? new Date()).toISOString())}::timestamptz - interval '7 days')`;
+
+  const cursor = options.cursor ? decodeCursor(options.cursor, query.sort) : undefined;
+  const after = cursor
+    ? `WHERE (score, sort_at, id) < (${p.add(cursor.score)}::int, ${p.add(cursor.at)}::timestamptz, ${p.add(cursor.id)}::text)`
+    : "";
+
+  const { rows } = await db.query<Row>(
+    `WITH base AS (
+       SELECT ${summaryColumns(sha, viewerRef)},
+         ${scoreSql} AS score,
+         COALESCE(f.published_at, f.updated_at) AS sort_at,
+         COALESCE(f.published_at, f.updated_at)::text AS sort_at_text
+       FROM fits f
+       WHERE ${where.join(" AND ")}
+     )
+     SELECT * FROM base ${after}
+     ORDER BY score DESC, sort_at DESC, id DESC
+     LIMIT ${size + 1}`,
+    p.values,
+  );
+
+  const pageRows = rows.slice(0, size);
+  const last = pageRows[pageRows.length - 1];
+  const nextCursor =
+    rows.length > size && last
+      ? encodeCursor({ sort: query.sort, score: last.score, at: last.sort_at_text, id: last.id })
+      : null;
+  return { fits: pageRows.map(mapSummary), nextCursor };
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Fit writes
+
+export type FitContent = { hullItem: string; fit: unknown };
+
+export type CreateFitInput = {
+  authorUserId: string;
+  authorName: string;
+  title: string;
+  description?: string;
+  tags?: readonly string[];
+  content: FitContent;
+  /** The engine build the author built against. */
+  buildSha: string;
+  /** The engine's verdict on `content` for `buildSha`, stored with the fit. */
+  evaluation?: EvaluationInput;
+};
+
+async function insertEvaluation(db: Queryable, fitId: string, e: EvaluationInput): Promise<void> {
+  validateEvaluation(e);
+  await db.query(
+    `INSERT INTO fit_evaluations (fit_id, build_sha, valid, rating, stats, issues)
+     VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb)
+     ON CONFLICT (fit_id, build_sha) DO UPDATE
+       SET valid = EXCLUDED.valid, rating = EXCLUDED.rating, stats = EXCLUDED.stats,
+           issues = EXCLUDED.issues, evaluated_at = now()`,
+    [fitId, e.buildSha, e.valid, e.rating, JSON.stringify(e.stats ?? {}), JSON.stringify(e.issues ?? [])],
+  );
+}
+
+/** Creates a draft owned by the author. Returns the stored fit. */
+export async function createFit(db: Db, input: CreateFitInput): Promise<FitDetail> {
+  const title = validateTitle(input.title);
+  const description = validateDescription(input.description ?? "");
+  const tags = validateTags(input.tags ?? []);
+  const { hullItem, json } = validateContent(input.content.hullItem, input.content.fit);
+  if (!input.buildSha) invalid("The build is not valid.");
+  if (!input.authorUserId || !input.authorName.trim()) invalid("The author is not valid.");
+
+  for (let attempt = 0; ; attempt++) {
+    const id = generateFitId();
+    try {
+      return await db.transaction(async (tx) => {
+        await tx.query(
+          `INSERT INTO fits (id, author_user_id, author_name, title, description, hull_item, tags, fit, created_build_sha)
+           VALUES ($1, $2, $3, $4, $5, $6, $7::text[], $8::jsonb, $9)`,
+          [id, input.authorUserId, input.authorName.trim(), title, description, hullItem, tags, json, input.buildSha],
+        );
+        if (input.evaluation) await insertEvaluation(tx, id, input.evaluation);
+        const fit = await getFit(tx, id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha });
+        return fit!;
+      });
+    } catch (error) {
+      // A 59-bit id collides about never; retry rather than surface it.
+      if (errorCode(error) === "23505" && attempt < 4) continue;
+      throw error;
+    }
+  }
+}
+
+export type UpdateFitInput = {
+  id: string;
+  /** Must be the fit's author. */
+  authorUserId: string;
+  title?: string;
+  description?: string;
+  tags?: readonly string[];
+  /** New fit content. Drops the fit's cached evaluations; pass `evaluation` to store the new verdict. */
+  content?: FitContent;
+  evaluation?: EvaluationInput;
+};
+
+/**
+ * Edits the author's own fit and keeps its id, votes and comments. A published fit can only change
+ * content to something the engine accepted (`evaluation.valid`); unpublish it first to save a broken one.
+ * Hidden fits can't be edited.
+ */
+export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetail> {
+  const title = input.title === undefined ? undefined : validateTitle(input.title);
+  const description = input.description === undefined ? undefined : validateDescription(input.description);
+  const tags = input.tags === undefined ? undefined : validateTags(input.tags);
+  const content = input.content === undefined ? undefined : validateContent(input.content.hullItem, input.content.fit);
+  if (input.evaluation && !content) invalid("An evaluation needs new content to belong to.");
+
+  return db.transaction(async (tx) => {
+    const { rows } = await tx.query<Row>(`SELECT author_user_id, status FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
+    const current = rows[0];
+    if (!current || !ID.test(input.id)) throw new FitDataError("not_found", "No such fit.");
+    if (current.author_user_id !== input.authorUserId || current.status === "hidden") {
+      throw new FitDataError("forbidden", "You can't edit this fit.");
+    }
+    if (content && current.status === "published" && input.evaluation?.valid !== true) {
+      throw new FitDataError("not_valid", "A published fit can only change to a fit that passes validation.");
+    }
+
+    await tx.query(
+      `UPDATE fits SET
+         title = COALESCE($2, title),
+         description = COALESCE($3, description),
+         tags = COALESCE($4::text[], tags),
+         hull_item = COALESCE($5, hull_item),
+         fit = COALESCE($6::jsonb, fit),
+         updated_at = now()
+       WHERE id = $1`,
+      [input.id, title ?? null, description ?? null, tags ?? null, content?.hullItem ?? null, content?.json ?? null],
+    );
+    if (content) {
+      await tx.query(`DELETE FROM fit_evaluations WHERE fit_id = $1`, [input.id]);
+      if (input.evaluation) await insertEvaluation(tx, input.id, input.evaluation);
+    }
+    const fit = await getFit(tx, input.id, {
+      viewer: { userId: input.authorUserId, isAdmin: false },
+      buildSha: input.evaluation?.buildSha ?? null,
+    });
+    return fit!;
+  });
+}
+
+/**
+ * Publishes the author's draft. Refused unless the engine's cached verdict for `buildSha` says the fit
+ * is valid. Publishing again keeps the original publication time.
+ */
+export async function publishFit(db: Db, input: { id: string; authorUserId: string; buildSha: string }): Promise<FitDetail> {
+  return db.transaction(async (tx) => {
+    const { rows } = await tx.query<Row>(`SELECT author_user_id, status FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
+    const current = rows[0];
+    if (!current || !ID.test(input.id)) throw new FitDataError("not_found", "No such fit.");
+    if (current.author_user_id !== input.authorUserId || current.status === "hidden") {
+      throw new FitDataError("forbidden", "You can't publish this fit.");
+    }
+    const { rows: valid } = await tx.query(
+      `SELECT 1 FROM fit_evaluations WHERE fit_id = $1 AND build_sha = $2 AND valid`,
+      [input.id, input.buildSha],
+    );
+    if (valid.length === 0) throw new FitDataError("not_valid", "Only a fit that passes validation can be published.");
+    await tx.query(
+      `UPDATE fits SET status = 'published', published_at = COALESCE(published_at, now()), updated_at = now() WHERE id = $1`,
+      [input.id],
+    );
+    return (await getFit(tx, input.id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha }))!;
+  });
+}
+
+/** Takes the author's own published fit back to a draft. Votes and comments stay. */
+export async function unpublishFit(db: Queryable, input: { id: string; authorUserId: string }): Promise<boolean> {
+  const { rows } = await db.query(
+    `UPDATE fits SET status = 'draft', updated_at = now()
+     WHERE id = $1 AND author_user_id = $2 AND status = 'published' RETURNING id`,
+    [input.id, input.authorUserId],
+  );
+  return rows.length > 0;
+}
+
+/** Moderation: hides a published fit from every public read, or restores a hidden one. False if nothing changed. */
+export async function setFitHidden(db: Queryable, id: string, hidden: boolean): Promise<boolean> {
+  const { rows } = await db.query(
+    hidden
+      ? `UPDATE fits SET status = 'hidden' WHERE id = $1 AND status = 'published' RETURNING id`
+      : `UPDATE fits SET status = 'published' WHERE id = $1 AND status = 'hidden' RETURNING id`,
+    [id],
+  );
+  return rows.length > 0;
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Votes
+
+export type VoteResult = { voted: boolean; votes: number };
+
+async function countVotes(db: Queryable, fitId: string): Promise<number> {
+  const { rows } = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM fit_votes WHERE fit_id = $1`, [fitId]);
+  return rows[0]!.n;
+}
+
+/**
+ * Sets whether `userId` has voted for a published fit. Idempotent: asking for the state they're already
+ * in changes nothing, and a user has at most one vote per fit however often or concurrently they ask.
+ * An author may vote for their own fit, once like anyone else.
+ */
+export async function setVote(db: Queryable, input: { fitId: string; userId: string; voted: boolean }): Promise<VoteResult> {
+  if (!input.userId) invalid("Sign in to vote.");
+  if (input.voted) {
+    const { rows } = await db.query(
+      `INSERT INTO fit_votes (fit_id, user_id)
+       SELECT id, $2 FROM fits WHERE id = $1 AND status = 'published'
+       ON CONFLICT (fit_id, user_id) DO NOTHING RETURNING fit_id`,
+      [input.fitId, input.userId],
+    );
+    if (rows.length === 0) {
+      const { rows: exists } = await db.query(`SELECT 1 FROM fits WHERE id = $1 AND status = 'published'`, [input.fitId]);
+      if (exists.length === 0) throw new FitDataError("not_found", "No such fit.");
+    }
+  } else {
+    await db.query(`DELETE FROM fit_votes WHERE fit_id = $1 AND user_id = $2`, [input.fitId, input.userId]);
+  }
+  const { rows } = await db.query(`SELECT 1 FROM fit_votes WHERE fit_id = $1 AND user_id = $2`, [input.fitId, input.userId]);
+  return { voted: rows.length > 0, votes: await countVotes(db, input.fitId) };
+}
+
+/** Flips the user's vote. Use setVote when the client knows which state it wants (double clicks). */
+export async function toggleVote(db: Db, input: { fitId: string; userId: string }): Promise<VoteResult> {
+  return db.transaction(async (tx) => {
+    // Lock the fit row so two concurrent toggles from one user serialize instead of both inserting.
+    await tx.query(`SELECT 1 FROM fits WHERE id = $1 FOR UPDATE`, [input.fitId]);
+    const { rows } = await tx.query(`SELECT 1 FROM fit_votes WHERE fit_id = $1 AND user_id = $2`, [input.fitId, input.userId]);
+    return setVote(tx, { ...input, voted: rows.length === 0 });
+  });
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Comments
+
+function mapComment(row: Row): Comment {
+  return {
+    id: row.id,
+    fitId: row.fit_id,
+    parentId: row.parent_id ?? null,
+    authorUserId: row.author_user_id,
+    authorName: row.author_name,
+    body: row.body,
+    createdAt: iso(row.created_at),
+    editedAt: isoOrNull(row.edited_at),
+    hidden: row.hidden,
+  };
+}
+
+const COMMENT_COLUMNS = `id::text AS id, fit_id, parent_id::text AS parent_id, author_user_id, author_name, body,
+  created_at, edited_at, hidden`;
+
+export type CreateCommentInput = {
+  fitId: string;
+  /** A top-level comment of the same fit, or omitted for a new top-level comment. */
+  parentId?: string | null;
+  authorUserId: string;
+  authorName: string;
+  body: string;
+};
+
+export async function createComment(db: Db, input: CreateCommentInput): Promise<Comment> {
+  const body = validateComment(input.body);
+  if (!input.authorUserId || !input.authorName.trim()) invalid("The author is not valid.");
+  const parentId = input.parentId ?? null;
+  if (parentId !== null && !NUMERIC_ID.test(parentId)) invalid("That comment can't be replied to.");
+
+  return db.transaction(async (tx) => {
+    const { rows: fits } = await tx.query(`SELECT 1 FROM fits WHERE id = $1 AND status = 'published'`, [input.fitId]);
+    if (fits.length === 0) throw new FitDataError("not_found", "No such fit.");
+    if (parentId !== null) {
+      const { rows } = await tx.query<Row>(`SELECT fit_id, parent_id, hidden FROM fit_comments WHERE id = $1::bigint`, [parentId]);
+      const parent = rows[0];
+      if (!parent || parent.fit_id !== input.fitId || parent.parent_id !== null || parent.hidden) {
+        invalid("That comment can't be replied to.");
+      }
+    }
+    const { rows } = await tx.query<Row>(
+      `INSERT INTO fit_comments (fit_id, parent_id, author_user_id, author_name, body)
+       VALUES ($1, $2::bigint, $3, $4, $5) RETURNING ${COMMENT_COLUMNS}`,
+      [input.fitId, parentId, input.authorUserId, input.authorName.trim(), body],
+    );
+    return mapComment(rows[0]!);
+  });
+}
+
+/** The author edits their own visible comment; `edited_at` records it. */
+export async function editComment(db: Queryable, input: { id: string; authorUserId: string; body: string }): Promise<Comment> {
+  const body = validateComment(input.body);
+  if (!NUMERIC_ID.test(input.id)) throw new FitDataError("not_found", "No such comment.");
+  const { rows } = await db.query<Row>(
+    `UPDATE fit_comments SET body = $3, edited_at = now()
+     WHERE id = $1::bigint AND author_user_id = $2 AND NOT hidden RETURNING ${COMMENT_COLUMNS}`,
+    [input.id, input.authorUserId, body],
+  );
+  if (rows[0]) return mapComment(rows[0]);
+  const { rows: existing } = await db.query(`SELECT 1 FROM fit_comments WHERE id = $1::bigint`, [input.id]);
+  throw existing.length === 0
+    ? new FitDataError("not_found", "No such comment.")
+    : new FitDataError("forbidden", "You can't edit this comment.");
+}
+
+/** Moderation: hides a comment (and so its replies) from public reads, or restores it. The caller checks admin. */
+export async function setCommentHidden(db: Queryable, id: string, hidden: boolean): Promise<boolean> {
+  if (!NUMERIC_ID.test(id)) return false;
+  const { rows } = await db.query(
+    `UPDATE fit_comments SET hidden = $2 WHERE id = $1::bigint AND hidden <> $2 RETURNING id`,
+    [id, hidden],
+  );
+  return rows.length > 0;
+}
+
+/**
+ * A fit's comments, oldest first: top-level comments each with their replies. Hidden comments are left
+ * out for everyone but an admin, and a hidden top-level comment takes its replies with it. The caller
+ * has already checked the viewer may see the fit. `limit` caps top-level comments.
+ */
+export async function listComments(
+  db: Queryable,
+  fitId: string,
+  options: { viewer?: Viewer; limit?: number } = {},
+): Promise<CommentThread[]> {
+  const showHidden = options.viewer?.isAdmin === true;
+  const limit = Math.min(Math.max(Math.trunc(options.limit ?? 200), 1), 500);
+  const { rows: tops } = await db.query<Row>(
+    `SELECT ${COMMENT_COLUMNS} FROM fit_comments
+     WHERE fit_id = $1 AND parent_id IS NULL AND ($2::boolean OR NOT hidden)
+     ORDER BY created_at, id LIMIT ${limit}`,
+    [fitId, showHidden],
+  );
+  if (tops.length === 0) return [];
+  const { rows: replies } = await db.query<Row>(
+    `SELECT ${COMMENT_COLUMNS} FROM fit_comments
+     WHERE parent_id = ANY($1::bigint[]) AND ($2::boolean OR NOT hidden)
+     ORDER BY created_at, id`,
+    [tops.map((row) => row.id), showHidden],
+  );
+  const byParent = new Map<string, Comment[]>();
+  for (const row of replies) {
+    const reply = mapComment(row);
+    byParent.set(reply.parentId!, [...(byParent.get(reply.parentId!) ?? []), reply]);
+  }
+  return tops.map((row) => ({ ...mapComment(row), replies: byParent.get(row.id) ?? [] }));
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Reports
+
+/**
+ * Files a report. A reporter has at most one open report per target: a second call returns the existing
+ * one with `created: false` rather than a duplicate. Once an admin resolves it they may report again.
+ */
+export async function createReport(
+  db: Queryable,
+  input: { targetKind: ReportTargetKind; targetId: string; reporterUserId: string; reason: string },
+): Promise<{ id: string; created: boolean }> {
+  const reason = input.reason.replace(/\u0000/g, "").trim();
+  if (reason === "") invalid("Say what's wrong.");
+  if (length(reason) > REPORT_REASON_MAX) invalid(`A reason can be at most ${REPORT_REASON_MAX} characters.`);
+  if (input.targetKind !== "fit" && input.targetKind !== "comment") invalid("You can't report that.");
+  if (!input.reporterUserId) invalid("Sign in to report.");
+
+  const { rows: target } =
+    input.targetKind === "fit"
+      ? await db.query(`SELECT 1 FROM fits WHERE id = $1 AND status = 'published'`, [input.targetId])
+      : NUMERIC_ID.test(input.targetId)
+        ? await db.query(
+            `SELECT 1 FROM fit_comments c JOIN fits f ON f.id = c.fit_id
+             WHERE c.id = $1::bigint AND NOT c.hidden AND f.status = 'published'`,
+            [input.targetId],
+          )
+        : { rows: [] };
+  if (target.length === 0) throw new FitDataError("not_found", "That no longer exists.");
+
+  const values = [input.targetKind, input.targetId, input.reporterUserId, reason];
+  const inserted = await db.query<{ id: string }>(
+    `INSERT INTO fit_reports (target_kind, target_id, reporter_user_id, reason)
+     VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING RETURNING id::text AS id`,
+    values,
+  );
+  if (inserted.rows[0]) return { id: inserted.rows[0].id, created: true };
+  const { rows } = await db.query<{ id: string }>(
+    `SELECT id::text AS id FROM fit_reports
+     WHERE target_kind = $1 AND target_id = $2 AND reporter_user_id = $3 AND resolved_at IS NULL`,
+    values.slice(0, 3),
+  );
+  return { id: rows[0]!.id, created: false };
+}
+
+/** Open reports, oldest first, with a preview of the reported thing. Page with `afterId`. */
+export async function listOpenReports(
+  db: Queryable,
+  options: { limit?: number; afterId?: string } = {},
+): Promise<{ reports: Report[]; nextAfterId: string | null }> {
+  const size = pageSize(options.limit ?? 50);
+  const after = options.afterId && NUMERIC_ID.test(options.afterId) ? options.afterId : "0";
+  const { rows } = await db.query<Row>(
+    `SELECT r.id::text AS id, r.target_kind, r.target_id, r.reporter_user_id, r.reason, r.created_at, r.resolved_at,
+       CASE r.target_kind WHEN 'fit' THEN f.id ELSE cf.id END AS target_fit_id,
+       CASE r.target_kind WHEN 'fit' THEN f.title ELSE left(c.body, 200) END AS preview,
+       CASE r.target_kind WHEN 'fit' THEN f.status = 'hidden' ELSE c.hidden END AS target_hidden
+     FROM fit_reports r
+     LEFT JOIN fits f ON r.target_kind = 'fit' AND f.id = r.target_id
+     LEFT JOIN fit_comments c ON r.target_kind = 'comment' AND r.target_id ~ '^[0-9]{1,15}$' AND c.id = (CASE WHEN r.target_id ~ '^[0-9]{1,15}$' THEN r.target_id::bigint END)
+     LEFT JOIN fits cf ON cf.id = c.fit_id
+     WHERE r.resolved_at IS NULL AND r.id > $1::bigint
+     ORDER BY r.id
+     LIMIT ${size + 1}`,
+    [after],
+  );
+  const page = rows.slice(0, size);
+  const reports = page.map(
+    (row): Report => ({
+      id: row.id,
+      targetKind: row.target_kind,
+      targetId: row.target_id,
+      reporterUserId: row.reporter_user_id,
+      reason: row.reason,
+      createdAt: iso(row.created_at),
+      resolvedAt: isoOrNull(row.resolved_at),
+      target: row.target_fit_id ? { fitId: row.target_fit_id, preview: row.preview, hidden: row.target_hidden === true } : null,
+    }),
+  );
+  return { reports, nextAfterId: rows.length > size ? page[page.length - 1]!.id : null };
+}
+
+/** Closes one open report. False if it was already resolved or doesn't exist. */
+export async function resolveReport(db: Queryable, id: string): Promise<boolean> {
+  if (!NUMERIC_ID.test(id)) return false;
+  const { rows } = await db.query(
+    `UPDATE fit_reports SET resolved_at = now() WHERE id = $1::bigint AND resolved_at IS NULL RETURNING id`,
+    [id],
+  );
+  return rows.length > 0;
+}
+
+/** Closes every open report about one target, for when a moderator acts on the target itself. Returns how many. */
+export async function resolveReportsForTarget(db: Queryable, targetKind: ReportTargetKind, targetId: string): Promise<number> {
+  const { rows } = await db.query(
+    `UPDATE fit_reports SET resolved_at = now()
+     WHERE target_kind = $1 AND target_id = $2 AND resolved_at IS NULL RETURNING id`,
+    [targetKind, targetId],
+  );
+  return rows.length;
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Evaluations (the re-evaluation job)
+
+/**
+ * Published fits with no verdict stored for `buildSha`, oldest first. Record a verdict for every one you
+ * evaluate, failures included (valid: false), or the next call returns it again.
+ */
+export async function fitsNeedingEvaluation(db: Queryable, buildSha: string, limit = 50): Promise<FitNeedingEvaluation[]> {
+  const { rows } = await db.query<Row>(
+    `SELECT f.id, f.hull_item, f.fit, f.updated_at::text AS revision
+     FROM fits f
+     WHERE f.status = 'published'
+       AND NOT EXISTS (SELECT 1 FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = $1)
+     ORDER BY f.published_at, f.id
+     LIMIT ${pageSize(limit)}`,
+    [buildSha],
+  );
+  return rows.map((row) => ({ id: row.id, hullItem: row.hull_item, fit: row.fit, revision: row.revision }));
+}
+
+/**
+ * Stores (or replaces) the engine's verdict for one fit on one build. With `revision` from
+ * fitsNeedingEvaluation, a fit edited since is left alone and this returns false, so a slow batch can't
+ * cache a verdict for content that no longer exists. False too when the fit is gone.
+ */
+export async function recordEvaluation(
+  db: Queryable,
+  fitId: string,
+  evaluation: EvaluationInput,
+  options: { revision?: string } = {},
+): Promise<boolean> {
+  validateEvaluation(evaluation);
+  const { rows } = await db.query(
+    `INSERT INTO fit_evaluations (fit_id, build_sha, valid, rating, stats, issues)
+     SELECT id, $2, $3, $4, $5::jsonb, $6::jsonb FROM fits
+     WHERE id = $1 AND ($7::text IS NULL OR updated_at::text = $7::text)
+     ON CONFLICT (fit_id, build_sha) DO UPDATE
+       SET valid = EXCLUDED.valid, rating = EXCLUDED.rating, stats = EXCLUDED.stats,
+           issues = EXCLUDED.issues, evaluated_at = now()
+     RETURNING fit_id`,
+    [
+      fitId,
+      evaluation.buildSha,
+      evaluation.valid,
+      evaluation.rating,
+      JSON.stringify(evaluation.stats ?? {}),
+      JSON.stringify(evaluation.issues ?? []),
+      options.revision ?? null,
+    ],
+  );
+  return rows.length > 0;
+}

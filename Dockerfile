@@ -28,6 +28,10 @@ WORKDIR /app
 RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/standalone ./
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/static ./.next/static
+# The schema and its apply script run before the server. migrate.mjs needs `pg`, which the standalone
+# trace includes only while some route imports src/lib/fits/db.ts (the browse and fit pages do).
+COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/migrate.mjs /repo/js/projects/theorycrafting/src/lib/fits/schema.sql ./src/lib/fits/
 USER app
 EXPOSE 3000
-CMD ["node", "server.js"]
+# Apply the schema first (a no-op when current, and without DATABASE_URL); a failed migration stops the start.
+CMD ["sh", "-c", "node src/lib/fits/migrate.mjs && node server.js"]
