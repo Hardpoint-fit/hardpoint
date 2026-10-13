@@ -2,8 +2,9 @@
 // the engine. While that request is out, newer changes don't cancel it; only the newest fit is kept and
 // sent once the answer arrives, so a player editing quickly makes one request at a time. When the
 // engine is down, or limits the checks (429), the state says which, and the newest fit is retried on
-// its own: after Retry-After when the engine gave one, otherwise in 5 s. Editing never waits on any of
-// it. Framework-free, with injectable timers, so it is unit-tested.
+// its own: after Retry-After when the engine gave one, otherwise in 5 s. A fit the engine can't read
+// (400) or won't take (413, too large) is final: it isn't sent again until it changes. Editing never
+// waits on any of it. Framework-free, with injectable timers, so it is unit-tested.
 import type { EngineResult } from "#/lib/engine/client";
 import type { EvaluationResponse, OpenFit } from "#/lib/engine/types";
 
@@ -21,11 +22,12 @@ export type LiveEvaluation = {
    * idle: nothing asked yet. waiting: a change is in its 150 ms. checking: the engine is answering
    * (newer changes queue behind it). ready: `result` is the current fit's. down / paused: the engine
    * is down / rate limited, and a retry is scheduled. rejected: the engine can't read the fit.
+   * tooLarge: the fit is larger than the engine takes.
    */
-  status: "idle" | "waiting" | "checking" | "ready" | "down" | "paused" | "rejected";
+  status: "idle" | "waiting" | "checking" | "ready" | "down" | "paused" | "rejected" | "tooLarge";
   /** The last answer, which may be for an earlier fit: compare `result.key` with `fitKey(fit)`. */
   result: Evaluated | null;
-  /** Why the last request failed (down, paused, rejected). */
+  /** Why the last request failed (down, paused, rejected, tooLarge). */
   message: string | null;
   /** Set when the last answer was an outage; stays set while its retry waits or runs. */
   outage: Outage | null;
@@ -63,6 +65,8 @@ export function createLiveEvaluator(options: {
   let latest: { fit: OpenFit; key: string } | null = null;
   let inFlight: AbortController | null = null;
   let timer: { handle: unknown; kind: "debounce" | "retry" } | null = null;
+  /** The fit whose answer (rejected or tooLarge) asking again can't change. */
+  let finalKey: string | null = null;
   let disposed = false;
 
   const set = (next: LiveEvaluation) => {
@@ -89,10 +93,11 @@ export function createLiveEvaluator(options: {
     const answer = await options.evaluate(fit, controller.signal);
     if (inFlight !== controller || disposed) return;
     inFlight = null;
-    if (answer.ok || answer.error.kind === "rejected") {
+    if (answer.ok || answer.error.kind === "rejected" || answer.error.kind === "tooLarge") {
+      finalKey = answer.ok ? null : key;
       const next: LiveEvaluation = answer.ok
         ? { status: "ready", result: { key, response: answer.value }, message: null, outage: null }
-        : { status: "rejected", result: state.result, message: answer.error.message, outage: null };
+        : { status: answer.error.kind, result: state.result, message: answer.error.message, outage: null };
       if (latest) {
         set({ ...next, status: "checking" });
         void send(); // the newest change, queued behind this answer
@@ -117,6 +122,12 @@ export function createLiveEvaluator(options: {
         return;
       }
       const key = fitKey(fit);
+      if (!inFlight && state.outage === null && key === finalKey) {
+        // Asked again for a fit whose answer was final: keep that answer.
+        clearTimer();
+        latest = null;
+        return;
+      }
       if (!inFlight && state.outage === null && state.result?.key === key) {
         clearTimer();
         latest = null;

@@ -22,13 +22,19 @@ export type EngineError = {
   retryAfterMs?: number;
 };
 
-/** Retry-After as seconds or an HTTP date, in milliseconds from `now`; undefined when absent or unreadable. */
+/** The wait a Retry-After is held to: never a tight loop (0 or a past date), never minutes of nothing. */
+export const RETRY_AFTER_MIN_MS = 1_000;
+export const RETRY_AFTER_MAX_MS = 60_000;
+
+/**
+ * Retry-After as seconds or an HTTP date, in milliseconds from `now`, clamped to
+ * [RETRY_AFTER_MIN_MS, RETRY_AFTER_MAX_MS]; undefined when absent or unreadable.
+ */
 export function parseRetryAfter(value: string | null, now = Date.now()): number | undefined {
   if (!value) return undefined;
   const trimmed = value.trim();
-  if (/^\d+$/.test(trimmed)) return Number(trimmed) * 1000;
-  const at = Date.parse(trimmed);
-  return Number.isNaN(at) ? undefined : Math.max(0, at - now);
+  const at = /^\d+$/.test(trimmed) ? now + Number(trimmed) * 1000 : Date.parse(trimmed);
+  return Number.isNaN(at) ? undefined : Math.min(RETRY_AFTER_MAX_MS, Math.max(RETRY_AFTER_MIN_MS, at - now));
 }
 export type EngineResult<T> = { ok: true; value: T } | { ok: false; error: EngineError };
 

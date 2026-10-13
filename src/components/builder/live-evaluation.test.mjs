@@ -172,6 +172,27 @@ test("a fit the engine can't read is 'rejected' with its message; dispose stops 
   evaluator.request(null);
 });
 
+test("a fit too large for the engine is final: not sent again until it changes", async () => {
+  const { timers, calls, evaluator } = harness(async (sent) =>
+    sent.progression.affinityXp === 1 ? { ok: false, error: { kind: "tooLarge", message: "That fit is too large for the engine." } } : ok(),
+  );
+  evaluator.request(fit(1));
+  timers.tick(EVALUATION_DELAY_MS);
+  await settle();
+  assert.equal(evaluator.current().status, "tooLarge");
+  assert.equal(timers.size, 0, "no retry is scheduled");
+  timers.tick(60_000);
+  evaluator.request(fit(1));
+  timers.tick(60_000);
+  await settle();
+  assert.equal(calls.length, 1, "the same fit isn't sent again");
+  evaluator.request(fit(2));
+  timers.tick(EVALUATION_DELAY_MS);
+  await settle();
+  assert.equal(calls.length, 2);
+  assert.equal(evaluator.current().status, "ready");
+});
+
 test("with a real client: a dead engine reads as down while the reducer keeps editing (Review Focus #4)", async () => {
   const cat = indexCatalog(FIXTURES.catalog);
   const client = createEngineClient({ baseUrl: await deadEngineUrl() });

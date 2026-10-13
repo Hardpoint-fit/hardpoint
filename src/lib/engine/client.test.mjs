@@ -132,6 +132,10 @@ test("a 429's Retry-After (seconds or a date) comes back as retryAfterMs", async
   const { parseRetryAfter } = await import("./client.ts");
   assert.equal(parseRetryAfter("3"), 3000);
   assert.equal(parseRetryAfter(new Date(10_000).toUTCString(), 4_000), 6000);
+  // Held to [1 s, 60 s]: "0" or a past date isn't a tight loop, an hour isn't a dead builder.
+  assert.equal(parseRetryAfter("0"), 1000);
+  assert.equal(parseRetryAfter(new Date(1_000).toUTCString(), 50_000), 1000);
+  assert.equal(parseRetryAfter("3600"), 60_000);
   assert.equal(parseRetryAfter(null), undefined);
   assert.equal(parseRetryAfter("soon"), undefined);
   const stub = await startStubEngine({

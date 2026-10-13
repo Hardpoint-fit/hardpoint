@@ -308,6 +308,11 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
                 <li className="tone-negative">THE ENGINE CAN&apos;T READ THIS FIT: {(evaluation.message ?? "").toUpperCase()}</li>
               </ul>
             )}
+            {evaluation.status === "tooLarge" && (
+              <ul className="issues">
+                <li className="tone-negative">THIS FIT IS TOO LARGE TO CHECK.</li>
+              </ul>
+            )}
             {result && result.issues.length > 0 && (
               <ul className="issues" aria-label="Issues">
                 {result.issues.map((issue, i) => (
@@ -413,6 +418,7 @@ function statusOf(evaluation: LiveEvaluation, result: { valid: boolean } | null)
   if (evaluation.outage === "down") return { label: "CAN'T EVALUATE RIGHT NOW", badge: "outdated" };
   if (evaluation.outage === "limited") return { label: "CHECKING PAUSED", badge: "pending" };
   if (evaluation.status === "rejected") return { label: "UNREADABLE", badge: "invalid" };
+  if (evaluation.status === "tooLarge") return { label: "TOO LARGE TO CHECK", badge: "invalid" };
   if (result) return result.valid ? { label: "VALID", badge: "current" } : { label: "NOT VALID", badge: "invalid" };
   return { label: "CHECKING", badge: "pending" };
 }
