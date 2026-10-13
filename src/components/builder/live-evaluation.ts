@@ -97,7 +97,7 @@ export function createLiveEvaluator(options: {
       finalKey = answer.ok ? null : key;
       const next: LiveEvaluation = answer.ok
         ? { status: "ready", result: { key, response: answer.value }, message: null, outage: null }
-        : { status: answer.error.kind, result: state.result, message: answer.error.message, outage: null };
+        : { status: answer.error.kind === "tooLarge" ? "tooLarge" : "rejected", result: state.result, message: answer.error.message, outage: null };
       if (latest) {
         set({ ...next, status: "checking" });
         void send(); // the newest change, queued behind this answer
