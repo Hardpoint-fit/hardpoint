@@ -1,7 +1,7 @@
-// Derives the site's design tokens and font from the Unity tree, which owns both.
-// Nothing here is authored: src/app/game-tokens.generated.css and src/app/fonts/ are git-ignored
-// outputs, rebuilt before every dev and build run. The repo root is found by walking up from this
-// file, so it works in a checkout and in the Docker build (whose context is the repo root).
+// Derives the site's design tokens, font, fitting-grid art and stat wording from the Unity tree, which
+// owns all of them. Nothing here is authored: the outputs (listed in .gitignore) are rebuilt before
+// every dev and build run. The repo root is found by walking up from this file, so it works in a
+// checkout and in the Docker build (whose context is the repo root).
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,12 +9,34 @@ import postcss from "postcss";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const unityRoot = resolve(appRoot, "../../../src/Citadel.Unity");
+const assets = join(unityRoot, "Assets");
 
 // The same five sheets the UI prototype imports in ui-prototype/src/main.tsx.
 const TOKEN_SHEETS = ["color", "typography", "spacing", "sizing", "components"].map((name) =>
-  join(unityRoot, `Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/tokens.${name}.uss`),
+  join(assets, `Scripts/Runtime/ArenaUI/DesignSystem/tokens/tokens.${name}.uss`),
 );
 const FONT = join(unityRoot, "ui-prototype/public/fonts/VCROSDNEUE.ttf");
+// Exported by Unity for the UI prototype: the port notch rectangles and state colours the game's
+// fitting grid draws with (ModuleOverlayPortIndicators, ModuleOverlayAppearance).
+const FITTING_FIXTURE = join(assets, "Scripts/Runtime/ArenaUI/Panels/Fitting/UI/FittingPanel.fixture.json");
+const INVENTORY_FIXTURE = join(assets, "Scripts/Runtime/ArenaUI/InventoryGrid/InventoryGrid.fixture.json");
+const HARDPOINT_ICONS = ["Battery", "Subsystem", "Propulsion", "Harpoon", "Repairer"].map((slot) => [
+  slot,
+  join(assets, `UI/Elements/Resources/Icon/hardpoint-${slot.toLowerCase()}.svg`),
+]);
+// How the game words a stat (StatTypeText, StatTypeRules), as the killboard reads it.
+const STAT_TEXT = join(assets, "Scripts/Runtime/Common/Stats/StatTypeText.cs");
+const STAT_RULES = join(assets, "Scripts/Simulation/LootGeneration/StatTypeRules.cs");
+const STAT_TYPES = join(assets, "Scripts/Simulation/Modules/Modules.qtn");
+
+export const SOURCES = [...TOKEN_SHEETS, FONT, FITTING_FIXTURE, INVENTORY_FIXTURE, ...HARDPOINT_ICONS.map(([, file]) => file), STAT_TEXT, STAT_RULES, STAT_TYPES];
+
+const OUTPUTS = {
+  tokens: join(appRoot, "src/app/game-tokens.generated.css"),
+  font: join(appRoot, "src/app/fonts/VCROSDNEUE.ttf"),
+  fittingArt: join(appRoot, "src/components/grid/fitting-art.generated.json"),
+  statText: join(appRoot, "src/lib/fits/stat-text.generated.json"),
+};
 
 /** USS is a CSS subset: keep the custom properties, drop what only Unity understands. */
 export function ussTokensToCss(uss) {
@@ -36,13 +58,103 @@ export function buildTokensCss(sheets = TOKEN_SHEETS) {
   return banner + sheets.map((file) => ussTokensToCss(readFileSync(file, "utf8"))).join("\n");
 }
 
+const css = ([r, g, b, a]) => `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${+a.toFixed(3)})`;
+
+// The colours the site's grid draws besides the tier palette (which the tokens carry).
+const GRID_COLORS = ["ConduitConnected", "InvalidRed", "InvalidRedBorder", "InvalidRedFill", "RegaliaSelectedGreen", "RegaliaWeldGreen", "HazardTapeBase", "HazardTapeRed", "SelectionAmber"];
+
+// Token values the share card (next/og, which can't read CSS variables) draws with.
+const CARD_TOKENS = ["panel-bg", "header-bg", "text-primary", "text-primary-muted", "text-secondary", "accent-orange", "accent-muted", "state-positive", "state-negative", "state-quantity"];
+const TIERS = ["standard", "augmented", "prototype", "artifact", "regalia", "harmonic", "heretical"];
+
+/** Resolved values of colour tokens from the token sheet, for renderers without CSS variables. */
+export function tokenValues(css, names) {
+  const values = Object.fromEntries([...css.matchAll(/--([\w-]+):\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]));
+  return Object.fromEntries(
+    names.map((name) => {
+      let value = values[name];
+      for (let depth = 0; value?.startsWith("var(") && depth < 4; depth++) value = values[value.slice(6, -1)];
+      if (!value) throw new Error(`The token sheets have no colour --${name}.`);
+      return [name, value];
+    }),
+  );
+}
+
+/**
+ * The fitting grid's art at the game's 48px cell: port notches for each direction (Up, Down, Left,
+ * Right), in a slot box inset 3px from the cell, the hardpoint glyphs, and the state colours.
+ */
+export function buildFittingArt(fitting = readJson(FITTING_FIXTURE), inventory = readJson(INVENTORY_FIXTURE), icons = HARDPOINT_ICONS, tokens = buildTokensCss()) {
+  const size = "48";
+  const rect = (index) => fitting.portRects[index];
+  const forms = Object.fromEntries(
+    ["FemaleOpen", "MaleAttached", "Expansion"].map((form) => [
+      form,
+      fitting.ports[size][form].map((port) => ({ body: rect(port.BodyFill), bridge: rect(port.BridgeFill), borders: port.Borders.map(rect) })),
+    ]),
+  );
+  const host = rect(fitting.ports[size].FemaleOpen[0].Host);
+  const hardpoints = Object.fromEntries(
+    icons.map(([slot, file]) => {
+      const svg = readFileSync(file, "utf8");
+      const viewBox = svg.match(/viewBox="([^"]+)"/)?.[1];
+      const paths = [...svg.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map(([, d]) => d);
+      if (!viewBox || paths.length === 0) throw new Error(`No path in the hardpoint icon ${file}.`);
+      return [slot, { viewBox, paths }];
+    }),
+  );
+  const colors = Object.fromEntries(
+    GRID_COLORS.map((name) => {
+      const value = inventory.colors[name];
+      if (!value) throw new Error(`The inventory fixture has no colour ${name}.`);
+      return [name, css(value)];
+    }),
+  );
+  const tiers = Object.fromEntries(
+    TIERS.map((tier) => {
+      const value = tokenValues(tokens, [`tier-${tier}-surface-bg`, `tier-${tier}-surface-base-border`, `tier-${tier}-base`]);
+      return [tier, { bg: value[`tier-${tier}-surface-bg`], border: value[`tier-${tier}-surface-base-border`], base: value[`tier-${tier}-base`] }];
+    }),
+  );
+  return { cellSize: Number(size), slotInset: (Number(size) - host.width) / 2, ports: forms, hardpoints, colors, tiers, tokens: tokenValues(tokens, CARD_TOKENS) };
+}
+
+/**
+ * How the game words a stat (StatTypeText, StatTypeRules): each stat's label, the stats that read as
+ * whole numbers or where lower is better, and the stat and operation whose shown sign is inverted.
+ * A source the patterns no longer match fails the build, as does a displayable stat without copy.
+ */
+export function buildStatText(text = readFileSync(STAT_TEXT, "utf8"), rules = readFileSync(STAT_RULES, "utf8"), types = readFileSync(STAT_TYPES, "utf8")) {
+  const labels = Object.fromEntries([...text.matchAll(/StatType\.(\w+) => "([^"]+)"/g)].map(([, stat, label]) => [stat, label]));
+  const statsIn = (method) => {
+    const body = rules.match(new RegExp(`static bool ${method}\\([^)]*\\) =>([\\s\\S]*?);`))?.[1];
+    if (!body) throw new Error(`${method} is missing from the game's stat rules.`);
+    return [...body.matchAll(/StatType\.(\w+)/g)].map(([, stat]) => stat);
+  };
+  const inverted = [...text.matchAll(/type == StatType\.(\w+) && operation == StatModifierOperation\.(\w+)/g)].map(([, stat, operation]) => ({ stat, operation }));
+  const enumBody = types.match(/enum StatType \{([\s\S]*?)\n\}/)?.[1];
+  if (!enumBody) throw new Error("StatType is missing from Modules.qtn.");
+  const displayable = [...enumBody.replace(/\/\/.*$/gm, "").matchAll(/\b(\w+)\s*=\s*\d+/g)]
+    .map(([, stat]) => stat)
+    .filter((stat) => stat !== "None" && !/^Reserved\d+$/.test(stat));
+  const unlabelled = displayable.filter((stat) => !labels[stat]);
+  if (displayable.length === 0 || unlabelled.length) throw new Error(`Stats without display copy: ${unlabelled.join(", ") || "none read"}.`);
+  return { labels, integer: statsIn("IsIntegerValued"), lowerIsBetter: statsIn("IsLowerBetter"), inverted };
+}
+
+function readJson(file) {
+  return JSON.parse(readFileSync(file, "utf8"));
+}
+
 export function prepare() {
-  for (const file of [...TOKEN_SHEETS, FONT]) {
+  for (const file of SOURCES) {
     if (!existsSync(file)) throw new Error(`Missing game asset ${file}. Build from the repo root checkout (see README).`);
   }
-  mkdirSync(join(appRoot, "src/app/fonts"), { recursive: true });
-  writeFileSync(join(appRoot, "src/app/game-tokens.generated.css"), buildTokensCss());
-  copyFileSync(FONT, join(appRoot, "src/app/fonts/VCROSDNEUE.ttf"));
+  for (const file of Object.values(OUTPUTS)) mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(OUTPUTS.tokens, buildTokensCss());
+  copyFileSync(FONT, OUTPUTS.font);
+  writeFileSync(OUTPUTS.fittingArt, `${JSON.stringify(buildFittingArt(), null, 1)}\n`);
+  writeFileSync(OUTPUTS.statText, `${JSON.stringify(buildStatText(), null, 1)}\n`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) prepare();

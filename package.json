@@ -10,8 +10,10 @@
     "prebuild": "pnpm run prepare:game-assets",
     "build": "next build",
     "start": "next start",
-    "test": "node --test",
-    "typecheck": "tsc --noEmit"
+    "test": "node --import ./scripts/node-hooks.mjs --test",
+    "typecheck": "tsc --noEmit",
+    "pretest": "pnpm run prepare:game-assets",
+    "smoke": "node --import ./scripts/node-hooks.mjs scripts/smoke.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "7.7.4",

@@ -6,3 +6,5 @@ next-env.d.ts
 # Written by scripts/prepare-game-assets.mjs from the Unity tree.
 src/app/game-tokens.generated.css
 src/app/fonts/
+src/components/grid/fitting-art.generated.json
+src/lib/fits/stat-text.generated.json

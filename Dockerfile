@@ -14,9 +14,16 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 FROM base AS build
 WORKDIR /repo
-# Sources of the game tokens and font, kept at their repo paths: the prepare script finds them by walking up.
+# The Unity files the prepare script derives the tokens, font, grid art and stat wording from
+# (scripts/prepare-game-assets.mjs SOURCES), kept at their repo paths: it finds them by walking up.
 COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/ src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/
 COPY src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf
+COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Panels/Fitting/UI/FittingPanel.fixture.json src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Panels/Fitting/UI/
+COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/InventoryGrid/InventoryGrid.fixture.json src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/InventoryGrid/
+COPY src/Citadel.Unity/Assets/UI/Elements/Resources/Icon/hardpoint-*.svg src/Citadel.Unity/Assets/UI/Elements/Resources/Icon/
+COPY src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/StatTypeText.cs src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/
+COPY src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/StatTypeRules.cs src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/
+COPY src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Modules/
 WORKDIR /repo/js/projects/theorycrafting
 COPY --from=deps /repo/js/projects/theorycrafting/node_modules ./node_modules
 COPY js/projects/theorycrafting/ ./
@@ -29,7 +36,7 @@ RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/standalone ./
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/static ./.next/static
 # The schema and its apply script run before the server. migrate.mjs needs `pg`, which the standalone
-# trace includes only while some route imports src/lib/fits/db.ts (the browse and fit pages do).
+# trace includes because the pages import src/lib/fits/db.ts (checked by building and running this image).
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/migrate.mjs /repo/js/projects/theorycrafting/src/lib/fits/schema.sql ./src/lib/fits/
 USER app
 EXPOSE 3000
