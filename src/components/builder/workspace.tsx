@@ -1,0 +1,486 @@
+"use client";
+
+// The builder: the reducer's state drawn as the game's fitting panel. The palette feeds the grid by
+// drag (pointer) or by Enter and the arrow keys; the grid shows where the held item would land, in green
+// where it fits and red where it doesn't (bounds and overlap only). Every change is evaluated live by
+// the engine, and the result draws issues, conduit links, regalia groups, stats and rating. The fit
+// autosaves to this browser; saving to the site needs sign-in.
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { FittingGrid, gridBounds } from "#/components/grid/fitting-grid";
+import { buildGridModel, type GridModule } from "#/components/grid/model";
+import { Panel, buildLabel } from "#/components/ui";
+import { StatsTable } from "#/components/fit/stats-table";
+import type { EvaluationResponse } from "#/lib/engine/types";
+import { useEngine } from "#/lib/engine/use-engine";
+import type { BuilderStart } from "#/lib/site/loaders";
+import { AffinityPanel } from "./affinity-panel";
+import { browserStorage, clearDraft, readDraft, writeDraft } from "./draft-storage";
+import { ExportFit, FitDetails, ImportFit, type BuilderAuth, type Navigate, type SavedState } from "./fit-details";
+import { HullPicker } from "./hull-picker";
+import { Inspector } from "./inspector";
+import { enumWords, roleName } from "./labels";
+import { IDLE, createLiveEvaluator, fitKey, type LiveEvaluation, type LiveEvaluator } from "./live-evaluation";
+import { Palette } from "./palette";
+import { dropPreview, heldDef } from "./placement";
+import type { BuilderCatalog } from "./rules";
+import { initialState, reduce, type BuilderAction, type BuilderState } from "./state";
+
+
+const ENGINE_RETRY_MS = 5_000;
+
+type Boot = { state: BuilderState; restored: boolean };
+
+/** The start the server chose, or this browser's autosave of it when that is newer work on the same fit. */
+function boot(start: BuilderStart): Boot {
+  if (!start.copiedFrom) {
+    const draft = readDraft(browserStorage(), start.fitId);
+    if (draft && (start.fitId === null || draft.base === start.updatedAt)) return { state: initialState(draft.fit, draft.meta), restored: true };
+  }
+  return { state: initialState(start.fit, start.meta), restored: false };
+}
+
+const snapshot = (state: Pick<BuilderState, "fit" | "meta">) => JSON.stringify({ fit: state.fit, meta: state.meta });
+
+const isTyping = (target: EventTarget | null) =>
+  target instanceof HTMLElement && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+type Drag = { mode: "palette" | "module"; index?: number } | { mode: "pending"; index: number; x: number; y: number; cell: { row: number; col: number } | null };
+
+export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog; start: BuilderStart; auth: BuilderAuth; navigate: Navigate }) {
+  const engine = useEngine();
+  const [{ state: bootState, restored }] = useState(() => boot(start));
+  const [state, dispatch] = useReducer((current: BuilderState, action: BuilderAction) => reduce(cat, current, action), bootState);
+  const [saved, setSaved] = useState<SavedState>({ fitId: start.fitId, status: start.status, updatedAt: start.updatedAt });
+  const [clean, setClean] = useState(() => snapshot(start));
+  const [notice, setNotice] = useState<string | null>(restored ? "RESTORED THE UNSAVED CHANGES KEPT IN THIS BROWSER." : start.note);
+  const [picking, setPicking] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [ghost, setGhost] = useState<{ x: number; y: number; name: string } | null>(null);
+
+  const fit = state.fit;
+  const current = snapshot(state);
+  const dirty = current !== clean;
+
+  // ---- Autosave to this browser ---------------------------------------------------------------
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const storage = browserStorage();
+      if (!fit || (!dirty && saved.fitId !== null)) clearDraft(storage, saved.fitId);
+      else writeDraft(storage, saved.fitId, { fit, meta: state.meta, base: saved.updatedAt });
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [fit, state.meta, dirty, saved]);
+
+  // ---- Live evaluation --------------------------------------------------------------------------
+  const [evaluation, setEvaluation] = useState<LiveEvaluation>(IDLE);
+  const evaluator = useRef<LiveEvaluator | null>(null);
+  useEffect(() => {
+    const created = createLiveEvaluator({ evaluate: (sent, signal) => engine.evaluate(sent, { signal }), onChange: setEvaluation });
+    evaluator.current = created;
+    return () => created.dispose();
+  }, [engine]);
+  useEffect(() => {
+    evaluator.current?.request(fit);
+  }, [fit, engine]);
+  // While the engine is down, ask again every few seconds so the result returns with it.
+  useEffect(() => {
+    if (evaluation.status !== "down") return;
+    const timer = setTimeout(() => evaluator.current?.request(fit), ENGINE_RETRY_MS);
+    return () => clearTimeout(timer);
+  }, [evaluation.status, fit]);
+  const key = useMemo(() => (fit ? fitKey(fit) : null), [fit]);
+  const result = evaluation.result && evaluation.result.key === key ? evaluation.result.response : null;
+  const buildSha = evaluation.result?.response.buildSha ?? cat.catalog.buildSha;
+
+  // ---- The grid ---------------------------------------------------------------------------------
+  const hull = fit ? cat.hulls.get(fit.hull.def) : undefined;
+  const model = useMemo(
+    () =>
+      fit && hull
+        ? buildGridModel({ hull, items: cat.items, regaliaSets: cat.regaliaSets }, fit, result ? { issues: result.issues, conduits: result.conduits, regaliaSets: result.regaliaSets } : null)
+        : null,
+    [fit, hull, cat, result],
+  );
+  const preview = fit && state.held ? dropPreview(cat, fit, state.held) : null;
+  const moduleName = useCallback((index: number) => (model?.modules[index]?.name ?? null), [model]);
+
+  const gridRef = useRef<HTMLDivElement>(null);
+  const live = useRef({ model, held: state.held, selected: state.selected, drag: null as Drag | null });
+  live.current.model = model;
+  live.current.held = state.held;
+  live.current.selected = state.selected;
+
+  const cellAt = useCallback((x: number, y: number) => {
+    const element = gridRef.current?.querySelector<HTMLElement>(".fg");
+    const current = live.current.model;
+    if (!element || !current) return null;
+    const rect = element.getBoundingClientRect();
+    if (x < rect.left || y < rect.top || x >= rect.right || y >= rect.bottom) return null;
+    const view = gridBounds(current, true);
+    return {
+      row: view.minRow + Math.floor(((y - rect.top) * view.rows) / rect.height),
+      col: view.minCol + Math.floor(((x - rect.left) * view.cols) / rect.width),
+    };
+  }, []);
+
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      const drag = live.current.drag;
+      if (!drag) return;
+      if (drag.mode === "pending") {
+        if (Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 4) return;
+        live.current.drag = { mode: "module", index: drag.index };
+        dispatch({ type: "pickUpModule", index: drag.index, cell: drag.cell ?? undefined });
+        setGhost({ x: event.clientX, y: event.clientY, name: live.current.model?.modules[drag.index]?.name ?? "" });
+      }
+      dispatch({ type: "hover", cell: cellAt(event.clientX, event.clientY) });
+      setGhost((ghost) => (ghost ? { ...ghost, x: event.clientX, y: event.clientY } : ghost));
+    };
+    const up = () => {
+      const drag = live.current.drag;
+      live.current.drag = null;
+      setGhost(null);
+      if (drag && drag.mode !== "pending") dispatch({ type: "release" });
+    };
+    const cancel = () => {
+      if (live.current.drag && live.current.drag.mode !== "pending") dispatch({ type: "cancel" });
+      live.current.drag = null;
+      setGhost(null);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
+    };
+  }, [cellAt]);
+
+  useEffect(() => {
+    const key = (event: KeyboardEvent) => {
+      if (isTyping(event.target) || event.metaKey || event.ctrlKey || event.altKey) return;
+      const held = live.current.held;
+      const arrows: Record<string, [number, number]> = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] };
+      if (event.key === "r" || event.key === "R") {
+        dispatch({ type: "rotate" });
+        event.preventDefault();
+      } else if (event.key === "Escape") {
+        dispatch({ type: "cancel" });
+      } else if (held && arrows[event.key]) {
+        const [rows, cols] = arrows[event.key]!;
+        dispatch({ type: "moveCursor", rows, cols });
+        event.preventDefault();
+      } else if (held && (event.key === "Enter" || event.key === " ")) {
+        dispatch({ type: "drop" });
+        event.preventDefault();
+      } else if (!held && event.key === "Enter" && event.target instanceof HTMLElement && event.target.dataset.module) {
+        dispatch({ type: "pickUpModule", index: Number(event.target.dataset.module) });
+        event.preventDefault();
+      } else if (!held && (event.key === "Delete" || event.key === "Backspace") && typeof live.current.selected === "number") {
+        dispatch({ type: "remove", index: live.current.selected });
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, []);
+
+  const onPalettePointer = (def: string, event: ReactPointerEvent<HTMLElement>) => {
+    event.preventDefault();
+    live.current.drag = { mode: "palette" };
+    dispatch({ type: "pickUp", def });
+    setGhost({ x: event.clientX, y: event.clientY, name: cat.items.get(def)?.name ?? "" });
+  };
+  const onModulePointerDown = (module: GridModule, event: ReactPointerEvent<HTMLElement>) => {
+    if (event.button !== 0 || state.held) return;
+    dispatch({ type: "select", target: module.index });
+    live.current.drag = { mode: "pending", index: module.index, x: event.clientX, y: event.clientY, cell: cellAt(event.clientX, event.clientY) };
+  };
+
+  // ---- Starting points --------------------------------------------------------------------------
+  const startOver = () => {
+    if (!confirmReset) return setConfirmReset(true);
+    setConfirmReset(false);
+    clearDraft(browserStorage(), saved.fitId);
+    dispatch({ type: "reset" });
+  };
+  const onImported = (imported: typeof fit) => {
+    if (!imported) return;
+    dispatch({ type: "load", fit: imported });
+    setImporting(false);
+    setNotice("FIT STRING IMPORTED.");
+  };
+
+  if (!fit || picking || !hull) {
+    return (
+      <main className="page builder">
+        <BuilderTitle title={fit ? state.meta.title || "NEW FIT" : "NEW FIT"} eyebrow="FIT BUILDER" />
+        {notice && <p className="banner banner--quiet">{notice}</p>}
+        {fit && !hull && <p className="banner">THIS FIT&apos;S HULL ISN&apos;T IN THE CURRENT BUILD. PICK ANOTHER; THE MODULES STAY.</p>}
+        <div className="builder-start">
+          <HullPicker
+            cat={cat}
+            current={fit?.hull.def ?? null}
+            onPick={(def) => {
+              setPicking(false);
+              setNotice(null);
+              dispatch(fit ? { type: "changeHull", hull: def } : { type: "start", hull: def });
+            }}
+            onCancel={fit && hull ? () => setPicking(false) : undefined}
+          />
+          {!fit && (
+            <Panel title="IMPORT A FIT STRING">
+              <ImportFit engine={engine} onImported={onImported} />
+            </Panel>
+          )}
+        </div>
+      </main>
+    );
+  }
+
+  const status = statusOf(evaluation, result);
+  return (
+    <main className={`page builder ${state.held ? "builder--holding" : ""}`}>
+      <BuilderTitle
+        title={state.meta.title || "NEW FIT"}
+        eyebrow={`${hull.name} · ${enumWords(hull.shipClass)} · ${roleName(hull.role)}`}
+        actions={
+          <>
+            <button type="button" className="btn btn--quiet" onClick={() => setPicking(true)}>
+              CHANGE HULL
+            </button>
+            <button type="button" className={`btn btn--quiet ${importing ? "btn--on" : ""}`} onClick={() => setImporting(!importing)} aria-expanded={importing}>
+              IMPORT FIT STRING
+            </button>
+            <button type="button" className="btn btn--quiet" onClick={startOver} onBlur={() => setConfirmReset(false)}>
+              {confirmReset ? "SURE? START OVER" : "START OVER"}
+            </button>
+          </>
+        }
+      />
+      <p className="builder__narrow note">THE BUILDER IS BEST ON A WIDER SCREEN. EVERYTHING STILL WORKS HERE, ONE PANEL AFTER ANOTHER.</p>
+      {notice && (
+        <p className="banner banner--quiet" role="status">
+          {notice}
+        </p>
+      )}
+      {start.copiedFrom && (
+        <p className="note">
+          COPIED FROM{" "}
+          <Link className="link" href={`/fits/${start.copiedFrom.id}`}>
+            {start.copiedFrom.title}
+          </Link>
+          . SAVING MAKES A NEW FIT OF YOUR OWN.
+        </p>
+      )}
+      {importing && (
+        <Panel title="IMPORT A FIT STRING">
+          <p className="note">THE IMPORTED FIT REPLACES THE ONE ON THE GRID. TITLE, DESCRIPTION AND TAGS STAY.</p>
+          <ImportFit engine={engine} onImported={onImported} onCancel={() => setImporting(false)} />
+        </Panel>
+      )}
+
+      <div className="builder-layout">
+        <div className="builder-layout__palette">
+          <Palette
+            cat={cat}
+            heldDef={state.held ? heldDef(fit, state.held) : null}
+            holding={state.held !== null}
+            onPointerPick={onPalettePointer}
+            onKeyboardPick={(def) => dispatch({ type: "pickUp", def, cursor: null })}
+          />
+        </div>
+
+        <div className="builder-layout__main">
+          <Panel title="FIT" aside={<span className={`badge badge--${status.badge}`}>{status.label}</span>}>
+            {evaluation.engineDown && (
+              <div className="banner" role="status">
+                <span>CAN&apos;T EVALUATE RIGHT NOW.</span>
+                <small>THE LOADOUT ENGINE ISN&apos;T ANSWERING. EDITING STILL WORKS AND THIS FIT IS KEPT IN THIS BROWSER.</small>
+              </div>
+            )}
+            {evaluation.status === "rejected" && (
+              <ul className="issues">
+                <li className="tone-negative">THE ENGINE CAN&apos;T READ THIS FIT: {(evaluation.message ?? "").toUpperCase()}</li>
+              </ul>
+            )}
+            {result && result.issues.length > 0 && (
+              <ul className="issues" aria-label="Issues">
+                {result.issues.map((issue, i) => (
+                  <li key={i} className="tone-negative">
+                    {issue.moduleIndex >= 0 ? (
+                      <button type="button" className="issue-link" onClick={() => dispatch({ type: "select", target: issue.moduleIndex })}>
+                        {moduleName(issue.moduleIndex) ?? "MODULE"}:
+                      </button>
+                    ) : null}{" "}
+                    {issue.message.toUpperCase()}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div
+              className="fg-scroll builder-grid"
+              ref={gridRef}
+              onFocusCapture={(event) => {
+                const index = (event.target as HTMLElement).dataset.module;
+                if (index !== undefined && !state.held) dispatch({ type: "select", target: Number(index) });
+              }}
+            >
+              {model && (
+                <FittingGrid
+                  model={model}
+                  selected={typeof state.selected === "number" ? state.selected : null}
+                  drop={preview ? { cells: preview.cells, valid: preview.fits } : null}
+                  tooltip={state.held ? () => null : undefined}
+                  onModulePointerDown={onModulePointerDown}
+                  onModuleContextMenu={(module, event) => {
+                    event.preventDefault();
+                    dispatch({ type: "remove", index: module.index });
+                  }}
+                  onCellPointerDown={(cell, event) => {
+                    if (event.button !== 0) return;
+                    if (state.held && !live.current.drag) {
+                      dispatch({ type: "hover", cell });
+                      dispatch({ type: "drop" });
+                    } else if (!state.held) dispatch({ type: "select", target: null });
+                  }}
+                  label={`${hull.name} fitting grid`}
+                />
+              )}
+            </div>
+            <p className="builder__keys note" aria-live="polite">
+              {state.held
+                ? preview
+                  ? preview.fits
+                    ? "RELEASE OR ENTER PLACES IT · R ROTATES · ESC CANCELS"
+                    : "IT DOESN'T FIT THERE · R ROTATES · ESC CANCELS"
+                  : "MOVE ONTO THE GRID, OR USE THE ARROW KEYS · ESC CANCELS"
+                : "DRAG TO PLACE OR MOVE · R ROTATES · DELETE OR RIGHT-CLICK REMOVES · ENTER ON A MODULE PICKS IT UP"}
+            </p>
+          </Panel>
+          <AffinityPanel cat={cat} progression={fit.progression} dispatch={dispatch} />
+        </div>
+
+        <div className="builder-layout__side">
+          <Inspector cat={cat} fit={fit} target={state.selected} dispatch={dispatch} />
+          <StatsPanel cat={cat} evaluation={evaluation} result={result} moduleName={moduleName} />
+          <FitDetails
+            fit={fit}
+            meta={state.meta}
+            dispatch={dispatch}
+            auth={auth}
+            saved={saved}
+            dirty={dirty}
+            buildSha={buildSha}
+            moduleName={moduleName}
+            onSaved={(next) => {
+              if (saved.fitId === null) clearDraft(browserStorage(), null);
+              setSaved(next);
+              setClean(current);
+            }}
+            navigate={navigate}
+          />
+          <Panel title="FIT STRING">
+            <ExportFit engine={engine} fit={fit} />
+          </Panel>
+        </div>
+      </div>
+      {ghost && (
+        <div className="drag-ghost" style={{ left: ghost.x + 14, top: ghost.y + 10 }} aria-hidden="true">
+          {ghost.name}
+        </div>
+      )}
+    </main>
+  );
+}
+
+function BuilderTitle({ title, eyebrow, actions }: { title: string; eyebrow: string; actions?: ReactNode }) {
+  return (
+    <div className="page-title builder__title">
+      <div className="flex flex-col gap-1">
+        <span className="eyebrow">{eyebrow}</span>
+        <h1>{title}</h1>
+      </div>
+      {actions && <div className="builder__actions">{actions}</div>}
+    </div>
+  );
+}
+
+function statusOf(evaluation: LiveEvaluation, result: { valid: boolean } | null): { label: string; badge: string } {
+  if (evaluation.engineDown) return { label: "CAN'T EVALUATE RIGHT NOW", badge: "outdated" };
+  if (evaluation.status === "rejected") return { label: "UNREADABLE", badge: "invalid" };
+  if (result) return result.valid ? { label: "VALID", badge: "current" } : { label: "NOT VALID", badge: "invalid" };
+  return { label: "CHECKING", badge: "pending" };
+}
+
+function StatsPanel({
+  cat,
+  evaluation,
+  result,
+  moduleName,
+}: {
+  cat: BuilderCatalog;
+  evaluation: LiveEvaluation;
+  result: EvaluationResponse | null;
+  moduleName: (index: number) => string | null;
+}) {
+  const shown = result ?? evaluation.result?.response ?? null;
+  const stale = shown !== null && result === null;
+  return (
+    <Panel
+      title="STATS"
+      className={stale ? "stats-panel--stale" : undefined}
+      aside={
+        shown ? (
+          shown.valid ? (
+            <span className="rating">
+              {stale ? "LAST CHECK · " : ""}RATING {shown.rating}
+            </span>
+          ) : (
+            <span className="tone-negative">NO RATING</span>
+          )
+        ) : undefined
+      }
+    >
+      {evaluation.engineDown && <p className="note note--error">CAN&apos;T EVALUATE RIGHT NOW. STATS RETURN WHEN THE LOADOUT ENGINE DOES.</p>}
+      {!shown ? (
+        <p className="note">{evaluation.engineDown ? "NO STATS YET." : "CHECKING THE FIT."}</p>
+      ) : (
+        <>
+          {stale && !evaluation.engineDown && <p className="note">UPDATING</p>}
+          {shown.valid ? null : <p className="note">AN INVALID FIT HAS NO STATS OR RATING. FIX THE ISSUES ON THE GRID.</p>}
+          {shown.regaliaSets.length > 0 && (
+            <ul className="set-list" aria-label="Regalia sets">
+              {shown.regaliaSets.map((group) => {
+                const set = cat.regaliaSets.get(group.set);
+                return (
+                  <li key={group.set} className="plate__row">
+                    <span className="accent-regalia">{(set?.name ?? "REGALIA SET").toUpperCase()}</span>
+                    <b className="accent-regalia">
+                      {group.fittedCount}/{set?.pieces ?? group.fittedCount}
+                    </b>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {shown.conduits.length > 0 && (
+            <ul className="set-list" aria-label="Conduit links">
+              {shown.conduits.map((link) => (
+                <li key={link.moduleIndex} className="plate__row">
+                  <span>{moduleName(link.moduleIndex) ?? "CONDUIT"}</span>
+                  <b>x{link.connectionCount}</b>
+                </li>
+              ))}
+            </ul>
+          )}
+          <StatsTable stats={shown.stats} catalog={cat.catalog} />
+          <span className="note">{buildLabel(shown.buildSha)}</span>
+        </>
+      )}
+    </Panel>
+  );
+}

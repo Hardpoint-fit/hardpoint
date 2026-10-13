@@ -39,7 +39,7 @@ export type PageEngine = {
 
 export type Unavailable = { status: "unavailable"; engine: PageEngine };
 
-async function pageEngine(deps: SiteDeps): Promise<PageEngine> {
+export async function pageEngine(deps: SiteDeps): Promise<PageEngine> {
   const state = await deps.engine.current();
   // A down engine would make a catalog fetch wait for its timeout; use what is held.
   const fetched = state.status === "up" ? await deps.catalog.get() : null;
@@ -214,6 +214,59 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer): P
     shown,
     grid: gridFor(fit, engine.catalog, shown),
     comments,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Builder
+
+/** Where the builder starts: an empty hull picker, a saved fit to edit, or a copy of someone's fit. */
+export type BuilderStart = {
+  /** The saved fit being edited; null for a new fit. */
+  fitId: string | null;
+  fit: OpenFit | null;
+  meta: { title: string; description: string; tags: string[] };
+  status: FitDetail["status"] | null;
+  /** The saved fit's updatedAt: an autosaved draft made on an older save is not restored over it. */
+  updatedAt: string | null;
+  /** The fit this one was copied from. */
+  copiedFrom: { id: string; title: string } | null;
+  /** Why a requested copy couldn't be made. */
+  note: string | null;
+};
+
+export type BuilderData = { status: "ok"; start: BuilderStart } | { status: "not_found" } | { status: "forbidden" } | { status: "unavailable" };
+
+const NEW_START: BuilderStart = { fitId: null, fit: null, meta: { title: "", description: "", tags: [] }, status: null, updatedAt: null, copiedFrom: null, note: null };
+export const COPY_UNAVAILABLE = "THAT FIT CAN'T BE COPIED RIGHT NOW. START FROM A HULL INSTEAD.";
+
+/**
+ * What the builder opens with. A new fit needs neither the database nor the engine (the browser loads
+ * the catalog); a copy reads a fit the viewer can see and keeps none of its words but its tags; an edit
+ * is the author's alone.
+ */
+export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { fitId?: string; copyFrom?: string }, viewer: Viewer): Promise<BuilderData> {
+  if (!request.fitId && !request.copyFrom) return { status: "ok", start: NEW_START };
+  const db = databaseOf(deps);
+  if (request.fitId) {
+    if (!db) return { status: "unavailable" };
+    const fit = await guarded("builder read", () => getFit(db, request.fitId!, { viewer }));
+    if (fit === null) {
+      const reachable = await guarded("probe", () => db.query("SELECT 1"));
+      return reachable ? { status: "not_found" } : { status: "unavailable" };
+    }
+    if (fit.authorUserId !== viewer.userId) return { status: "forbidden" };
+    if (!isOpenFit(fit.fit)) return { status: "not_found" };
+    return {
+      status: "ok",
+      start: { ...NEW_START, fitId: fit.id, fit: fit.fit, meta: { title: fit.title, description: fit.description, tags: fit.tags }, status: fit.status, updatedAt: fit.updatedAt },
+    };
+  }
+  const source = db ? await guarded("builder copy", () => getFit(db, request.copyFrom!, { viewer })) : null;
+  if (!source || !isOpenFit(source.fit)) return { status: "ok", start: { ...NEW_START, note: COPY_UNAVAILABLE } };
+  return {
+    status: "ok",
+    start: { ...NEW_START, fit: source.fit, meta: { title: "", description: "", tags: source.tags }, copiedFrom: { id: source.id, title: source.title } },
   };
 }
 

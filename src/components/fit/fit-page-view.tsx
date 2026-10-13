@@ -163,6 +163,16 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               )}
             </div>
             <CopyFitStringButton fitId={fit.id} />
+            <span className="flex flex-wrap gap-2">
+              <Link className="btn btn--quiet" href={`/fits/new?from=${encodeURIComponent(fit.id)}`}>
+                COPY FIT TO BUILDER
+              </Link>
+              {viewer.userId === fit.authorUserId && (
+                <Link className="btn" href={`/fits/${encodeURIComponent(fit.id)}/edit`}>
+                  EDIT
+                </Link>
+              )}
+            </span>
             {published && viewer.authEnabled && viewer.userId && viewer.userId !== fit.authorUserId && (
               <ReportButton targetKind="fit" targetId={fit.id} label="REPORT FIT" />
             )}

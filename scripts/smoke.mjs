@@ -124,6 +124,17 @@ try {
   await check(up, `/u/${ALICE_ID}`, { has: ["ALICE", "Scarab cipher brawler"], lacks: ["Unfinished idea"] });
   await check(up, "/u/user_nobody", { has: ["HASN&#x27;T PUBLISHED"] });
   await check(up, "/admin/reports", { status: 404 });
+  // The builder: its page renders and loads the catalog from the server, which keeps serving the copy
+  // it holds when the engine stops answering (Review Focus #4).
+  await check(up, "/fits/new", { has: ["LOADING THE CATALOG"] });
+  await check(up, `/fits/new?from=${ids.showcase}`, { has: ["LOADING THE CATALOG"] });
+  await check(up, "/api/catalog", { has: ["SCARAB", "OMNI REPAIRER TURRET", "affinity"] });
+  stub.fail(503);
+  await check(up, "/api/catalog", { has: ["SCARAB"] });
+  stub.fail(null);
+  await check(up, `/fits/${ids.showcase}/edit`, { status: 307 });
+  await check(up, `/fits/${ids.draft}/edit`, { status: 404 });
+  await check(up, `/fits/${ids.showcase}`, { has: ["COPY FIT TO BUILDER"], lacks: [`/fits/${ids.showcase}/edit`] });
   up.child.kill();
 
   // ---- Engine down since start: stored verdicts, a banner, no 500 --------------------------
@@ -135,6 +146,8 @@ try {
   await check(down, `/fits/${ids.removed}`, { has: ["ISN&#x27;T ANSWERING", "Old build regalia runner"] });
   await check(down, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(down, `/u/${ALICE_ID}`, { has: ["Scarab cipher brawler"] });
+  await check(down, "/fits/new", { has: ["LOADING THE CATALOG"] });
+  await check(down, "/api/catalog", { status: 503, has: ["no_catalog"] });
   down.child.kill();
 
   // ---- No database: an unavailable state, not a 500 -----------------------------------------
@@ -145,6 +158,9 @@ try {
   await check(noDb, `/fits/${ids.showcase}`, { has: ["UNAVAILABLE RIGHT NOW"] });
   await check(noDb, `/u/${ALICE_ID}`, { has: ["UNAVAILABLE RIGHT NOW"] });
   await check(noDb, "/admin/reports", { status: 404 });
+  await check(noDb, "/fits/new", { has: ["LOADING THE CATALOG"] });
+  await check(noDb, `/fits/new?from=${ids.showcase}`, { has: ["LOADING THE CATALOG"] });
+  await check(noDb, `/fits/${ids.showcase}/edit`, { has: ["UNAVAILABLE RIGHT NOW"] });
   noDb.child.kill();
   console.log(results.join("\n"));
   console.log(`smoke: ${results.filter((line) => !line.startsWith("==")).length} requests passed`);

@@ -19,9 +19,11 @@ export type LiveEvaluation = {
   result: Evaluated | null;
   /** Why the last request failed (down, rejected). */
   message: string | null;
+  /** The last answered request found the engine down; stays true while a retry waits or runs. */
+  engineDown: boolean;
 };
 
-export const IDLE: LiveEvaluation = { status: "idle", result: null, message: null };
+export const IDLE: LiveEvaluation = { status: "idle", result: null, message: null, engineDown: false };
 
 /** A fit's identity for evaluation: its JSON. */
 export const fitKey = (fit: OpenFit): string => JSON.stringify(fit);
@@ -71,10 +73,10 @@ export function createLiveEvaluator(options: {
     const answer = await options.evaluate(fit, controller.signal);
     if (inFlight !== controller || disposed) return; // superseded by a newer change
     inFlight = null;
-    if (answer.ok) set({ status: "ready", result: { key, response: answer.value }, message: null });
+    if (answer.ok) set({ status: "ready", result: { key, response: answer.value }, message: null, engineDown: false });
     else if (answer.error.kind === "cancelled") return;
-    else if (answer.error.kind === "rejected") set({ status: "rejected", result: state.result, message: answer.error.message });
-    else set({ status: "down", result: state.result, message: answer.error.message });
+    else if (answer.error.kind === "rejected") set({ status: "rejected", result: state.result, message: answer.error.message, engineDown: false });
+    else set({ status: "down", result: state.result, message: answer.error.message, engineDown: true });
   }
 
   return {
@@ -86,7 +88,7 @@ export function createLiveEvaluator(options: {
       }
       const key = fitKey(fit);
       if (state.result?.key === key) {
-        set({ status: "ready", result: state.result, message: null });
+        set({ ...state, status: "ready", message: null });
         return;
       }
       set({ ...state, status: "waiting" });

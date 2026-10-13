@@ -111,11 +111,14 @@ test("an engine that is down is reported, keeps the last answer, and recovers", 
   await settle();
   assert.equal(evaluator.current().status, "down");
   assert.equal(evaluator.current().message, "The loadout engine can't be reached.");
+  assert.equal(evaluator.current().engineDown, true);
   up = true;
   evaluator.request(fit(2));
+  assert.equal(evaluator.current().engineDown, true, "still down while the retry waits");
   timers.tick(EVALUATION_DELAY_MS);
   await settle();
   assert.equal(evaluator.current().status, "ready");
+  assert.equal(evaluator.current().engineDown, false);
 });
 
 test("a fit the engine can't read is 'rejected' with its message; dispose stops everything", async () => {

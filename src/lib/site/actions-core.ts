@@ -5,7 +5,9 @@
 import { AuthError, toAuthRefusal, type AuthErrorReason } from "../auth-errors";
 import type { Author } from "../auth-core";
 import type { EngineClient } from "../engine/client";
+import type { EvaluationIssue, OpenFit } from "../engine/types";
 import type { DatabaseState, Db } from "../fits/db";
+import { publish as publishService, saveDraft, type Refusal } from "../fits/service";
 import {
   FitDataError,
   createComment,
@@ -18,6 +20,7 @@ import {
   setFitHidden,
   setVote,
   type Comment,
+  type FitStatus,
   type ReportTargetKind,
   type Viewer,
 } from "../fits/queries";
@@ -28,14 +31,16 @@ export type ActionAuth = { requireAuthor(): Promise<Author>; requireAdmin(): Pro
 export type ActionDeps = {
   database: () => DatabaseState;
   auth: ActionAuth;
-  engine: Pick<EngineClient, "exportFitString">;
+  engine: Pick<EngineClient, "exportFitString" | "evaluate">;
 };
 
 export type ActionRefusal = {
   ok: false;
-  reason: AuthErrorReason | FitDataError["code"] | "unavailable" | "engine" | "error";
+  reason: AuthErrorReason | FitDataError["code"] | "unavailable" | "engine" | "invalid_fit" | "error";
   status: number;
   message: string;
+  /** Why the engine says the fit isn't valid, when that is the refusal. */
+  issues?: EvaluationIssue[];
 };
 
 export type ActionResult<T extends object = object> = ({ ok: true } & T) | ActionRefusal;
@@ -150,3 +155,57 @@ export function copyFitString(deps: ActionDeps, input: { fitId: string; viewer: 
   });
 }
 
+/** A fit service refusal as an action result. */
+function serviceRefusal(refusal: Refusal): ActionRefusal {
+  switch (refusal.reason) {
+    case "engine":
+      return refuse("engine", refusal.engineError.kind === "rejected" ? 422 : 503, refusal.message);
+    case "invalid_fit":
+      return { ...refuse("invalid_fit", 409, refusal.message), issues: refusal.issues };
+    default:
+      return refuse(refusal.reason, DATA_STATUS[refusal.reason], refusal.message);
+  }
+}
+
+export type SavedFit = {
+  fitId: string;
+  status: FitStatus;
+  updatedAt: string;
+  /** "skipped": the engine didn't answer, so the draft was stored unchecked. */
+  evaluation: "stored" | "skipped";
+};
+
+/**
+ * Saves the builder's fit as the author's draft (a new one, or an edit of theirs), with the engine's
+ * verdict when it answers. Editing a published fit keeps it published, so the new content must pass.
+ */
+export function saveFit(
+  deps: ActionDeps,
+  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit; buildSha: string | null },
+): Promise<ActionResult<{ fit: SavedFit }>> {
+  return withAuthor(deps, "fit save", async (db, author) => {
+    const result = await saveDraft(
+      { db, engine: deps.engine },
+      {
+        authorUserId: author.userId,
+        authorName: author.name,
+        fitId: input.fitId ?? undefined,
+        title: input.title,
+        description: input.description,
+        tags: input.tags,
+        fit: input.fit,
+        buildSha: input.buildSha,
+      },
+    );
+    if (!result.ok) return serviceRefusal(result);
+    return { ok: true, fit: { fitId: result.fit.id, status: result.fit.status, updatedAt: result.fit.updatedAt, evaluation: result.evaluation } };
+  });
+}
+
+/** Publishes the author's saved fit if the engine, asked now, says it is valid; otherwise says why. */
+export function publishFit(deps: ActionDeps, input: { fitId: string }): Promise<ActionResult<{ fitId: string }>> {
+  return withAuthor(deps, "fit publish", async (db, author) => {
+    const result = await publishService({ db, engine: deps.engine }, { fitId: input.fitId, authorUserId: author.userId });
+    return result.ok ? { ok: true, fitId: result.fit.id } : serviceRefusal(result);
+  });
+}

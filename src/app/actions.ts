@@ -4,6 +4,8 @@
 // actions-core function, which authenticates before it writes; a refusal comes back as a value the
 // control shows. Nothing here logs what was sent.
 import { revalidatePath } from "next/cache";
+import { isEditableFit } from "#/lib/engine/open-fit";
+import { FIT_JSON_MAX_BYTES } from "#/lib/fits/limits";
 import * as core from "#/lib/site/actions-core";
 import { actionDeps, pageViewer } from "#/lib/site/server";
 
@@ -61,4 +63,36 @@ export async function copyFitStringAction(fitId: unknown): Promise<core.ActionRe
   if (!isId(fitId)) return BAD_INPUT;
   const viewer = await pageViewer();
   return core.copyFitString(actionDeps(), { fitId, viewer });
+}
+
+/** Generous bounds on what the builder sends; the data layer applies the real limits and words them. */
+function isMeta(value: unknown): value is { title: string; description: string; tags: string[] } {
+  const meta = value as { title?: unknown; description?: unknown; tags?: unknown } | null;
+  return (
+    typeof meta === "object" &&
+    meta !== null &&
+    text(meta.title, 1_000) &&
+    text(meta.description, 40_000) &&
+    Array.isArray(meta.tags) &&
+    meta.tags.length <= 50 &&
+    meta.tags.every((tag) => text(tag, 100))
+  );
+}
+
+export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown, buildSha: unknown): Promise<core.ActionResult<{ fit: core.SavedFit }>> {
+  if ((fitId !== null && !isId(fitId)) || !isMeta(meta) || (buildSha !== null && !text(buildSha, 100))) return BAD_INPUT;
+  if (!isEditableFit(fit) || JSON.stringify(fit).length > FIT_JSON_MAX_BYTES) return BAD_INPUT;
+  const result = await core.saveFit(actionDeps(), { fitId, ...meta, fit, buildSha });
+  if (result.ok) revalidatePath(`/fits/${result.fit.fitId}`);
+  return result;
+}
+
+export async function publishFitAction(fitId: unknown): Promise<core.ActionResult<{ fitId: string }>> {
+  if (!isId(fitId)) return BAD_INPUT;
+  const result = await core.publishFit(actionDeps(), { fitId });
+  if (result.ok) {
+    revalidatePath(`/fits/${fitId}`);
+    revalidatePath("/");
+  }
+  return result;
 }
