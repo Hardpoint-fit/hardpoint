@@ -1,0 +1,41 @@
+{
+ "note": "Engine verdicts (build c919ec0e) for fit-showcase.json with module 5 turned to each rotation.",
+ "cases": [
+  {
+   "moduleIndex": 5,
+   "rotation": 0,
+   "valid": true,
+   "issues": []
+  },
+  {
+   "moduleIndex": 5,
+   "rotation": 1,
+   "valid": false,
+   "issues": [
+    {
+     "moduleIndex": 5,
+     "kind": "Overlap",
+     "message": "This item overlaps another."
+    }
+   ]
+  },
+  {
+   "moduleIndex": 5,
+   "rotation": 2,
+   "valid": true,
+   "issues": []
+  },
+  {
+   "moduleIndex": 5,
+   "rotation": 3,
+   "valid": false,
+   "issues": [
+    {
+     "moduleIndex": 5,
+     "kind": "Overlap",
+     "message": "This item overlaps another."
+    }
+   ]
+  }
+ ]
+}

@@ -128,6 +128,8 @@ export type CatalogHull = {
   def: string;
   name: string;
   shipClass: string;
+  /** The ShipRole of the ship the hull unlocks; "None" when it has none. */
+  role: string;
   rows: number;
   cols: number;
   /** The fitting grid, row-major SlotType names. */

@@ -5,6 +5,7 @@
    "def": "1274722114706556685",
    "name": "SCARAB",
    "shipClass": "Cruiser",
+   "role": "Destroyer",
    "rows": 15,
    "cols": 15,
    "slots": [
@@ -429,6 +430,7 @@
    "def": "1421202711594240286",
    "name": "SERAPH",
    "shipClass": "Cruiser",
+   "role": "Interceptor",
    "rows": 15,
    "cols": 15,
    "slots": [

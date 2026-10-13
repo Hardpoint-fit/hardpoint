@@ -1,0 +1,398 @@
+{
+ "version": 1,
+ "hull": {
+  "def": "1274722114706556685",
+  "roll": {
+   "quality": "Standard",
+   "rarity": "Normal",
+   "modifiers": [],
+   "ports": [],
+   "artifact": null,
+   "regalia": null,
+   "heretical": null,
+   "moduleTypeOverride": null,
+   "isIdentified": true,
+   "isHarmonized": false,
+   "isMirrored": false,
+   "harmonicSet": null,
+   "scaledStat": null
+  },
+  "patina": 0
+ },
+ "progression": {
+  "affinityType": "None",
+  "affinityXp": 0,
+  "allocatedPoints": [],
+  "thresholdSelections": []
+ },
+ "modules": [
+  {
+   "item": {
+    "def": "1284176030826467319",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Augmented",
+     "modifiers": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "tier": 1,
+       "value": "67502",
+       "slot": 0,
+       "isInverted": false,
+       "isFractured": false
+      }
+     ],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 3,
+   "col": 6,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1297320276078073896",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [
+      {
+       "row": 2,
+       "col": 2,
+       "direction": "Up",
+       "cipher": null
+      }
+     ],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 3,
+   "col": 8,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1276464883135659217",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 4,
+   "col": 6,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1278500398224355069",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [
+      {
+       "row": 3,
+       "col": 2,
+       "direction": "Down",
+       "cipher": "1283267483210613362"
+      }
+     ],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 4,
+   "col": 7,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1309670480061494117",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 4,
+   "col": 8,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1329495787612835751",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 6,
+   "col": 6,
+   "rotation": 2
+  },
+  {
+   "item": {
+    "def": "1340739176998289780",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 6,
+   "col": 8,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1343056967634011071",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 7,
+   "col": 5,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1304467395283315534",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 10,
+   "col": 7,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1285107459712062168",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 7,
+   "col": 7,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1387039041809030747",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Normal",
+     "modifiers": [],
+     "ports": [],
+     "artifact": null,
+     "regalia": null,
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 7,
+   "col": 9,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1493464852498204501",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Regalia",
+     "modifiers": [
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "tier": 4,
+       "value": "70123",
+       "slot": 0,
+       "isInverted": false,
+       "isFractured": false
+      }
+     ],
+     "ports": [],
+     "artifact": null,
+     "regalia": "359734331002714082",
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 8,
+   "col": 8,
+   "rotation": 0
+  },
+  {
+   "item": {
+    "def": "1442753905704368467",
+    "roll": {
+     "quality": "Standard",
+     "rarity": "Regalia",
+     "modifiers": [
+      {
+       "stat": "MaxSpeed",
+       "operation": "Multiply",
+       "tier": 4,
+       "value": "70778",
+       "slot": 0,
+       "isInverted": false,
+       "isFractured": false
+      }
+     ],
+     "ports": [],
+     "artifact": null,
+     "regalia": "376835473569659020",
+     "heretical": null,
+     "moduleTypeOverride": null,
+     "isIdentified": true,
+     "isHarmonized": false,
+     "isMirrored": false,
+     "harmonicSet": null,
+     "scaledStat": null
+    },
+    "patina": 0
+   },
+   "row": 9,
+   "col": 7,
+   "rotation": 0
+  }
+ ],
+ "ammo": [
+  {
+   "moduleIndex": 0,
+   "ammoType": "ArmorRepairCharge"
+  }
+ ],
+ "slotOverrides": [
+  {
+   "cell": 0,
+   "slotType": "Core"
+  }
+ ]
+}
