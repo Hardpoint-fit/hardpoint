@@ -75,6 +75,37 @@ test("cursors round-trip and bind to the sort they were made for", () => {
   assert.equal(decodeCursor(text, "new"), undefined);
 });
 
+test("a top-week cursor carries the moment its week counts back from", () => {
+  const cursor = { sort: "top-week", score: 2, at: "2026-10-13 10:00:00+00", id: "abc123DEF4", now: "2026-10-14T12:00:00.000Z" };
+  assert.deepEqual(decodeCursor(encodeCursor(cursor), "top-week"), cursor);
+  const { now: _now, ...without } = cursor;
+  assert.equal(decodeCursor(encodeCursor(without), "top-week"), undefined);
+  assert.equal(decodeCursor(encodeCursor({ ...cursor, now: "last week" }), "top-week"), undefined);
+});
+
+test("a cursor's fields are checked before they reach the database", () => {
+  const good = { sort: "new", score: 0, at: "2026-10-13 10:00:00.5+05:30", id: "abc123DEF4" };
+  assert.deepEqual(decodeCursor(encodeCursor(good), "new"), good);
+  for (const bad of [
+    { at: "2026-10-13T10:00:00Z" },
+    { at: "2026-13-01 10:00:00+00" },
+    { at: "2026-02-30 10:00:00+00" },
+    { at: "2026-10-13 24:00:00+00" },
+    { score: 2_147_483_648 },
+    { score: -1 },
+    { score: 1.5 },
+    { id: "short" },
+    { id: "abc123DEF4'" },
+  ]) {
+    assert.equal(decodeCursor(encodeCursor({ ...good, ...bad }), "new"), undefined, JSON.stringify(bad));
+  }
+});
+
+test("cursors are made without Node's Buffer, so client code can load filters.ts", () => {
+  const text = encodeCursor({ sort: "new", score: 0, at: "2026-10-13 10:00:00+00", id: "ÅbcdefghiJ" });
+  assert.equal(Buffer.from(text, "base64url").toString("utf8").includes("ÅbcdefghiJ"), true);
+});
+
 test("garbage cursors are ignored", () => {
   assert.equal(decodeCursor("not a cursor", "new"), undefined);
   assert.equal(decodeCursor("", "new"), undefined);

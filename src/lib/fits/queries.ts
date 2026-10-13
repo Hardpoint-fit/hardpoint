@@ -362,6 +362,9 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
     );
   }
 
+  const cursor = options.cursor ? decodeCursor(options.cursor, query.sort) : undefined;
+  // A later page of "top this week" keeps the week its first page counted.
+  const now = cursor?.now ?? (options.now ?? new Date()).toISOString();
   const scoreSql =
     query.sort === "top-all"
       ? VOTES_SQL
@@ -370,9 +373,8 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
         : query.sort === "new"
           ? `0`
           : `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id
-               AND v.created_at > ${p.add((options.now ?? new Date()).toISOString())}::timestamptz - interval '7 days')`;
+               AND v.created_at > ${p.add(now)}::timestamptz - interval '7 days')`;
 
-  const cursor = options.cursor ? decodeCursor(options.cursor, query.sort) : undefined;
   const after = cursor
     ? `WHERE (score, sort_at, id) < (${p.add(cursor.score)}::int, ${p.add(cursor.at)}::timestamptz, ${p.add(cursor.id)}::text)`
     : "";
@@ -396,7 +398,13 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
   const last = pageRows[pageRows.length - 1];
   const nextCursor =
     rows.length > size && last
-      ? encodeCursor({ sort: query.sort, score: last.score, at: last.sort_at_text, id: last.id })
+      ? encodeCursor({
+          sort: query.sort,
+          score: last.score,
+          at: last.sort_at_text,
+          id: last.id,
+          ...(query.sort === "top-week" ? { now } : {}),
+        })
       : null;
   return { fits: pageRows.map(mapSummary), nextCursor };
 }

@@ -348,6 +348,38 @@ test("a cursor from another sort or a garbage cursor is ignored, not trusted", a
   assert.equal(junk.fits.length, 2);
 });
 
+test("a crafted cursor reads as the first page instead of failing the query", async () => {
+  for (let i = 0; i < 3; i++) await published();
+  const first = (await browse("sort=new", { limit: 2 })).fits.map((f) => f.id);
+  const crafted = (fields) => Buffer.from(JSON.stringify({ sort: "new", score: 0, at: "2026-10-13 10:00:00+00", id: "abcdefghij", ...fields })).toString("base64url");
+  for (const fields of [{ at: "yesterday" }, { at: "2026-02-31 10:00:00+00" }, { score: 2 ** 31 }, { score: -1 }, { id: "x'; --" }]) {
+    const page = await browse("sort=new", { limit: 2, cursor: crafted(fields) });
+    assert.deepEqual(page.fits.map((f) => f.id), first, JSON.stringify(fields));
+  }
+});
+
+test("every page of top this week counts the same week", async () => {
+  const ids = [];
+  for (let i = 0; i < 4; i++) ids.push((await published(ALICE, { title: `week ${i}` })).id);
+  // Votes eight days old at the second request but inside the week of the first.
+  await setVote(db, { fitId: ids[3], userId: "u1", voted: true });
+  await setVote(db, { fitId: ids[2], userId: "u1", voted: true });
+  await setVote(db, { fitId: ids[2], userId: "u2", voted: true });
+  const firstAt = new Date(Date.now() + 1_000);
+  const first = await browse("sort=top-week", { limit: 2, now: firstAt });
+  assert.deepEqual(first.fits.map((f) => f.id), [ids[2], ids[3]]);
+  const second = await browse("sort=top-week", { limit: 2, cursor: first.nextCursor, now: new Date(firstAt.getTime() + 8 * 86_400_000) });
+  assert.deepEqual(second.fits.map((f) => f.id).sort(), [ids[0], ids[1]].sort(), "nothing repeated or skipped");
+});
+
+test("an admin's crafted report cursor reads as the first page", async () => {
+  const fit = await published();
+  await createReport(db, { targetKind: "fit", targetId: fit.id, reporterUserId: "user_bob", reason: "x" });
+  for (const afterId of ["99999999999999999999", "-1", "1e3", "abc"]) {
+    assert.equal((await listOpenReports(db, { afterId })).reports.length, 1, afterId);
+  }
+});
+
 test("the limit is clamped", async () => {
   await published();
   assert.equal((await browse("", { limit: 0 })).fits.length, 1);
