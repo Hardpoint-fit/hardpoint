@@ -52,7 +52,7 @@ export type GridModule = {
   tier: TierKey;
   anchor: Cell;
   rotation: number;
-  /** Base shape cells; for an unknown item only its anchor cell, the one cell certain to be covered. */
+  /** Base shape cells. An unknown item has no known shape, so only its anchor cell (the bounds' top-left). */
   cells: Cell[];
   /** Cells its Tek Ciphers fill. */
   expansions: Cell[];
