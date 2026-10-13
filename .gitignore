@@ -1,0 +1,8 @@
+node_modules/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+# Written by scripts/prepare-game-assets.mjs from the Unity tree.
+src/app/game-tokens.generated.css
+src/app/fonts/

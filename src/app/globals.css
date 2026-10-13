@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  /* The token sheets leave --font-family to the host; here it is the loaded game font. */
+  --font-family: var(--font-vcr), ui-monospace, monospace;
+}
+
+html,
+body {
+  min-height: 100vh;
+  background: #1a1a1a;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  text-transform: uppercase;
+}
+
+/* The game's panel: hard edges with chamfered top-left and bottom-right corners, one border. */
+.bevel {
+  --cut: 10px;
+  clip-path: polygon(
+    var(--cut) 0,
+    100% 0,
+    100% calc(100% - var(--cut)),
+    calc(100% - var(--cut)) 100%,
+    0 100%,
+    0 var(--cut)
+  );
+}
