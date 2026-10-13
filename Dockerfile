@@ -39,6 +39,12 @@ COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/static 
 # The schema and its apply script run before the server. migrate.mjs needs `pg`, which the standalone
 # trace includes because the pages import src/lib/fits/db.ts (checked by building and running this image).
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/migrate.mjs /repo/js/projects/theorycrafting/src/lib/fits/schema.sql ./src/lib/fits/
+# The re-evaluation job (src/jobs/reevaluate.ts) runs from this same image as a cron service. Node strips
+# the types itself, so there is no compile step: just the job's own files, which import nothing from Next
+# and use `pg` from the standalone node_modules. Start command: `node src/jobs/reevaluate.ts`.
+COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/jobs/reevaluate.ts ./src/jobs/
+COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/engine/client.ts /repo/js/projects/theorycrafting/src/lib/engine/types.ts ./src/lib/engine/
+COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/pool-db.ts /repo/js/projects/theorycrafting/src/lib/fits/queries.ts /repo/js/projects/theorycrafting/src/lib/fits/filters.ts /repo/js/projects/theorycrafting/src/lib/fits/limits.ts /repo/js/projects/theorycrafting/src/lib/fits/service.ts ./src/lib/fits/
 USER app
 EXPOSE 3000
 # Apply the schema first (a no-op when current, and without DATABASE_URL); a failed migration stops the start.

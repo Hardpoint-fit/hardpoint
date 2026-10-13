@@ -55,6 +55,18 @@ All optional, read at run time by `src/lib/config.ts` (through the server-only `
 
 The browser learns its config from the server: the root layout reads the environment per request and passes the public part (`engineUrl`, `clerkPublishableKey`, `authEnabled`) to `PublicConfigProvider`; client code calls `usePublicConfig()`. Nothing is inlined at build time, so one image serves every environment.
 
+## Re-evaluation job
+
+When the engine ships a new build, every published fit needs a fresh verdict. `src/jobs/reevaluate.ts` does that: it reads the build from the engine's `/healthz`, evaluates published (not hidden) fits that have no verdict for it in batches of 50 with at most 4 requests in flight, and stores each one through the same revision guard the site uses, so a fit edited meanwhile keeps its newer content. It is idempotent, logs counts only (never fit contents), waits out an engine 429 (`Retry-After`, at most 5 waits), stops quietly if the engine is down or erroring (exit 0; the next run continues), stops after 10 minutes, and exits 1 only when the database fails or `DATABASE_URL` / `LOADOUT_ENGINE_INTERNAL_URL` is missing.
+
+It runs from the site's own image, with no build step: Node strips the types, and the image carries the job's few files next to the standalone `node_modules` (`pg`). On Railway add a second service from the same repo and Dockerfile, with:
+
+- Start command: `node src/jobs/reevaluate.ts`
+- Cron schedule: `*/15 * * * *`
+- Variables: `DATABASE_URL` (same database) and `LOADOUT_ENGINE_INTERNAL_URL` (the engine's private-network URL, so it uses the private bucket).
+
+Locally: `DATABASE_URL=... LOADOUT_ENGINE_INTERNAL_URL=http://localhost:8080 node src/jobs/reevaluate.ts`. Keep the job's imports to erasable TypeScript with explicit `.ts` paths and nothing from Next.
+
 ## Docker
 
 The build context is the **repo root**, because the build reads the Unity tokens and font:
