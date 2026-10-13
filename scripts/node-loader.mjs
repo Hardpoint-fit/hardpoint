@@ -54,7 +54,8 @@ export function load(url, context, next) {
     });
     return { format: "module", source: outputText, shortCircuit: true };
   }
-  if (url.endsWith(".json") && context.importAttributes?.type !== "json") {
+  // A dependency that `require`s JSON (sharp reads its package.json) keeps Node's own handling.
+  if (url.endsWith(".json") && context.importAttributes?.type !== "json" && !context.conditions?.includes("require")) {
     const source = readFileSync(fileURLToPath(url), "utf8");
     return { format: "module", source: `export default ${source};`, shortCircuit: true };
   }
