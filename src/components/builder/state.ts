@@ -37,6 +37,7 @@ export type RollEdit =
   | { kind: "artifact"; def: string }
   | { kind: "regalia"; def: string }
   | { kind: "heretical"; def: string }
+  | { kind: "ascended"; def: string | null }
   | { kind: "harmonicSet"; def: string }
   | { kind: "typeOverride"; type: string | null }
   | { kind: "addModifier"; stat: string; operation: string; slot: Slot }
@@ -133,6 +134,8 @@ function applyEdit(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll, ed
       return edits.setRegalia(cat, subject, roll, edit.def);
     case "heretical":
       return edits.setHeretical(cat, subject, roll, edit.def);
+    case "ascended":
+      return edits.setAscended(cat, subject, roll, edit.def);
     case "harmonicSet":
       return edits.setHarmonicSet(cat, subject, roll, edit.def);
     case "typeOverride":

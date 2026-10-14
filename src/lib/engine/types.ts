@@ -26,6 +26,8 @@ export type OpenRoll = {
   artifact: string | null;
   regalia: string | null;
   heretical: string | null;
+  /** The ascended form an ascended brand gave beside the special; an older item carries its form as `heretical`. */
+  ascended: string | null;
   moduleTypeOverride: string | null;
   isIdentified: boolean;
   isHarmonized: boolean;

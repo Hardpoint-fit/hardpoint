@@ -171,11 +171,33 @@ export function poolType(subject: RollSubject, roll: Pick<OpenRoll, "moduleTypeO
   return type === "None" ? "Hull" : type;
 }
 
-/** The specials a GULLVEIG BRAND gives this item's effective type. */
-export function hereticalOptions(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll): CatalogHereticalSpecial[] {
+/** Every special a GULLVEIG BRAND gives this item's effective type, standard and ascended. */
+function typeSpecials(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll): CatalogHereticalSpecial[] {
   if (subject.kind !== "module" || !subject.roll.rarities.includes("Heretical")) return [];
   if (roll.moduleTypeOverride === null) return subject.roll.hereticals.flatMap((def) => cat.hereticals.get(def) ?? []);
   return cat.catalog.hereticalSpecials.filter((special) => special.moduleTypes.includes(roll.moduleTypeOverride!));
+}
+
+/**
+ * The specials a GULLVEIG BRAND gives this item's effective type: the standard ones (HereticalRules.TryBrand).
+ * An item branded before ascended forms sat beside a special keeps its form as the special, so a roll that
+ * holds one also lists it.
+ */
+export function hereticalOptions(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll): CatalogHereticalSpecial[] {
+  return typeSpecials(cat, subject, roll).filter((special) => !special.ascended || special.def === roll.heretical);
+}
+
+/** The ascended forms an ascended brand can add beside the roll's standard special: its heresy's, for the type. */
+export function ascendedOptions(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll): CatalogHereticalSpecial[] {
+  const special = roll.heretical === null ? undefined : cat.hereticals.get(roll.heretical);
+  if (roll.rarity !== "Heretical" || !special || special.ascended) return [];
+  return typeSpecials(cat, subject, roll).filter((form) => form.ascended && form.heresy === special.heresy);
+}
+
+/** A brand inverts one line, an ascended brand a second; any other rarity none. */
+export function inversionCount(roll: OpenRoll): number {
+  if (roll.rarity !== "Heretical") return 0;
+  return roll.ascended === null ? 1 : 2;
 }
 
 /** The harmonic sets a Cipher Key completes on this item at its effective type and port count. */
@@ -384,7 +406,7 @@ export function canFracture(roll: OpenRoll, index: number): boolean {
   return modifier.isFractured || !roll.modifiers.some((other) => other.isFractured);
 }
 
-/** A brand inverts one line of a Heretical item: not a fractured one, never VENDOR LICENSE (HereticalRules.CanInvert). */
+/** A brand inverts lines of a Heretical item: not a fractured one, never VENDOR LICENSE (HereticalRules.CanInvert). */
 export function canInvert(roll: OpenRoll, index: number): boolean {
   const modifier = roll.modifiers[index];
   return roll.rarity === "Heretical" && modifier !== undefined && !modifier.isFractured && modifier.stat !== "MerchantSystem";

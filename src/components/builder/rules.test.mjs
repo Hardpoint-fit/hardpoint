@@ -6,6 +6,7 @@ import * as edits from "./roll-edits.ts";
 import {
   FP_ONE,
   addableModifiers,
+  ascendedOptions,
   canFracture,
   canInvert,
   canMirror,
@@ -168,6 +169,36 @@ test("fracture: one line, never inverted or a template's; inversion: one Heretic
   const artifact = edits.setRarity(cat, tracer, defaultRoll(tracer), "Artifact");
   assert.equal(canFracture(artifact, 0), false);
   assert.equal(canMirror(tracer, artifact), false, "YATA can't copy an artifact");
+});
+
+test("an ascended brand adds its heresy's form beside the special and inverts a second line", () => {
+  const tracer = subject("TRACER ROUNDS");
+  let roll = edits.setTypeOverride(cat, tracer, edits.setRarity(cat, tracer, defaultRoll(tracer), "Prototype"), "Drone");
+  roll = edits.setRarity(cat, tracer, roll, "Heretical");
+  while (roll.modifiers.length < 3) {
+    const [line] = addableModifiers(cat, tracer, roll);
+    roll = edits.addModifier(cat, tracer, roll, { stat: line.entry.stat, operation: line.entry.operation, slot: line.slot });
+  }
+  const names = (specials) => specials.map((special) => special.name);
+  assert.deepEqual(names(hereticalOptions(cat, tracer, roll)), ["VIGIL"], "a brand gives a standard special");
+  assert.deepEqual(names(ascendedOptions(cat, tracer, roll)), ["UNTIRING"], "its heresy's ascended form can sit beside it");
+  const inverted = (each) => each.modifiers.flatMap((modifier, index) => (modifier.isInverted ? [index] : []));
+  assert.equal(inverted(roll).length, 1);
+
+  const ascended = edits.setAscended(cat, tracer, roll, ascendedOptions(cat, tracer, roll)[0].def);
+  assert.equal(ascended.heretical, roll.heretical);
+  assert.equal(inverted(ascended).length, 2, "an ascended brand inverts a second line");
+  const third = ascended.modifiers.findIndex((modifier, index) => !modifier.isInverted && canInvert(ascended, index));
+  const moved = edits.setModifierInverted(ascended, third);
+  assert.equal(inverted(moved).length, 2);
+  assert.ok(inverted(moved).includes(third), "inverting a third line keeps two");
+  assert.equal(inverted(edits.setAscended(cat, tracer, ascended, null)).length, 1, "clearing the form leaves one");
+  assert.equal(edits.setRarity(cat, tracer, ascended, "Prototype").ascended, null, "another rarity has no form");
+
+  // An item branded before forms sat beside a special holds its form as the special.
+  const older = { ...roll, heretical: ascended.ascended };
+  assert.deepEqual(names(hereticalOptions(cat, tracer, older)), ["VIGIL", "UNTIRING"]);
+  assert.deepEqual(ascendedOptions(cat, tracer, older), []);
 });
 
 test("ports: up to the catalog's count at its candidate cells; ciphers only from the catalog", () => {

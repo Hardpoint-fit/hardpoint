@@ -14,12 +14,14 @@ import {
   addableModifiers,
   ammoOptions,
   artifactOptions,
+  ascendedOptions,
   canFracture,
   canInvert,
   canMirror,
   harmonicOptions,
   hereticalOptions,
   hullSubject,
+  inversionCount,
   isGrantOnly,
   isTemplated,
   modifierCount,
@@ -178,7 +180,13 @@ function ModifierRow({
           )}
           {roll.rarity === "Heretical" && (
             <label className="check">
-              <input type="radio" name="inverted" checked={modifier.isInverted} disabled={!canInvert(roll, index)} onChange={() => edit({ kind: "inverted", index })} />
+              <input
+                type={inversionCount(roll) > 1 ? "checkbox" : "radio"}
+                name="inverted"
+                checked={modifier.isInverted}
+                disabled={!canInvert(roll, index) || (inversionCount(roll) > 1 && modifier.isInverted)}
+                onChange={() => edit({ kind: "inverted", index })}
+              />
               INVERTED
             </label>
           )}
@@ -423,6 +431,19 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
             options={hereticalOptions(cat, subject, roll).map((special) => ({ ...special, note: special.ascended ? "ASCENDED" : enumWords(special.heresy) }))}
             onChange={(def) => edit({ kind: "heretical", def })}
           />
+        )}
+        {roll.rarity === "Heretical" && ascendedOptions(cat, subject, roll).length > 0 && (
+          <label className="field">
+            ASCENDED FORM
+            <select className="select" value={roll.ascended ?? ""} onChange={(event) => edit({ kind: "ascended", def: event.target.value || null })}>
+              <option value="">NONE</option>
+              {ascendedOptions(cat, subject, roll).map((form) => (
+                <option key={form.def} value={form.def}>
+                  {form.name}
+                </option>
+              ))}
+            </select>
+          </label>
         )}
         {roll.rarity === "Harmonic" && (
           <ReferenceSelect label="HARMONIC SET" value={roll.harmonicSet} options={harmonicOptions(cat, subject, roll)} onChange={(def) => edit({ kind: "harmonicSet", def })} />

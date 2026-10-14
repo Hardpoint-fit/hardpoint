@@ -14,7 +14,9 @@ import {
   entriesFor,
   grantFor,
   harmonicOptions,
+  ascendedOptions,
   hereticalOptions,
+  inversionCount,
   invertValue,
   isGrantOnly,
   isTemplated,
@@ -50,6 +52,7 @@ export function defaultRoll(subject: RollSubject): OpenRoll {
     artifact: null,
     regalia: null,
     heretical: null,
+    ascended: null,
     moduleTypeOverride: null,
     isIdentified: true,
     isHarmonized: false,
@@ -68,6 +71,7 @@ function bare(roll: OpenRoll): OpenRoll {
     artifact: null,
     regalia: null,
     heretical: null,
+    ascended: null,
     moduleTypeOverride: null,
     isHarmonized: false,
     isMirrored: false,
@@ -113,14 +117,19 @@ function keepPoolLines(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll
   return { ...roll, modifiers: kept };
 }
 
-/** A Heretical item carries exactly one inverted line; any other none. */
+const flip = (modifier: OpenModifier, inverted: boolean): OpenModifier =>
+  modifier.isInverted === inverted ? modifier : { ...modifier, isInverted: inverted, value: raw(invertValue(modifier.operation, Number(modifier.value))) };
+
+/**
+ * A Heretical item carries one inverted line, two with an ascended form; any other none. The lines already
+ * inverted stay so while they can be, and the first lines that can be fill the rest.
+ */
 function settleInversion(roll: OpenRoll): OpenRoll {
-  const flip = (modifier: OpenModifier, inverted: boolean): OpenModifier =>
-    modifier.isInverted === inverted ? modifier : { ...modifier, isInverted: inverted, value: raw(invertValue(modifier.operation, Number(modifier.value))) };
-  if (roll.rarity !== "Heretical") return { ...roll, modifiers: roll.modifiers.map((modifier) => flip(modifier, false)) };
-  let chosen = roll.modifiers.findIndex((modifier) => modifier.isInverted);
-  if (chosen < 0 || !canInvert(roll, chosen)) chosen = roll.modifiers.findIndex((_, index) => canInvert(roll, index));
-  return { ...roll, modifiers: roll.modifiers.map((modifier, index) => flip(modifier, index === chosen)) };
+  const count = inversionCount(roll);
+  const chosen = roll.modifiers.flatMap((modifier, index) => (modifier.isInverted && canInvert(roll, index) ? [index] : [])).slice(0, count);
+  for (let index = 0; index < roll.modifiers.length && chosen.length < count; index++)
+    if (!chosen.includes(index) && canInvert(roll, index)) chosen.push(index);
+  return { ...roll, modifiers: roll.modifiers.map((modifier, index) => flip(modifier, chosen.includes(index))) };
 }
 
 function applyTemplate(cat: BuilderCatalog, roll: OpenRoll): OpenRoll {
@@ -165,7 +174,9 @@ function settleRarity(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll)
     case "Heretical": {
       const specials = hereticalOptions(cat, subject, roll);
       const heretical = specials.some((special) => special.def === roll.heretical) ? roll.heretical : (specials[0]?.def ?? null);
-      return settleInversion(fill(cat, subject, keepPoolLines(cat, subject, { ...roll, heretical })));
+      const next = { ...roll, heretical };
+      const ascended = ascendedOptions(cat, subject, next).some((form) => form.def === roll.ascended) ? roll.ascended : null;
+      return settleInversion(fill(cat, subject, keepPoolLines(cat, subject, { ...next, ascended })));
     }
     default:
       return fill(cat, subject, keepPoolLines(cat, subject, roll));
@@ -181,6 +192,7 @@ function withoutReferences(roll: OpenRoll, rarity: string): OpenRoll {
     artifact: null,
     regalia: null,
     heretical: rarity === "Heretical" ? roll.heretical : null,
+    ascended: rarity === "Heretical" ? roll.ascended : null,
     harmonicSet: rarity === "Harmonic" ? roll.harmonicSet : null,
     isHarmonized: false,
     scaledStat: null,
@@ -220,9 +232,19 @@ export function setRegalia(cat: BuilderCatalog, subject: RollSubject, roll: Open
   return applyTemplate(cat, { ...roll, regalia: def });
 }
 
+/** Sets the special; an ascended form of another heresy, or beside an older item's form, is dropped. */
 export function setHeretical(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll, def: string): OpenRoll {
   if (roll.rarity !== "Heretical" || !hereticalOptions(cat, subject, roll).some((each) => each.def === def)) return roll;
-  return { ...roll, heretical: def };
+  const next = { ...roll, heretical: def };
+  const keeps = ascendedOptions(cat, subject, next).some((form) => form.def === roll.ascended);
+  return settleInversion({ ...next, ascended: keeps ? roll.ascended : null });
+}
+
+/** Adds or clears the ascended form beside the special; an ascended brand inverts a second line. */
+export function setAscended(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll, def: string | null): OpenRoll {
+  if (roll.ascended === def) return roll;
+  if (def !== null && !ascendedOptions(cat, subject, roll).some((form) => form.def === def)) return roll;
+  return settleInversion({ ...roll, ascended: def });
 }
 
 export function setHarmonicSet(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll, def: string): OpenRoll {
@@ -286,16 +308,15 @@ export function setModifierFractured(roll: OpenRoll, index: number, fractured: b
   return replaceLine(roll, index, { ...modifier, isFractured: fractured });
 }
 
-/** Moves a Heretical item's one inverted line to this line. */
+/**
+ * Inverts this line of a Heretical item in place of another: the one inverted line moves here, and of an
+ * ascended item's two the line inverted first gives way.
+ */
 export function setModifierInverted(roll: OpenRoll, index: number): OpenRoll {
   if (!canInvert(roll, index) || roll.modifiers[index]!.isInverted) return roll;
-  return {
-    ...roll,
-    modifiers: roll.modifiers.map((modifier, each) => {
-      const inverted = each === index;
-      return modifier.isInverted === inverted ? modifier : { ...modifier, isInverted: inverted, value: raw(invertValue(modifier.operation, Number(modifier.value))) };
-    }),
-  };
+  const inverted = roll.modifiers.flatMap((modifier, each) => (modifier.isInverted ? [each] : []));
+  const kept = inverted.slice(Math.max(0, inverted.length - (inversionCount(roll) - 1)));
+  return { ...roll, modifiers: roll.modifiers.map((modifier, each) => flip(modifier, each === index || kept.includes(each))) };
 }
 
 export function setScaledStrength(cat: BuilderCatalog, roll: OpenRoll, strength: number): OpenRoll {
