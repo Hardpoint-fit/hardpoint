@@ -37,3 +37,40 @@ test("cellSizeCss writes the same rule for the browser to evaluate", () => {
     `round(down, min(100cqw / 12, 88px, max(48px, (100svh - ${GRID_CHROME_HEIGHT}px) / 13)), 1px)`,
   );
 });
+
+/**
+ * Evaluates `cellSizeCss`'s expression the way the browser does, for a container `width` wide in a
+ * viewport whose height leaves `height` for the grid: CSS min/max are Math.min/max, round(down, x, 1px)
+ * is Math.floor, lengths are pixels. Anything else in the expression fails the test.
+ */
+function evaluateCss(expression, { width, height }) {
+  const js = expression
+    .replace(/round\(down, (.*), 1px\)$/, "Math.floor($1)")
+    .replaceAll("min(", "Math.min(")
+    .replaceAll("max(", "Math.max(")
+    .replaceAll("100cqw", String(width))
+    .replaceAll("100svh", String(height + GRID_CHROME_HEIGHT))
+    .replace(/(\d+(?:\.\d+)?)px/g, "$1");
+  assert.match(js, /^[\d\s.+\-*/(),Mathflorinmax]+$/, `only arithmetic is left: ${js}`);
+  return Function(`return ${js}`)();
+}
+
+test("the CSS rule and cellSizeFor agree on every size", () => {
+  const spans = [
+    { rows: 13, cols: 12 },
+    { rows: 5, cols: 5 },
+    { rows: 9, cols: 7 },
+    { rows: 3, cols: 14 },
+  ];
+  const widths = [200, 311, 341, 576, 600, 635, 665, 830, 1200, 1600];
+  const heights = [300, 500, 656, 788, 1000, 2000];
+  for (const span of spans) {
+    for (const width of widths) {
+      for (const height of heights) {
+        assert.equal(evaluateCss(cellSizeCss(span), { width, height }), cellSizeFor({ width, height }, span), JSON.stringify({ span, width, height }));
+      }
+    }
+  }
+  const card = { min: 0, max: 88 };
+  assert.equal(evaluateCss(cellSizeCss({ rows: 9, cols: 7 }, card), { width: 440, height: 440 }), cellSizeFor({ width: 440, height: 440 }, { rows: 9, cols: 7 }, card));
+});

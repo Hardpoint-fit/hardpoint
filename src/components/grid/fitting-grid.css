@@ -203,6 +203,7 @@
   overflow-wrap: anywhere;
   text-align: center;
   pointer-events: none;
+  container-type: inline-size;
 }
 
 /* With art, the name sits top-left over the icon, as the overlay's name does (ModuleOverlay.uss). */
@@ -219,6 +220,15 @@
   position: absolute;
   display: flex;
   pointer-events: none;
+}
+
+/* The label box is a size container, so a name that has no room at 11px (a one-cell footprint drawn
+   under the game's 48px cell, on a phone) is hidden; the tooltip and the module's aria-label still name it.
+   A one-cell label's content box is 38 art px wide: 38px at the game's 48px cell. */
+@container (width < 37.5px) {
+  .fg-module__name {
+    visibility: hidden;
+  }
 }
 
 .fg-module--unknown .fg-module__label {
@@ -245,25 +255,38 @@
   pointer-events: none;
 }
 
+/* The issue marker (anchored at its cell's top-right corner) and the conduit count (at its bottom-left):
+   the game's 12px box and 9px text, scaled, but never under 11px text in a box that holds it, so they
+   stay legible where cells are smaller than the game's (phones). */
+.fg-module__marker,
+.fg-module__count {
+  --fg-badge: max(13px, calc(var(--fg-u) * 12));
+  font-size: max(11px, calc(var(--fg-u) * 9));
+  line-height: 1;
+}
+
 .fg-module__marker {
   position: absolute;
   display: flex;
+  width: var(--fg-badge);
+  height: var(--fg-badge);
   align-items: center;
   justify-content: center;
   background: var(--fg-invalid);
   color: #000;
-  font-size: calc(var(--fg-u) * 9);
+  translate: -100% 0;
   pointer-events: none;
 }
 
 .fg-module__count {
   position: absolute;
   display: flex;
+  height: var(--fg-badge);
   align-items: center;
   padding: 0 calc(var(--fg-u) * 2);
   background: var(--fg-conduit);
   color: #000;
-  font-size: calc(var(--fg-u) * 9);
+  translate: 0 -100%;
   letter-spacing: 0;
   text-transform: lowercase;
   pointer-events: none;

@@ -25,7 +25,7 @@ function CardModules({ modules }: { modules: FitCard["modules"] }) {
   const shown = modules.slice(0, CARD_MODULES);
   const rest = modules.slice(CARD_MODULES).reduce((sum, module) => sum + module.count, 0);
   return (
-    <span className="fit-card__modules" aria-label={`Modules: ${modules.map((module) => (module.count > 1 ? `${module.name} x${module.count}` : module.name)).join(", ")}`}>
+    <span className="fit-card__modules" role="img" aria-label={`Modules: ${modules.map((module) => (module.count > 1 ? `${module.name} x${module.count}` : module.name)).join(", ")}`}>
       {shown.map((module) => (
         <span key={module.def} className="fit-card__module" title={module.name}>
           <ItemIcon src={module.icon} size={40} />

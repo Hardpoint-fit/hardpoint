@@ -69,7 +69,7 @@ test("a module with no art at all keeps its footprint and name, and the grid sti
   const own = html.slice(html.lastIndexOf("<div", start), html.indexOf(`data-module="${bare.index + 1}"`));
   assert.match(own, /fg-module--no-art/);
   assert.doesNotMatch(own.slice(0, own.indexOf('class="tip"')), /fg-module__icon/, "no image in the footprint");
-  assert.match(own, /<span class="fg-module__label "[^>]*>NO ART HERE<\/span>/, "the name stands in for the art");
+  assert.match(own, /<span class="fg-module__label "[^>]*><span class="fg-module__name">NO ART HERE<\/span><\/span>/, "the name stands in for the art");
   assert.match(own, /item-icon item-icon--none/, "the tooltip's placeholder");
 });
 

@@ -166,6 +166,7 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.ok(showcase.modules.every((module) => module.icon?.startsWith("/art/")));
   const shown = data.cards.reduce((sum, card) => sum + Math.min(10, card.modules.length), 0);
   assert.equal(count(html, 'class="fit-card__module"'), shown, "ten kinds a card at most");
+  assert.match(html, /<span class="fit-card__modules" role="img" aria-label="Modules: OMNI REPAIRER TURRET, OMNI REPAIRER TURRET, /, "the strip is named for screen readers");
   assert.match(html, /<span class="fit-card__module-more">\+3<\/span>/, "the showcase's other three summed up");
   // A kind fitted twice is one icon with its count; an item the build lacks is UNKNOWN ITEM with no art.
   const twice = cardModules({ moduleItems: [showcase, showcase].map(() => ({ def: FIXTURES.catalog.items[0].def, rarity: "Normal", isIdentified: true, artifact: null })).concat([{ def: "gone", rarity: "Normal", isIdentified: true, artifact: null }]) }, FIXTURES.catalog);

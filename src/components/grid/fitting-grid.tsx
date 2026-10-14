@@ -80,9 +80,6 @@ export function showsName(module: Pick<GridModule, "cells" | "known" | "icon">):
   return box !== null && box.cols >= 2 && box.rows >= 2;
 }
 
-/** The issue marker's and conduit count's height, in art pixels. */
-const MARKER = 12;
-
 /** Where a module's icon sits, in art pixels from its shape's bounds (geometry.ts iconBox at the game's cell). */
 const iconBoxOf = (cells: readonly Cell[]) => iconBox(cells, CELL, INSET);
 
@@ -220,16 +217,16 @@ function ModuleView({
           className={`fg-module__label ${icon ? "fg-module__label--name" : ""}`}
           style={place(px(labelBox.minCol - box.minCol) + INSET, px(labelBox.minRow - box.minRow) + INSET, px(labelBox.cols) - 2 * INSET, px(labelBox.rows) - 2 * INSET)}
         >
-          {module.name}
+          <span className="fg-module__name">{module.name}</span>
         </span>
       )}
       {module.issues.length > 0 && (
-        <span className="fg-module__marker" style={place(firstAt.x + CELL - INSET - MARKER, firstAt.y + INSET, MARKER, MARKER)} aria-hidden="true">
+        <span className="fg-module__marker" style={place(firstAt.x + CELL - INSET, firstAt.y + INSET)} aria-hidden="true">
           !
         </span>
       )}
       {module.conduitConnections !== null && module.conduitConnections > 0 && (
-        <span className="fg-module__count" style={place(firstAt.x + INSET + 1, firstAt.y + CELL - INSET - MARKER, undefined, MARKER)} aria-hidden="true">
+        <span className="fg-module__count" style={place(firstAt.x + INSET + 1, firstAt.y + CELL - INSET)} aria-hidden="true">
           x{module.conduitConnections}
         </span>
       )}
