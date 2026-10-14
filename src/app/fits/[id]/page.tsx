@@ -20,12 +20,15 @@ const revParam = (search: { rev?: string | string[] }) => (search.rev === undefi
 
 export async function generateMetadata({ params, searchParams }: { params: Params; searchParams: Search }): Promise<Metadata> {
   const { id } = await params;
-  const { data } = await load(id, revParam(await searchParams));
-  if (data.status !== "ok") return { title: "Fit · hardpoint.fit" };
+  // Always the latest: a revision is a read-only view of the same fit, kept out of search results.
+  const { data } = await load(id, null);
+  const robots = (await searchParams).rev === undefined ? undefined : { index: false, follow: true };
+  if (data.status !== "ok") return { title: "Fit · hardpoint.fit", robots };
   const hull = data.hull?.name ?? "Ship";
   const description = `${hull} fit by ${data.fit.authorName}: ${data.fit.votes} upvotes.`;
   return {
     title: `${data.fit.title} · ${hull} · hardpoint.fit`,
+    robots,
     description,
     openGraph: { title: data.fit.title, description, type: "article" },
     twitter: { card: "summary_large_image", title: data.fit.title, description },

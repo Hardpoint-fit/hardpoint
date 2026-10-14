@@ -11,6 +11,7 @@ import { createEngineMonitor } from "../../lib/engine/engine-state.ts";
 import { deadEngineUrl, startStubEngine } from "../../lib/engine/stub-engine.mjs";
 import { createTestDb } from "../../lib/fits/test-db.mjs";
 import { updateFit } from "../../lib/fits/queries.ts";
+import { toEvaluationInput } from "../../lib/fits/service.ts";
 import { loadBrowse, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
 import { FitCards } from "./browse-view.tsx";
@@ -201,13 +202,21 @@ test("a fit lists its history, and a fit with none shows no HISTORY section", as
 
 test("?rev=N is read-only on that revision: banner, its words and fit string source, no stats for an old one", async () => {
   // The tests above left two revisions: 1 (renamed) and 2 (described); the seeded one was deleted.
+  // Revision 3 changes the content, so revision 1 no longer equals the fit and has no stats.
+  const changed = { ...FIXTURES.fit, modules: FIXTURES.fit.modules.slice(0, 1) };
+  await updateFit(db, {
+    id: ids.pending,
+    authorUserId: BOB.userId,
+    content: { hullItem: changed.hull.def, fit: changed },
+    evaluation: { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: FIXTURES.health.buildSha },
+  });
   const html = await renderFit(stub.url, ids.pending, anonymous(false), "1");
-  assert.match(html, /REVISION 1 OF 2/);
+  assert.match(html, /REVISION 1 OF 3/);
   assert.match(html, /VIEW LATEST/);
   assert.match(html, /STATS ARE SHOWN FOR THE LATEST REVISION/);
   assert.doesNotMatch(html, /<span>(MODIFIERS|HULL SPECS)<\/span>/);
   assert.match(html, /Waiting, renamed/, "the first revision's title");
   assert.doesNotMatch(html, /More words/, "the later revision's description");
   assert.match(html, /\/fits\/new\?from=[A-Za-z0-9]+&amp;rev=1"/, "copy to builder carries the revision");
-  assert.equal(count(html, 'data-module="'), FIXTURES.fit.modules.length);
+  assert.equal(count(html, 'data-module="'), FIXTURES.fit.modules.length, "the revision's own modules, not the current one's");
 });

@@ -13,7 +13,7 @@ export default async function NewFitPage({ searchParams }: { searchParams: Searc
   const params = await searchParams;
   const from = typeof params.from === "string" && /^[A-Za-z0-9]{1,40}$/.test(params.from) ? params.from : undefined;
   // `rev` only means something beside `from`: it picks the revision of that fit to copy.
-  const rev = from !== undefined && typeof params.rev === "string" ? params.rev : undefined;
+  const rev = from !== undefined && params.rev;
   const viewer = await pageViewer();
   const data = await loadBuilder(siteDeps(), { copyFrom: from, rev }, viewer);
   if (data.status !== "ok")

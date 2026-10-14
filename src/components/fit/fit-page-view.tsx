@@ -253,27 +253,29 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               <p className="note">STATS ARE SHOWN FOR THE LATEST REVISION.</p>
             </Panel>
           )}
-          {statsShown && <Panel
-            title="HULL SPECS"
-            aside={shown.reference ? (shown.referenceIsOld ? `LAST VALID · ${buildLabel(shown.reference.buildSha)}` : buildLabel(shown.reference.buildSha)) : undefined}
-          >
-            {shown.reference === null ? (
-              <p className="note">THIS FIT HAS NEVER PASSED THE ENGINE, SO IT HAS NO STATS.</p>
-            ) : (
-              <>
-                {shown.referenceIsOld && shown.standing === "outdated" && (
-                  <p className="note note--error">THIS FIT FAILS ON THE CURRENT BUILD. THESE STATS ARE FROM ITS LAST VALID BUILD.</p>
-                )}
-                {shown.result.sections === null ? (
-                  // Stored before the engine sent hull specs: the re-evaluation job asks again. An outdated
-                  // fit's last valid build can't be asked again, so it says so rather than promise.
-                  <p className="note">{shown.standing === "outdated" ? "NO HULL SPECS WERE KEPT FROM ITS LAST VALID BUILD." : SPECS_PENDING}</p>
-                ) : (
-                  <HullSpecs sections={shown.result.sections} />
-                )}
-              </>
-            )}
-          </Panel>}
+          {statsShown && (
+            <Panel
+              title="HULL SPECS"
+              aside={shown.reference ? (shown.referenceIsOld ? `LAST VALID · ${buildLabel(shown.reference.buildSha)}` : buildLabel(shown.reference.buildSha)) : undefined}
+            >
+              {shown.reference === null ? (
+                <p className="note">THIS FIT HAS NEVER PASSED THE ENGINE, SO IT HAS NO STATS.</p>
+              ) : (
+                <>
+                  {shown.referenceIsOld && shown.standing === "outdated" && (
+                    <p className="note note--error">THIS FIT FAILS ON THE CURRENT BUILD. THESE STATS ARE FROM ITS LAST VALID BUILD.</p>
+                  )}
+                  {shown.result.sections === null ? (
+                    // Stored before the engine sent hull specs: the re-evaluation job asks again. An outdated
+                    // fit's last valid build can't be asked again, so it says so rather than promise.
+                    <p className="note">{shown.standing === "outdated" ? "NO HULL SPECS WERE KEPT FROM ITS LAST VALID BUILD." : SPECS_PENDING}</p>
+                  ) : (
+                    <HullSpecs sections={shown.result.sections} />
+                  )}
+                </>
+              )}
+            </Panel>
+          )}
           {statsShown && shown.reference !== null && (
             <Panel title="MODIFIERS">
               <StatsTable stats={shown.result.stats} catalog={engine.catalog} />

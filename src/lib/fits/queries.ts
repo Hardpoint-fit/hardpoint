@@ -555,7 +555,6 @@ export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetai
   const tags = input.tags === undefined ? undefined : validateTags(input.tags);
   const content = input.content === undefined ? undefined : validateContent(input.content.hullItem, input.content.fit);
   if (input.evaluation && !content) invalid("An evaluation needs new content to belong to.");
-  const note = validateRevisionNote(input.note);
 
   return db.transaction(async (tx) => {
     const { rows } = await tx.query<Row>(`SELECT author_user_id, status FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
@@ -583,7 +582,10 @@ export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetai
       await tx.query(`DELETE FROM fit_evaluations WHERE fit_id = $1`, [input.id]);
       if (input.evaluation) await insertEvaluation(tx, input.id, input.evaluation);
     }
-    if (current.status === "published") await appendRevision(tx, { fitId: input.id, buildSha: input.evaluation?.buildSha ?? null, note });
+    // Only a note that will be stored is checked: a draft's save ignores it.
+    if (current.status === "published") {
+      await appendRevision(tx, { fitId: input.id, buildSha: input.evaluation?.buildSha ?? null, note: validateRevisionNote(input.note) });
+    }
     const fit = await getFit(tx, input.id, {
       viewer: { userId: input.authorUserId, isAdmin: false },
       buildSha: input.evaluation?.buildSha ?? null,

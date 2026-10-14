@@ -250,7 +250,8 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     return reachable ? { status: "not_found", engine } : { status: "unavailable", engine };
   }
   const comments = fit.status === "published" || viewer.isAdmin ? ((await guarded("comments", () => listComments(db, id, { viewer }))) ?? []) : [];
-  const revisions = (await guarded("revisions", () => listRevisions(db, id))) ?? [];
+  const listed = await guarded("revisions", () => listRevisions(db, id));
+  const revisions = listed ?? [];
   const current = shownEvaluation(fit, engine.currentSha);
 
   let shownFit = fit;
@@ -261,8 +262,9 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     const wanted: Revision | null = number === null ? null : await guarded("revision", () => getRevision(db, id, number));
     if (wanted === null || number === null) return { status: "not_found", engine };
     const latest = revisions[0]?.revision ?? wanted.revision;
-    // The stored verdict is of the fit's present content: it describes this revision only if it is the latest and still current.
-    const statsShown = wanted.revision === latest && wanted.matchesCurrent;
+    // The stored verdict is of the fit's present content: it describes any revision whose content equals it.
+    // Without the revision list (it failed) nothing vouches for the page, so no stats are shown.
+    const statsShown = listed !== null && wanted.matchesCurrent;
     shownFit = { ...fit, title: wanted.title, description: wanted.description, tags: wanted.tags, hullItem: wanted.hullItem, fit: wanted.fit };
     shown = statsShown ? current : NO_STATS;
     revision = { number: wanted.revision, of: latest, statsShown, note: wanted.note, createdAt: wanted.createdAt };
@@ -314,7 +316,7 @@ export const COPY_UNAVAILABLE = "THAT FIT CAN'T BE COPIED RIGHT NOW. START FROM 
  * the catalog); a copy reads a fit the viewer can see and keeps none of its words but its tags; an edit
  * is the author's alone.
  */
-export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { fitId?: string; copyFrom?: string; rev?: string }, viewer: Viewer): Promise<BuilderData> {
+export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { fitId?: string; copyFrom?: string; rev?: unknown }, viewer: Viewer): Promise<BuilderData> {
   if (!request.fitId && !request.copyFrom) return { status: "ok", start: NEW_START };
   const db = databaseOf(deps);
   if (request.fitId) {

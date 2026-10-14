@@ -319,3 +319,30 @@ test("the builder copies a revision's content when asked, and refuses one the fi
   const hidden = await loadBuilder(deps, { copyFrom: ids.draft, rev: "1" }, ANONYMOUS);
   assert.equal(hidden.start.fit, null, "another pilot's draft is not copyable");
 });
+
+test("stats show for any revision whose content equals the current fit, and for none when the revision list fails", async () => {
+  const { id } = await fitWithHistory();
+  // Revision 4 restores revision 1's content: 1 and 4 both equal it, 3 no longer does.
+  const verdict = { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: CURRENT_SHA };
+  await updateFit(db, { id, authorUserId: ALICE.userId, content: { hullItem: FIXTURES.fit.hull.def, fit: FIXTURES.fit }, evaluation: verdict, note: "Reverted" });
+  const deps = depsFor(stub.url);
+  assert.equal((await loadFitPage(deps, id, ANONYMOUS, "1")).revision.statsShown, true, "an older revision equal to the current content");
+  assert.equal((await loadFitPage(deps, id, ANONYMOUS, "4")).revision.statsShown, true);
+  assert.equal((await loadFitPage(deps, id, ANONYMOUS, "3")).revision.statsShown, false);
+
+  const failing = {
+    ...db,
+    query: (text, params) => (/FROM fit_revisions WHERE fit_id = \$1 ORDER BY/.test(text) ? Promise.reject(new Error("down")) : db.query(text, params)),
+  };
+  const broken = await loadFitPage(depsFor(stub.url, () => ({ status: "ready", db: failing })), id, ANONYMOUS, "4");
+  assert.equal(broken.status, "ok");
+  assert.equal(broken.revision.statsShown, false);
+  assert.equal(broken.shown.reference, null);
+});
+
+test("the builder treats a repeated rev like the fit page does: copy unavailable, never the latest", async () => {
+  const { id } = await fitWithHistory();
+  const result = await loadBuilder(depsFor(stub.url), { copyFrom: id, rev: ["1", "2"] }, ANONYMOUS);
+  assert.equal(result.start.fit, null);
+  assert.ok(result.start.note);
+});

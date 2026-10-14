@@ -898,3 +898,10 @@ test("deleting a fit deletes its revisions and only its own", async () => {
   assert.deepEqual(await revisionsOf(fit.id), []);
   assert.deepEqual(await revisionsOf(other.id), [1]);
 });
+
+test("a draft's save ignores a note it won't store, even one that would be refused on a published fit", async () => {
+  const fit = await draft();
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Still a draft", note: "x".repeat(500) });
+  assert.equal((await getFit(db, fit.id, { viewer: ALICE })).title, "Still a draft");
+  assert.deepEqual(await revisionsOf(fit.id), []);
+});
