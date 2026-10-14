@@ -1,16 +1,17 @@
 // The /api/catalog response: the catalog the server holds, compressed for the browser (~800 KB of JSON
 // is ~60 KB as brotli) and revalidated by build. Each build's bodies are compressed once and kept until
 // the next build replaces them.
+import { createHash } from "node:crypto";
 import { brotliCompressSync, constants, gzipSync } from "node:zlib";
 import type { Catalog } from "./types.ts";
 
 type Encoding = "br" | "gzip" | "identity";
-type Bodies = { buildSha: string; identity: Buffer; gzip?: Buffer; br?: Buffer };
+type Bodies = { catalog: Catalog; identity: Buffer; gzip?: Buffer; br?: Buffer };
 
 let held: Bodies | null = null;
 
 function bodies(catalog: Catalog): Bodies {
-  if (held?.buildSha !== catalog.buildSha) held = { buildSha: catalog.buildSha, identity: Buffer.from(JSON.stringify(catalog)) };
+  if (held?.catalog !== catalog) held = { catalog, identity: Buffer.from(JSON.stringify(catalog)) };
   return held;
 }
 
@@ -46,8 +47,13 @@ export function matchesEtag(ifNoneMatch: string | null, etag: string): boolean {
   });
 }
 
-export function catalogResponse(catalog: Catalog, request: Request): Response {
-  const etag = `"${catalog.buildSha}"`;
+/**
+ * `engineEtag` is the engine's tag for this catalog, a hash of its content, so browsers drop their copy
+ * whenever the engine's catalog changes, not only when the game build does. Without one, the tag is a hash
+ * of the body this server sends.
+ */
+export function catalogResponse(catalog: Catalog, request: Request, engineEtag: string | null = null): Response {
+  const etag = engineEtag?.replace(/^W\//, "") ?? `"${createHash("sha256").update(bodies(catalog).identity).digest("hex")}"`;
   const headers: Record<string, string> = { etag, "cache-control": "no-cache", vary: "accept-encoding" };
   if (matchesEtag(request.headers.get("if-none-match"), etag)) return new Response(null, { status: 304, headers });
   const encoding = pickEncoding(request.headers.get("accept-encoding"));

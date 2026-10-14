@@ -19,9 +19,11 @@ export type CatalogCache = {
   get(): Promise<EngineResult<Catalog>>;
   /** What is held right now, without any request. */
   peek(): Catalog | null;
+  /** The engine's ETag for what is held (null before the first fetch, or when the engine sent none). */
+  etag(): string | null;
 };
 
-type Held = { catalog: Catalog; etag: string; nextCheckAt: number };
+type Held = { catalog: Catalog; etag: string | null; nextCheckAt: number };
 
 export function createCatalogCache(client: Pick<EngineClient, "catalog">, options: CatalogCacheOptions = {}): CatalogCache {
   const recheckMs = options.recheckMs ?? 60_000;
@@ -31,6 +33,7 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
   let inFlight: Promise<EngineResult<Catalog>> | null = null;
 
   async function refresh(): Promise<EngineResult<Catalog>> {
+    // The catalog is the same only if the engine says so by its tag: the same build can carry new content.
     const result = await client.catalog({ ifNoneMatch: held?.etag ?? null });
     if (!result.ok) {
       if (held) {
@@ -46,7 +49,7 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
       return { ok: true, value: held.catalog };
     }
     const { catalog, etag } = result.value;
-    held = { catalog, etag: etag ?? `"${catalog.buildSha}"`, nextCheckAt: now() + recheckMs };
+    held = { catalog, etag, nextCheckAt: now() + recheckMs };
     return { ok: true, value: catalog };
   }
 
@@ -60,5 +63,6 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
       return inFlight;
     },
     peek: () => held?.catalog ?? null,
+    etag: () => held?.etag ?? null,
   };
 }

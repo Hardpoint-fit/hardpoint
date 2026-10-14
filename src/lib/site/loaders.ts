@@ -27,7 +27,7 @@ import { baseIcon } from "../art/item-icon";
 export type SiteDeps = {
   database: () => DatabaseState;
   engine: EngineMonitor;
-  catalog: { get(): Promise<EngineResult<Catalog>>; peek(): Catalog | null };
+  catalog: { get(): Promise<EngineResult<Catalog>>; peek(): Catalog | null; etag(): string | null };
 };
 
 export type PageEngine = {

@@ -57,6 +57,24 @@ test("a new build replaces the held catalog", async () => {
   assert.equal(cache.peek().buildSha, "next-build");
 });
 
+test("a new engine etag on the same build replaces the held catalog", async () => {
+  const cache = make();
+  await cache.get();
+  const first = cache.etag();
+  assert.ok(first);
+  const next = { ...FIXTURES.catalog, items: FIXTURES.catalog.items.slice(1) };
+  stub.route("GET /v1/catalog", (req, res) => {
+    res.writeHead(200, { "content-type": "application/json", etag: '"content-2"' });
+    res.end(JSON.stringify(next));
+  });
+  clock += 61_000;
+  const result = await cache.get();
+  assert.equal(result.value.buildSha, FIXTURES.catalog.buildSha);
+  assert.equal(result.value.items.length, next.items.length);
+  assert.equal(cache.etag(), '"content-2"');
+  assert.notEqual(cache.etag(), first);
+});
+
 test("when revalidation fails the held catalog keeps serving, and retries wait", async () => {
   const cache = make();
   await cache.get();
