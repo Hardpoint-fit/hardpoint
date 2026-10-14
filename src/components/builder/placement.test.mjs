@@ -1,13 +1,13 @@
-// Drag feedback: bounds, disabled cells and overlap, with rotation, against the catalog's shapes and
-// the engine's own verdicts.
+// The drop verdict: bounds, the catalog's cell rules, matching hardpoints and overlap, with rotation,
+// against the catalog's shapes and the engine's own verdicts.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { cellKey } from "../grid/geometry.ts";
 import { FIXTURES } from "../../lib/engine/stub-engine.mjs";
-import { cellsAt, dropPreview, firstOpenCell, gridOf, takenCells } from "./placement.ts";
+import { cellsAt, dropPreview, firstOpenCell, fitsAnywhere, gridOf, hardpointTargets, nowhereReason, placementVerdict, takenCells } from "./placement.ts";
 import { indexCatalog } from "./rules.ts";
 import { initialState, reduce } from "./state.ts";
-import { SCARAB, itemNamed } from "./test-catalog.mjs";
+import { SCARAB, SERAPH, itemNamed } from "./test-catalog.mjs";
 
 const catalog = FIXTURES.catalog;
 const cat = indexCatalog(catalog);
@@ -40,15 +40,15 @@ test("every catalog shape keeps its cell count at every rotation and fits on the
 });
 
 test("the preview refuses cells outside the grid, disabled cells and other modules' cells", () => {
-  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 4, col: 6 })).fits, true);
-  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 14, col: 14 })).fits, false, "runs off the grid");
-  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 11, col: 7 })).fits, false, "row 12 is disabled");
-  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 4, col: 6 }, 1)).fits, true);
-  // With a turret at (5,6): the unturned L covers it, turned twice it covers (4,6) (4,7) (5,7) instead.
-  const withTurret = reduce(cat, reduce(cat, reduce(cat, { ...initialState(empty) }, { type: "pickUp", def: itemNamed(catalog, "OMNI REPAIRER TURRET").def }), { type: "hover", cell: { row: 5, col: 6 } }), { type: "drop" }).fit;
+  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 4, col: 6 })).verdict.ok, true);
+  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 14, col: 14 })).verdict.ok, false, "runs off the grid");
+  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 11, col: 7 })).verdict.ok, false, "row 12 is disabled");
+  assert.equal(dropPreview(cat, empty, held(HEATSINK.def, { row: 4, col: 6 }, 1)).verdict.ok, true);
+  // With a conduit at (5,6): the unturned L covers it, turned twice it covers (4,6) (4,7) (5,7) instead.
+  const withTurret = reduce(cat, reduce(cat, reduce(cat, { ...initialState(empty) }, { type: "pickUp", def: itemNamed(catalog, "PROPULSION CONDUIT").def }), { type: "hover", cell: { row: 5, col: 6 } }), { type: "drop" }).fit;
   assert.equal(withTurret.modules.length, 1);
-  assert.equal(dropPreview(cat, withTurret, held(HEATSINK.def, { row: 4, col: 6 }, 0)).fits, false, "rotation 0 covers (5,6)");
-  assert.equal(dropPreview(cat, withTurret, held(HEATSINK.def, { row: 4, col: 6 }, 2)).fits, true, "rotation 2 doesn't");
+  assert.equal(dropPreview(cat, withTurret, held(HEATSINK.def, { row: 4, col: 6 }, 0)).verdict.ok, false, "rotation 0 covers (5,6)");
+  assert.equal(dropPreview(cat, withTurret, held(HEATSINK.def, { row: 4, col: 6 }, 2)).verdict.ok, true, "rotation 2 doesn't");
   assert.equal(dropPreview(cat, empty, held(HEATSINK.def, null)), null, "off the grid: no preview");
 });
 
@@ -58,7 +58,7 @@ test("overlap feedback agrees with the engine's verdict for a turned module besi
     const module = fit.modules[verdict.moduleIndex];
     const moving = { source: { kind: "module", index: verdict.moduleIndex }, rotation: verdict.rotation, cursor: { row: module.row, col: module.col }, grab: { row: 0, col: 0 } };
     const overlaps = verdict.issues.some((issue) => issue.kind === "Overlap");
-    assert.equal(dropPreview(cat, fit, moving).fits, !overlaps, `rotation ${verdict.rotation}`);
+    assert.equal(dropPreview(cat, fit, moving).verdict.ok, !overlaps, `rotation ${verdict.rotation}`);
   }
 });
 
@@ -76,6 +76,130 @@ test("a module being moved doesn't block itself; cipher cells count as taken", (
 test("slot overrides open cells the hull has disabled", () => {
   const grid = gridOf(cat, FIXTURES.fit);
   assert.equal(grid.slots[0], "Core", "fit.json overrides cell 0");
-  assert.equal(dropPreview(cat, FIXTURES.fit, held(itemNamed(catalog, "PROPULSION CONDUIT").def, { row: 0, col: 0 })).fits, true);
+  assert.equal(dropPreview(cat, FIXTURES.fit, held(itemNamed(catalog, "PROPULSION CONDUIT").def, { row: 0, col: 0 })).verdict.ok, true);
   assert.deepEqual(firstOpenCell(grid), { row: 0, col: 0 });
 });
+
+// ---- The verdict -----------------------------------------------------------------------------
+
+const HARDENER = itemNamed(catalog, "ARMOR HARDENER");
+const TURRET = itemNamed(catalog, "OMNI REPAIRER TURRET");
+const SERAPH_FIT = reduce(cat, initialState(), { type: "start", hull: SERAPH }).fit;
+const at = (def, row, col, rotation = 0, fit = empty, extra = {}) => placementVerdict(cat, fit, { def, anchor: { row, col }, rotation, ...extra });
+
+test("the catalog carries the game's cell rules: battery, subsystem and propulsion items need their own hardpoint", () => {
+  assert.equal(HARDENER.slotType, "Subsystem");
+  assert.deepEqual(cat.placement.get("Subsystem"), { slotType: "Subsystem", covers: ["Battery", "Subsystem", "Core", "Propulsion", "Harpoon"], hardpoint: "Subsystem" });
+  assert.equal(cat.placement.get("Core").hardpoint, null);
+});
+
+test("ARMOR HARDENER is refused off a subsystem hardpoint, with the reason, and taken over one", () => {
+  // SCARAB's subsystem hardpoints are (7,6) (7,7) (8,5). Unturned, the 1x3 runs down a column.
+  const shape = (rotation) => cellsAt(cat, HARDENER.def, { row: 0, col: 0, rotation }).map(cellKey).sort();
+  assert.deepEqual(shape(0), ["0,0", "1,0", "2,0"]);
+  const off = at(HARDENER.def, 4, 6);
+  assert.equal(off.ok, false);
+  assert.equal(off.kind, "MissingHardpoint");
+  assert.equal(off.reason, "NEEDS A SUBSYSTEM HARDPOINT");
+  assert.deepEqual(off.offending.map(cellKey), off.cells.map(cellKey), "the whole footprint is to blame");
+  const on = at(HARDENER.def, 5, 6);
+  assert.equal(on.ok, true, "(5,6) (6,6) (7,6) covers the hardpoint at (7,6)");
+  assert.deepEqual(keys(on.cells), ["5,6", "6,6", "7,6"]);
+});
+
+test("rotation moves the footprint onto or off a hardpoint", () => {
+  // At (6,6) the unturned 1x3 runs down to the hardpoint at (7,6); turned once it lies along row 6,
+  // over (6,6) (6,7) (6,8), none of them a subsystem hardpoint.
+  assert.equal(at(HARDENER.def, 6, 6, 0).ok, true);
+  assert.deepEqual(keys(at(HARDENER.def, 6, 6, 1).cells), ["6,6", "6,7", "6,8"]);
+  assert.equal(at(HARDENER.def, 6, 6, 1).reason, "NEEDS A SUBSYSTEM HARDPOINT");
+  assert.equal(at(HARDENER.def, 7, 5, 1).ok, true, "along row 7 it covers both hardpoints there");
+});
+
+test("a battery item needs a battery hardpoint, a core item doesn't need one", () => {
+  assert.equal(at(TURRET.def, 5, 8).ok, true, "(5,8) is a battery hardpoint");
+  assert.equal(at(TURRET.def, 5, 6).reason, "NEEDS A BATTERY HARDPOINT");
+  assert.equal(at(itemNamed(catalog, "TRACER ROUNDS").def, 4, 6).ok, true);
+});
+
+test("outside the grid and on cells that aren't part of the fitting reads OUTSIDE THE GRID", () => {
+  const off = at(HARDENER.def, 13, 7);
+  assert.equal(off.kind, "OutOfBounds");
+  assert.equal(off.reason, "OUTSIDE THE GRID");
+  assert.deepEqual(keys(off.offending), ["13,7", "14,7", "15,7"], "row 15 is past the grid, rows 13 and 14 aren't fitting cells");
+  const none = at(HARDENER.def, 0, 0);
+  assert.equal(none.kind, "SlotNotFittable");
+  assert.equal(none.reason, "OUTSIDE THE GRID");
+});
+
+test("a cell type no module fits on is named", () => {
+  const fit = { ...empty, slotOverrides: [{ cell: 4 * 15 + 6, slotType: "SafetyCargo" }] };
+  const verdict = at(itemNamed(catalog, "TRACER ROUNDS").def, 4, 6, 0, fit);
+  assert.equal(verdict.kind, "SlotNotFittable");
+  assert.equal(verdict.reason, "NOTHING FITS ON SAFETY CARGO CELLS");
+  assert.deepEqual(keys(verdict.offending), ["4,6"]);
+});
+
+test("overlap names the module in the way; a moved module doesn't block itself", () => {
+  const one = withModuleAt(TURRET.def, 5, 8);
+  const verdict = at(itemNamed(catalog, "TRACER ROUNDS").def, 4, 8, 0, one);
+  assert.equal(verdict.kind, "Overlap");
+  assert.equal(verdict.reason, "OVERLAPS OMNI REPAIRER TURRET");
+  assert.deepEqual(keys(verdict.offending), ["5,8"]);
+  assert.equal(at(TURRET.def, 5, 8, 0, one, { moving: 0 }).ok, true);
+});
+
+test("bounds come before cell types, cell types before overlap, overlap before the hardpoint", () => {
+  const one = withModuleAt(TURRET.def, 5, 8);
+  // From (4,8) down: (4,8) Core, (5,8) the turret, (6,8) Core; no subsystem hardpoint either.
+  assert.equal(at(HARDENER.def, 4, 8, 0, one).kind, "Overlap");
+  assert.equal(at(HARDENER.def, 13, 8, 0, one).kind, "OutOfBounds");
+});
+
+test("the held item's hardpoint targets are the empty cells of its type", () => {
+  assert.deepEqual(keys(hardpointTargets(cat, empty, HARDENER.def)), ["7,6", "7,7", "8,5"]);
+  assert.deepEqual(hardpointTargets(cat, empty, itemNamed(catalog, "TRACER ROUNDS").def), [], "a core item needs none");
+  const one = withModuleAt(TURRET.def, 5, 8);
+  assert.deepEqual(keys(hardpointTargets(cat, one, TURRET.def)), ["3,6", "3,8", "6,7"]);
+  assert.deepEqual(keys(hardpointTargets(cat, one, TURRET.def, 0)), ["3,6", "3,8", "5,8", "6,7"], "the moved turret frees its own");
+});
+
+test("an item fits nowhere when its hardpoints are gone, and the palette says why", () => {
+  assert.equal(fitsAnywhere(cat, empty, HARDENER.def), true);
+  let full = empty;
+  for (const [row, col] of [[3, 6], [3, 8], [5, 8], [6, 7]]) full = withModuleAt(TURRET.def, row, col, full);
+  assert.equal(full.modules.length, 4);
+  assert.equal(fitsAnywhere(cat, full, TURRET.def), false);
+  assert.equal(nowhereReason(cat, full, TURRET.def), "EVERY BATTERY HARDPOINT IS TAKEN");
+  const noSubsystems = { ...SERAPH_FIT, slotOverrides: [{ cell: 4 * 15 + 7, slotType: "Core" }, { cell: 8 * 15 + 7, slotType: "Core" }] };
+  assert.equal(fitsAnywhere(cat, noSubsystems, HARDENER.def), false);
+  assert.equal(nowhereReason(cat, noSubsystems, HARDENER.def), "THIS HULL HAS NO SUBSYSTEM HARDPOINT");
+});
+
+test("the builder refuses exactly the drops the engine refuses (recorded engine verdicts)", () => {
+  const bases = { SCARAB: empty, SERAPH: SERAPH_FIT, "fit.json": FIXTURES.fit };
+  let checked = 0;
+  for (const recorded of FIXTURES.placementOracle.cases) {
+    const fit = bases[recorded.base];
+    let index = 0;
+    for (let row = recorded.rows[0]; row <= recorded.rows[1]; row++) {
+      for (let col = recorded.cols[0]; col <= recorded.cols[1]; col++) {
+        const engine = recorded.verdicts[index++];
+        const verdict = placementVerdict(cat, fit, { def: recorded.item, anchor: { row, col }, rotation: recorded.rotation });
+        const where = `${recorded.base} ${recorded.name} r${recorded.rotation} at (${row},${col}): engine ${engine}, builder ${verdict.ok ? "." : verdict.kind}`;
+        assert.equal(verdict.ok, engine === ".", where);
+        if (engine === "H") assert.equal(verdict.kind, "MissingHardpoint", where);
+        checked++;
+      }
+    }
+  }
+  assert.ok(checked > 8000, `${checked} drops checked`);
+  const letters = new Set(FIXTURES.placementOracle.cases.flatMap((each) => [...each.verdicts]));
+  for (const letter of [".", "S", "O", "H"]) assert.ok(letters.has(letter), `the recording has ${letter} verdicts`);
+});
+
+function withModuleAt(def, row, col, fit = empty) {
+  const placed = reduce(cat, reduce(cat, reduce(cat, initialState(fit), { type: "pickUp", def }), { type: "hover", cell: { row, col } }), { type: "drop" }).fit;
+  assert.equal(placed.modules.length, fit.modules.length + 1, `placed at (${row},${col})`);
+  return placed;
+}

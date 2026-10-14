@@ -8,7 +8,6 @@ import {
   outerEdges,
   overlappingItems,
   placeFootprint,
-  placementFeedback,
   rotateDirection,
   rotateShape,
   rotateShapeCell,
@@ -107,42 +106,11 @@ test("overlaps agree with the engine's verdict for each rotation of a module nex
   }
 });
 
-test("the engine-valid showcase fit sits inside the grid on enabled cells with no overlap", () => {
-  const fit = FIXTURES.fitShowcase;
-  const slots = applySlotOverrides(hull.slots, fit.slotOverrides);
-  const cells = occupied(fit);
-  assert.equal(overlappingItems(cells).size, 0);
-  for (const moduleCells of cells) {
-    const feedback = placementFeedback(moduleCells, { rows: hull.rows, cols: hull.cols, slots }, new Set());
-    assert.equal(feedback.fits, true, JSON.stringify(feedback));
-  }
-});
-
 test("the engine's overlapping fit overlaps here too", () => {
   const fit = FIXTURES.fit;
   const overlapping = { ...fit, modules: [fit.modules[0], fit.modules[0]] };
   assert.deepEqual([...overlappingItems(occupied(overlapping))].sort(), [0, 1]);
   assert.equal(overlappingItems(occupied(fit)).size, 0);
-});
-
-test("drag feedback names cells outside the grid, on disabled cells and on taken cells", () => {
-  const grid = { rows: 3, cols: 3, slots: ["Core", "Core", "None", "Core", "Core", "Core", "Core", "Core", "Core"] };
-  const taken = new Set(["1,1"]);
-  const result = placementFeedback(
-    [
-      { row: 0, col: 2 },
-      { row: 1, col: 1 },
-      { row: 3, col: 0 },
-      { row: 0, col: 0 },
-    ],
-    grid,
-    taken,
-  );
-  assert.equal(result.fits, false);
-  assert.deepEqual(result.outside, [{ row: 3, col: 0 }]);
-  assert.deepEqual(result.disabled, [{ row: 0, col: 2 }]);
-  assert.deepEqual(result.overlapping, [{ row: 1, col: 1 }]);
-  assert.equal(placementFeedback([{ row: 0, col: 0 }], grid, taken).fits, true);
 });
 
 test("outer edges outline an L", () => {

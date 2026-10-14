@@ -158,7 +158,16 @@ export type Catalog = {
   ciphers: CatalogCipher[];
   affinity: CatalogAffinity;
   qualities: CatalogQuality[];
+  /** Where an item of each slot type may sit on a fitting grid, read from the game's FittingSlotRules. */
+  placement: CatalogSlotPlacement[];
 };
+
+/**
+ * Every cell an item of `slotType` covers must be one of `covers`; with a `hardpoint`, at least one must be
+ * a cell of that type. Bounds and overlap are geometry; battery families and unique rolls stay with the
+ * evaluation.
+ */
+export type CatalogSlotPlacement = { slotType: string; covers: string[]; hardpoint: string | null };
 
 export type CatalogHull = {
   def: string;

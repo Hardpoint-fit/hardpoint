@@ -176,7 +176,7 @@ function removeModule(fit: OpenFit, index: number): OpenFit {
 
 function place(cat: BuilderCatalog, state: BuilderState, fit: OpenFit, held: Held): BuilderState {
   const preview = dropPreview(cat, fit, held);
-  if (!preview?.fits) return state;
+  if (!preview?.verdict.ok) return state;
   const { anchor } = preview;
   if (held.source.kind === "module") {
     const index = held.source.index;

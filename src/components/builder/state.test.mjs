@@ -67,6 +67,26 @@ test("a drop that doesn't fit (overlap, disabled cell, outside) changes nothing 
   assert.equal(run(outside, { type: "cancel" }, { type: "cancel" }).selected, null, "a second cancel clears the selection");
 });
 
+test("a drop off a matching hardpoint changes nothing: ARMOR HARDENER stays in hand until it is over a subsystem hardpoint", () => {
+  const HARDENER = item("ARMOR HARDENER").def;
+  const held = run(started(), { type: "pickUp", def: HARDENER }, { type: "hover", cell: { row: 4, col: 6 } });
+  const refused = run(held, { type: "drop" });
+  assert.equal(refused.fit, held.fit, "the fit is the same object");
+  assert.equal(refused.revision, held.revision);
+  assert.ok(refused.held, "still held");
+  const released = run(held, { type: "release" });
+  assert.equal(released.fit, held.fit, "a released illegal drop goes back to the palette");
+  assert.equal(released.held, null);
+  // Over (5,6) (6,6) (7,6) it covers the subsystem hardpoint at (7,6).
+  const placed = run(refused, { type: "hover", cell: { row: 5, col: 6 } }, { type: "drop" });
+  assert.equal(placed.fit.modules.length, 1);
+  assert.equal(placed.held, null);
+  // Turning a fitted one in place where the turn would leave the hardpoint takes it in hand instead.
+  const turned = run(placed, { type: "select", target: 0 }, { type: "pickUpModule", index: 0 }, { type: "rotate" }, { type: "hover", cell: { row: 6, col: 6 } }, { type: "drop" });
+  assert.equal(turned.fit, placed.fit, "turned along row 6 it covers no subsystem hardpoint");
+  assert.ok(turned.held);
+});
+
 test("release puts the item down where it fits and back where it came from otherwise", () => {
   const one = withModule(HEATSINK, 4, 6);
   const back = run(one, { type: "pickUpModule", index: 0 }, { type: "hover", cell: { row: 14, col: 14 } }, { type: "release" });

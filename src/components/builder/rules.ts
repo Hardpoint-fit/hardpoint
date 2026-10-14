@@ -18,6 +18,7 @@ import type {
   CatalogRegalia,
   CatalogRoll,
   CatalogScaledStatRange,
+  CatalogSlotPlacement,
   CatalogTemplateLine,
   OpenModifier,
   OpenRoll,
@@ -40,6 +41,8 @@ export type BuilderCatalog = {
   pools: Map<string, CatalogModifierSlots>;
   /** Regalia set def to its name and piece count, as the grid model reads it. */
   regaliaSets: Map<string, { name: string; pieces: number }>;
+  /** Item slot type to the cells it may cover and the hardpoint it needs (placement.ts reads it). */
+  placement: Map<string, CatalogSlotPlacement>;
 };
 
 const byDef = <T extends { def: string }>(list: readonly T[]) => new Map(list.map((entry) => [entry.def, entry]));
@@ -56,6 +59,7 @@ export function indexCatalog(catalog: Catalog): BuilderCatalog {
     ciphers: byDef(catalog.ciphers),
     pools: new Map(catalog.modifierPools.map((pool) => [pool.moduleType, pool.modifiers])),
     regaliaSets: new Map(catalog.regaliaSets.map((set) => [set.def, { name: set.name, pieces: set.pieces.length }])),
+    placement: new Map(catalog.placement.map((rule) => [rule.slotType, rule])),
   };
 }
 

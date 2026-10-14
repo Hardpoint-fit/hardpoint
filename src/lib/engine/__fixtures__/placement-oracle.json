@@ -1,0 +1,1445 @@
+{
+ "note": "Engine verdicts (build c919ec0e) for one default-roll palette item dropped on each base fit; verdicts: one letter per anchor row by row, \".\" accepted, B OutOfBounds, D DisabledCell, S SlotNotFittable, O Overlap, H MissingHardpoint, T TooManyBatteries.",
+ "cases": [
+  {
+   "base": "SCARAB",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSS..HSSSSSS..HSSSSS...HHSSSSSHHHSSSSSSSHSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSSHSSSSSSSSHSSSSSSSSHSSSSSSS...SSSSS..HHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSS..HSSSSSS..HSSSSS...HHSSSSSHHHSSSSSSSHSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSSHSSSSSSSSHSSSSSSSSHSSSSSSS...SSSSS..HHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSS..HSSSSS...HHSSSS.HHHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSSHHSSSSSSSHHSSSSSSSHHSSSSSS...HSSSS..HHHHSSSSHHHHSSSSSSHHSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSS..HSSSSS...HHSSSS.HHHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSSHHSSSSSSSHHSSSSSSSHHSSSSSS...HSSSS..HHHHSSSSHHHHSSSSSSHHSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSSHHHSSSSSSHH.SSSSSSH.HSSSSSHHHHHSSSHHHHHHHSSSHHHHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSSHHHSSSSSSHH.SSSSSSH.HSSSSSHHHHHSSSHHHHHHHSSSHHHHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSSHHHSSSSSSHH.SSSSSSH.HSSSSSHHHHHSSSHHHHHHHSSSHHHHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSSHHHSSSSSSHH.SSSSSSH.HSSSSSHHHHHSSSHHHHHHHSSSHHHHHSSSSSHHHSSSSSSSHSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSSHHHSSSSSHHHHHSSSSHH.HHSSSSSH.HSSSSSSS.SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSSHHSSSSSSSHHSSSSSSSHHSSSSSSHHHHSSSSHHHHHHSSSSH..HSSSSSS..SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSSHHHSSSSSHHHHHSSSSHH.HHSSSSSH.HSSSSSSS.SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSSHHSSSSSSSHHSSSSSSSHHSSSSSSHHHHSSSSHHHHHHSSSSH..HSSSSSS..SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSSHHHSSSSSHHHHHSSSHHHHHHHSSSHH.HHSSSSSH.HSSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSSHHHSSSSSHHHHHSSSHHHHHHHSSSHH.HHSSSSSH.HSSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSSHHHSSSSSHHHHHSSSHHHHHHHSSSHH.HHSSSSSH.HSSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSHSHSSSSSSHHHSSSSSSHHHSSSSSSHHHSSSSSHHHHHSSSHHHHHHHSSSHH.HHSSSSSH.HSSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.SSSSSSSS..SSSSSSS..SSSSSSS...SSSSS.....SSSS....SSSSSS..SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSS..SSSSSSS..SSSSSSS..SSSSSS....SSSSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSS..SSSSSSS..SSSSSSS..SSSSSS....SSSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSS.SSSSSSS..SSSSSSS..SSSSSS...SSSSS.....SSSSS....SSSSSS..SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSS...SSSSSS...SSSSSS...SSSSS.....SSSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSS..SSSSSSS..SSSSSSS..SSSSSS....SSSS......SSSS....SSSSSS..SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSS...SSSSSS...SSSSSS...SSSSS.....SSSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSSSSSSSSSS..SSSSSSS..SSSSSSS..SSSSSS....SSSS......SSSS....SSSSSS..SSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSS...SSSSSS...SSSSSS...SSSSS.....SSS.......SSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSS...SSSSSS...SSSSSS...SSSSS.....SSS.......SSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSS...SSSSSS...SSSSSS...SSSSS.....SSS.......SSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SCARAB",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSS.S.SSSSSS...SSSSSS...SSSSSS...SSSSS.....SSS.......SSS.....SSSSS...SSSSSSS.SSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSH.HSSSSHHHSSSSH.HSSSHH.HHSSHS.SHSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS.SSSSSSHSSSSSSHSSSSSHHHSSSS...SSSSHHHSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSH.HSSSSHHHSSSSH.HSSSHH.HHSSHS.SHSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS.SSSSSSHSSSSSSHSSSSSHHHSSSS...SSSSHHHSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSH.HSSSSHHHSSSSHHHSSSHH.HHSSHH.HHSSHSHSHSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSSHHSSSSSHHSSSSHHHHSSSH..HSSSHHHHSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSH.HSSSSHHHSSSSHHHSSSHH.HHSSHH.HHSSHSHSHSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSSHHSSSSSHHSSSSHHHHSSSH..HSSSHHHHSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS.H.SSSSHHHSSSSHHHSSSHHHHHSS.HHH.SSHHHHHSSHSHSHSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS.H.SSSSHHHSSSSHHHSSSHHHHHSS.HHH.SSHHHHHSSHSHSHSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS.H.SSSSHHHSSSSHHHSSSHHHHHSS.HHH.SSHHHHHSSHSHSHSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS.H.SSSSHHHSSSSHHHSSSHHHHHSS.HHH.SSHHHHHSSHSHSHSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHHSSSSHHHSSSSHHHSSSHHHHHSSH.H.HSS.SHS.SSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHSSSSSHHSSSSSHHSSSSHHHHSSSHHHHSSS....SSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHHSSSSHHHSSSSHHHSSSHHHHHSSH.H.HSS.SHS.SSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHSSSSSHHSSSSSHHSSSSHHHHSSSHHHHSSS....SSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHHSSSSHHHSSSSHHHSSSHHHHHSSHHHHHSSH.H.HSS.SHS.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHHSSSSHHHSSSSHHHSSSHHHHHSSHHHHHSSH.H.HSS.SHS.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHHSSSSHHHSSSSHHHSSSHHHHHSSHHHHHSSH.H.HSS.SHS.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSSHHHSSSSHHHSSSSHHHSSSHHHHHSSHHHHHSSH.H.HSS.SHS.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSS..SSSSS...SSS....SSS....SSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSS..SSSSS..SSSS....SSS....SSS.S.SSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSS..SSSSS..SSSS....SSS....SSSS.S.SSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSS..SSSS...SSSS....SSS....SSSSSSSSSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS...SSSS...SSSS...SSS.....SS.....SS.S.S.SSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSS..SSSSS..SSSS....SSS....SSS....SSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS...SSSS...SSSS...SSS.....SS.....SS.S.S.SSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS..SSSSS..SSSSS..SSSS....SSS....SSS....SSSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 0,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS...SSSS...SSSS...SSS.....SS.....SS.....SS.S.S.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 1,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS...SSSS...SSSS...SSS.....SS.....SS.....SS.S.S.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 2,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS...SSSS...SSSS...SSS.....SS.....SS.....SS.S.S.SSSSSSSS"
+  },
+  {
+   "base": "SERAPH",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 3,
+   "rows": [
+    3,
+    11
+   ],
+   "cols": [
+    4,
+    10
+   ],
+   "verdicts": "SSSSSSSSS...SSSS...SSSS...SSS.....SS.....SS.....SS.S.S.SSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOHOOOSSSSSSOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOSSSSSOOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOHOOOSSSSSSOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304164571492635706",
+   "name": "ARMOR HARDENER",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOSSSSSOOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOHOOOSSSSSHOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOHSSSSHOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOHOOOSSSSSHOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1285107459712062168",
+   "name": "AUTO VENTING",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOHSSSSHOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1284176030826467319",
+   "name": "OMNI REPAIRER TURRET",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOHOOOSSSSSHOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOHSSSSHOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOHOOOSSSSSHOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1304467395283315534",
+   "name": "LIGHTFRAME THRUSTERS",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOHSSSSHOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOHOSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOHOSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOHOSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1442753905704368467",
+   "name": "INERTIA COUPLER",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOHOSSSSSOOOOOSSSHOHOOHHSSSHHOOOSSSSSHOHSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSOOOOOSSSSSOOOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOOSSSSSOOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOOSSSSS.OOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1493464852498204501",
+   "name": "HEATSINK MAGAZINE",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSO.OOOOSSSSSOOOSSSSSSOOSSSSSSSOSSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSO.OOOSSSSS.OOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOO.SSSS.OOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSSO.OOOSSSSS.OOOSSSSSSOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1340739176998289780",
+   "name": "TRACER ROUNDS",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSOOOSSSSSOOOOOSSSOOOOO.SSSS.OOOOSSSSSOOSSSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 0,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSS.O.OO..SSS..OOOSSSSS.O.SSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 1,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSS.O.OO..SSS..OOOSSSSS.O.SSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 2,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSS.O.OO..SSS..OOOSSSSS.O.SSSSSSSOSSSSSSSSSSSSS"
+  },
+  {
+   "base": "fit.json",
+   "item": "1387039041809030747",
+   "name": "PROPULSION CONDUIT",
+   "rotation": 3,
+   "rows": [
+    2,
+    12
+   ],
+   "cols": [
+    3,
+    11
+   ],
+   "verdicts": "SSSSSSSSSSSSOSOSSSSSSOOOSSSSSSOOOSSSSSSO.OSSSSSOOOOOSSS.O.OO..SSS..OOOSSSSS.O.SSSSSSSOSSSSSSSSSSSSS"
+  }
+ ]
+}

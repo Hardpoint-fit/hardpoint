@@ -1,8 +1,12 @@
-// Where a held item would land and whether it fits: inside the grid, on enabled cells, clear of the
-// other modules. Only drag feedback, from the grid's geometry module; slot types, hardpoints and every
-// other placement rule are the engine's. Pure: no React.
-import { applySlotOverrides, cellKey, placeFootprint, placementFeedback, type Cell } from "#/components/grid/geometry";
+// Where a held item would land and whether the game would take it there, decided before the drop: inside
+// the grid, on cells its slot type may cover, over a matching hardpoint when it needs one, and clear of
+// the other modules. The cell rules are the engine catalog's `placement`, which the engine reads from the
+// game's FittingSlotRules (and tests against its placement walk); this module only applies them to the
+// grid's geometry. Rules a drop can't break with a fresh roll (battery families, unique regalia,
+// artifacts and heretical specials) stay with the engine's evaluation. Pure: no React.
+import { applySlotOverrides, cellKey, insideGrid, placeFootprint, type Cell } from "#/components/grid/geometry";
 import type { OpenFit, OpenModule, OpenPort } from "#/lib/engine/types";
+import { enumWords } from "./labels";
 import type { BuilderCatalog } from "./rules";
 
 export type GridShape = { rows: number; cols: number; slots: string[] };
@@ -25,13 +29,127 @@ export function moduleCellsOf(cat: BuilderCatalog, module: OpenModule): Cell[] {
   return cellsAt(cat, module.item.def, module, module.item.roll.ports);
 }
 
+/** Which module (by index) fills each cell, but one's (the module being moved). */
+export function cellOwners(cat: BuilderCatalog, fit: OpenFit, except: number | null = null): Map<string, number> {
+  const owners = new Map<string, number>();
+  fit.modules.forEach((module, index) => {
+    if (index !== except) for (const cell of moduleCellsOf(cat, module)) if (!owners.has(cellKey(cell))) owners.set(cellKey(cell), index);
+  });
+  return owners;
+}
+
 /** Every cell the fit's modules fill, but one's (the module being moved). */
 export function takenCells(cat: BuilderCatalog, fit: OpenFit, except: number | null = null): Set<string> {
-  const taken = new Set<string>();
-  fit.modules.forEach((module, index) => {
-    if (index !== except) for (const cell of moduleCellsOf(cat, module)) taken.add(cellKey(cell));
+  return new Set(cellOwners(cat, fit, except).keys());
+}
+
+/** The engine's issue kind each refusal stands for (StableLoadoutIssueKind). */
+export type RefusalKind = "UnknownItem" | "OutOfBounds" | "SlotNotFittable" | "Overlap" | "MissingHardpoint";
+
+export type Verdict =
+  | { ok: true; cells: Cell[] }
+  /** `reason` is the player-facing words; `offending` the footprint cells to blame (all of them for a missing hardpoint). */
+  | { ok: false; kind: RefusalKind; reason: string; cells: Cell[]; offending: Cell[] };
+
+/** What a verdict is asked about: an item (with its ports, for cipher cells) at an anchor and rotation. */
+export type Candidate = {
+  def: string;
+  anchor: Cell;
+  rotation: number;
+  ports?: readonly OpenPort[];
+  /** The fitted module being moved, which doesn't block itself. */
+  moving?: number | null;
+};
+
+/** Words for a slot type's cell: hardpoints by their type, CORE SLOT for the rest. */
+export function hardpointName(slotType: string): string {
+  return slotType === "Core" ? "CORE SLOT" : `${enumWords(slotType)} HARDPOINT`;
+}
+
+/** Context a verdict reads, built once per fit (and per moved module) so anchor scans stay cheap. */
+export type PlacementContext = { grid: GridShape; owners: Map<string, number> };
+
+export function placementContext(cat: BuilderCatalog, fit: OpenFit, moving: number | null = null): PlacementContext | null {
+  const grid = gridOf(cat, fit);
+  return grid ? { grid, owners: cellOwners(cat, fit, moving) } : null;
+}
+
+/**
+ * Whether the game would take the item here, judged as FittingPlacementRules walks a footprint: every cell
+ * inside the grid, of a type the item's slot type may cover, not taken, and (for a battery, subsystem or
+ * propulsion item) at least one cell of its own type. The first broken rule is the reason, in that order.
+ */
+export function placementVerdict(cat: BuilderCatalog, fit: OpenFit, candidate: Candidate, context?: PlacementContext | null): Verdict {
+  const ctx = context ?? placementContext(cat, fit, candidate.moving ?? null);
+  const item = cat.items.get(candidate.def);
+  const cells = cellsAt(cat, candidate.def, { ...candidate.anchor, rotation: candidate.rotation }, candidate.ports ?? []);
+  const refuse = (kind: RefusalKind, reason: string, offending: Cell[]): Verdict => ({ ok: false, kind, reason, cells, offending });
+  const rule = item ? cat.placement.get(item.slotType) : undefined;
+  if (!ctx || !item || !rule) return refuse("UnknownItem", "NOT IN THE CURRENT BUILD", cells);
+  const { grid, owners } = ctx;
+
+  const outside = cells.filter((cell) => !insideGrid(cell, grid) || grid.slots[cell.row * grid.cols + cell.col] === "None");
+  if (outside.length > 0) return refuse(outside.some((cell) => !insideGrid(cell, grid)) ? "OutOfBounds" : "SlotNotFittable", "OUTSIDE THE GRID", outside);
+
+  const slotOf = (cell: Cell) => grid.slots[cell.row * grid.cols + cell.col]!;
+  const unfit = cells.filter((cell) => !rule.covers.includes(slotOf(cell)));
+  if (unfit.length > 0) return refuse("SlotNotFittable", `NOTHING FITS ON ${enumWords(slotOf(unfit[0]!))} CELLS`, unfit);
+
+  const overlapping = cells.filter((cell) => owners.has(cellKey(cell)));
+  if (overlapping.length > 0) {
+    const other = fit.modules[owners.get(cellKey(overlapping[0]!))!];
+    const name = other ? (cat.items.get(other.item.def)?.name ?? "ANOTHER MODULE") : "ANOTHER MODULE";
+    return refuse("Overlap", `OVERLAPS ${name}`, overlapping);
+  }
+
+  if (rule.hardpoint !== null && !cells.some((cell) => slotOf(cell) === rule.hardpoint)) {
+    return refuse("MissingHardpoint", `NEEDS A ${hardpointName(rule.hardpoint)}`, cells);
+  }
+  return { ok: true, cells };
+}
+
+/** The hardpoint an item needs under it, or null when any fittable cell will do. */
+export function requiredHardpoint(cat: BuilderCatalog, def: string): string | null {
+  const item = cat.items.get(def);
+  return item ? (cat.placement.get(item.slotType)?.hardpoint ?? null) : null;
+}
+
+/**
+ * The empty cells of the hardpoint type a held item needs: the game's drag highlight (FitCellHighlight),
+ * drawn so the player sees where it can go before trying. Empty for an item that needs none.
+ */
+export function hardpointTargets(cat: BuilderCatalog, fit: OpenFit, def: string, moving: number | null = null): Cell[] {
+  const hardpoint = requiredHardpoint(cat, def);
+  const ctx = placementContext(cat, fit, moving);
+  if (hardpoint === null || !ctx) return [];
+  const cells: Cell[] = [];
+  ctx.grid.slots.forEach((slot, index) => {
+    const cell = { row: Math.floor(index / ctx.grid.cols), col: index % ctx.grid.cols };
+    if (slot === hardpoint && !ctx.owners.has(cellKey(cell))) cells.push(cell);
   });
-  return taken;
+  return cells;
+}
+
+/** Whether the item fits anywhere on the fit as it stands, at any rotation (the palette's check). */
+export function fitsAnywhere(cat: BuilderCatalog, fit: OpenFit, def: string, context?: PlacementContext | null): boolean {
+  const ctx = context ?? placementContext(cat, fit);
+  if (!ctx) return false;
+  const hardpoint = requiredHardpoint(cat, def);
+  if (hardpoint !== null && !ctx.grid.slots.some((slot, index) => slot === hardpoint && !ctx.owners.has(cellKey({ row: Math.floor(index / ctx.grid.cols), col: index % ctx.grid.cols }))))
+    return false;
+  for (let rotation = 0; rotation < 4; rotation++)
+    for (let row = 0; row < ctx.grid.rows; row++)
+      for (let col = 0; col < ctx.grid.cols; col++) if (placementVerdict(cat, fit, { def, anchor: { row, col }, rotation }, ctx).ok) return true;
+  return false;
+}
+
+/** Why an item fits nowhere on this fit: the hull lacks its hardpoint, or there is no room left. */
+export function nowhereReason(cat: BuilderCatalog, fit: OpenFit, def: string): string {
+  const hardpoint = requiredHardpoint(cat, def);
+  const grid = gridOf(cat, fit);
+  if (hardpoint !== null && grid && !grid.slots.includes(hardpoint)) return `THIS HULL HAS NO ${hardpointName(hardpoint)}`;
+  if (hardpoint !== null && hardpointTargets(cat, fit, def).length === 0) return `EVERY ${hardpointName(hardpoint)} IS TAKEN`;
+  return "NO ROOM FOR IT ON THE GRID";
 }
 
 /** What is being placed: a palette item or a fitted module, turned, held at a cursor cell. */
@@ -52,17 +170,16 @@ export function heldPorts(fit: OpenFit, held: Held): readonly OpenPort[] {
   return held.source.kind === "module" ? (fit.modules[held.source.index]?.item.roll.ports ?? []) : [];
 }
 
-export type DropPreview = { anchor: Cell; cells: Cell[]; fits: boolean };
+export const heldModule = (held: Held): number | null => (held.source.kind === "module" ? held.source.index : null);
 
-/** Where the held item would go and whether it fits; null while the cursor is off the grid. */
+export type DropPreview = { anchor: Cell; verdict: Verdict };
+
+/** Where the held item would go and the verdict there; null while the cursor is off the grid. */
 export function dropPreview(cat: BuilderCatalog, fit: OpenFit, held: Held): DropPreview | null {
-  const grid = gridOf(cat, fit);
   const def = heldDef(fit, held);
-  if (!grid || !held.cursor || def === null) return null;
+  if (!held.cursor || def === null || !gridOf(cat, fit)) return null;
   const anchor = { row: held.cursor.row - held.grab.row, col: held.cursor.col - held.grab.col };
-  const cells = cellsAt(cat, def, { ...anchor, rotation: held.rotation }, heldPorts(fit, held));
-  const except = held.source.kind === "module" ? held.source.index : null;
-  return { anchor, cells, fits: placementFeedback(cells, grid, takenCells(cat, fit, except)).fits };
+  return { anchor, verdict: placementVerdict(cat, fit, { def, anchor, rotation: held.rotation, ports: heldPorts(fit, held), moving: heldModule(held) }) };
 }
 
 /** The first enabled cell, row by row: where a keyboard placement starts. */

@@ -19,6 +19,8 @@ export const FIXTURES = {
   evaluateRemovedItem: fixture("evaluate-removed-item.json"),
   /** Engine verdicts for fit-showcase.json with module 5 at each rotation (two overlap the cipher's cell). */
   rotationOracle: fixture("rotation-oracle.json"),
+  /** Engine verdicts for single palette drops on empty hulls and fit.json (scripts/record-placement-oracle.mjs). */
+  placementOracle: fixture("placement-oracle.json"),
   exported: fixture("export.json"),
   imported: fixture("import.json"),
   error: fixture("error.json"),

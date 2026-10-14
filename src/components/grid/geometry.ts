@@ -1,8 +1,9 @@
 // Fitting-grid geometry: where a module's cells, ports and Tek Cipher cells land for a placement.
 // Pure functions over plain data, shared by the read-only fit page and the builder's drag feedback.
 // The rules mirror the game's own (Simulation/ModuleShapeMask.cs and BaseModuleDefPrototype.User.cs:
-// GetRotatedLocation, RotateDirection, GetExpansionCell); the site only uses them to draw and to give
-// instant bounds and overlap feedback. Legality is always the engine's call.
+// GetRotatedLocation, RotateDirection, GetExpansionCell); the site uses them to draw and, with the
+// catalog's cell rules (builder/placement.ts), to judge a drop before it happens. The engine re-checks
+// every fit.
 
 /** A cell as (row, col). In a shape it is in the 5x5 shape grid; on a hull it is a fitting-grid cell. */
 export type Cell = { row: number; col: number };
@@ -152,11 +153,6 @@ export function insideGrid(cell: Cell, grid: GridSize): boolean {
   return cell.row >= 0 && cell.row < grid.rows && cell.col >= 0 && cell.col < grid.cols;
 }
 
-/** The cells that fall outside the grid. */
-export function outOfBounds(cells: readonly Cell[], grid: GridSize): Cell[] {
-  return cells.filter((cell) => !insideGrid(cell, grid));
-}
-
 /** Which item fills each cell; several owners on one key is an overlap. */
 export function occupancy(footprints: readonly (readonly Cell[])[]): Map<string, number[]> {
   const owners = new Map<string, number[]>();
@@ -176,23 +172,6 @@ export function overlappingItems(footprints: readonly (readonly Cell[])[]): Set<
   const overlapping = new Set<number>();
   for (const owners of occupancy(footprints).values()) if (owners.length > 1) for (const owner of owners) overlapping.add(owner);
   return overlapping;
-}
-
-/**
- * Drag feedback: whether `cells` fit inside the grid without covering a disabled cell or another
- * item's cells (`taken`, keyed by cellKey). Not a legality check: slot types, hardpoints and every
- * other rule are the engine's.
- */
-export function placementFeedback(
-  cells: readonly Cell[],
-  grid: GridSize & { slots?: readonly string[] },
-  taken: ReadonlySet<string>,
-): { fits: boolean; outside: Cell[]; disabled: Cell[]; overlapping: Cell[] } {
-  const outside = outOfBounds(cells, grid);
-  const inside = cells.filter((cell) => insideGrid(cell, grid));
-  const disabled = grid.slots ? inside.filter((cell) => grid.slots![cell.row * grid.cols + cell.col] === "None") : [];
-  const overlapping = inside.filter((cell) => taken.has(cellKey(cell)));
-  return { fits: outside.length === 0 && disabled.length === 0 && overlapping.length === 0, outside, disabled, overlapping };
 }
 
 /** For each cell, which of its sides face outside the set: where an outline is drawn. */

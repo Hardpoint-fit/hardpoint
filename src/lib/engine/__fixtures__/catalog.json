@@ -6020,5 +6020,62 @@
    "quality": "Masterwork",
    "multiplier": "78643"
   }
+ ],
+ "placement": [
+  {
+   "slotType": "Battery",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": "Battery"
+  },
+  {
+   "slotType": "Subsystem",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": "Subsystem"
+  },
+  {
+   "slotType": "Core",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": null
+  },
+  {
+   "slotType": "Propulsion",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": "Propulsion"
+  },
+  {
+   "slotType": "Harpoon",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": null
+  }
  ]
 }
