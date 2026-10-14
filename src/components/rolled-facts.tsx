@@ -5,8 +5,8 @@
 // every tooltip on the page, so asks queue together and a 429 holds them all.
 import { useEffect, useReducer, useRef, useState } from "react";
 import { createEngineClient } from "#/lib/engine/client";
-import { createFactsLoader, factsKey, type FactsLoader, type FactsState } from "#/lib/engine/item-facts";
-import type { FactRow, OpenItem } from "#/lib/engine/types";
+import { createFactsLoader, factsKey, type CatalogFacts, type FactsLoader, type FactsState } from "#/lib/engine/item-facts";
+import type { OpenItem } from "#/lib/engine/types";
 import { usePublicConfig } from "#/lib/public-config";
 import { FactRows } from "./item-text";
 
@@ -24,18 +24,18 @@ function loaderFor(engineUrl: string | null): FactsLoader {
 }
 
 /** The item's facts to show now; asks the engine while `active` and the roll isn't the plainest. */
-export function useItemFacts(item: OpenItem | null, catalogFacts: readonly FactRow[], active = true): FactsState {
+export function useItemFacts(item: OpenItem | null, catalog: CatalogFacts, active = true): FactsState {
   const loader = loaderFor(usePublicConfig().engineUrl);
   const [, changed] = useReducer((n: number) => n + 1, 0);
   useEffect(() => loader.subscribe(changed), [loader]);
   const key = item ? factsKey(item) : null;
   useEffect(() => {
     if (!item || !active) return;
-    loader.request(item);
+    loader.request(item, catalog);
     return () => loader.release(item);
     // The key stands for the item: a new object with the same roll asks nothing new.
-  }, [loader, key, active]);
-  return item ? loader.state(item, catalogFacts) : { status: "default", facts: catalogFacts };
+  }, [loader, key, active, catalog.rarity]);
+  return item ? loader.state(item, catalog) : { status: "default", facts: catalog.facts };
 }
 
 const NOTES: Record<FactsState["status"], string | null> = {
@@ -48,8 +48,8 @@ const NOTES: Record<FactsState["status"], string | null> = {
 };
 
 /** Facts for the item now, asking about its roll while `active`. */
-export function RolledFacts({ item, catalogFacts, active = true }: { item: OpenItem; catalogFacts: readonly FactRow[]; active?: boolean }) {
-  const state = useItemFacts(item, catalogFacts, active);
+export function RolledFacts({ item, catalog, active = true }: { item: OpenItem; catalog: CatalogFacts; active?: boolean }) {
+  const state = useItemFacts(item, catalog, active);
   // Not asked about yet (a tooltip not opened): the catalog's rows, named for what they are.
   return <FactRows facts={state.facts} note={!active && state.status === "loading" ? "STANDARD ROLL" : NOTES[state.status]} />;
 }
@@ -58,7 +58,7 @@ export function RolledFacts({ item, catalogFacts, active = true }: { item: OpenI
  * Facts inside a hover tooltip: asks about the roll only once the tooltip's anchor (the nearest
  * `.tip-anchor`) is hovered or focused, so a page of modules doesn't ask about every one at load.
  */
-export function TooltipFacts({ item, catalogFacts }: { item: OpenItem; catalogFacts: readonly FactRow[] }) {
+export function TooltipFacts({ item, catalog }: { item: OpenItem; catalog: CatalogFacts }) {
   const marker = useRef<HTMLSpanElement>(null);
   const [opened, setOpened] = useState(false);
   useEffect(() => {
@@ -75,7 +75,7 @@ export function TooltipFacts({ item, catalogFacts }: { item: OpenItem; catalogFa
   return (
     <>
       <span ref={marker} hidden />
-      <RolledFacts item={item} catalogFacts={catalogFacts} active={opened} />
+      <RolledFacts item={item} catalog={catalog} active={opened} />
     </>
   );
 }

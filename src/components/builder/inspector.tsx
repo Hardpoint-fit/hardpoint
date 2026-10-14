@@ -7,6 +7,7 @@ import { Panel } from "#/components/ui";
 import { enumWords, rarityName } from "./labels";
 import { ItemDescription, ItemIcon } from "#/components/item-text";
 import { RolledFacts } from "#/components/rolled-facts";
+import { catalogFacts } from "#/lib/engine/item-facts";
 import { itemIcon } from "#/lib/art/item-icon";
 import {
   FP_ONE,
@@ -379,7 +380,7 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
       {catalogItem && (
         <div className="inspector__about">
           <ItemDescription text={catalogItem.description} />
-          <RolledFacts item={item} catalogFacts={catalogItem.facts} />
+          <RolledFacts item={item} catalog={catalogFacts(catalogItem)} />
         </div>
       )}
 

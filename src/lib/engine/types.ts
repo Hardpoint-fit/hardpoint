@@ -182,7 +182,7 @@ export type CatalogItem = {
   path: string;
   /** The module's authored description, trimmed; null when it has none. Plain text, may hold newlines. */
   description: string | null;
-  /** The item tooltip's facts for a Standard-quality, Normal-rarity roll. */
+  /** The item tooltip's facts for its default roll (ItemFacts.Default): Standard quality, the lowest of `roll.rarities`. */
   facts: FactRow[];
   category: string;
   slotType: string;
@@ -205,6 +205,7 @@ export type CatalogPortCandidate = { row: number; col: number; direction: string
 
 export type CatalogRoll = {
   qualities: string[];
+  /** In ModuleRarity order, lowest first. */
   rarities: string[];
   modifierCounts: CatalogModifierCount[];
   modifierPool: CatalogModifierSlots;

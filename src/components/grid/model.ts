@@ -7,13 +7,13 @@ import type {
   CatalogItem,
   ConduitLink,
   EvaluationIssue,
-  FactRow,
   OpenFit,
   OpenItem,
   OpenModifier,
   RegaliaGroup,
 } from "#/lib/engine/types";
 import { itemIcon } from "#/lib/art/item-icon";
+import { catalogFacts, type CatalogFacts } from "#/lib/engine/item-facts";
 import { applySlotOverrides, occupiedCells, placeFootprint, type Cell, type Footprint, type PlacedPort } from "./geometry";
 
 /** The game's tier palettes (--tier-<key>-surface-* tokens). */
@@ -74,7 +74,7 @@ export type GridModule = {
   /** The catalog's description: plain text. */
   description: string | null;
   /** The catalog's facts for the plainest roll; the engine's for this roll arrive in the browser. */
-  facts: FactRow[];
+  facts: CatalogFacts;
   /** Each Tek Cipher's cell with the cipher's own image. */
   ciphers: { cell: Cell; name: string; icon: string | null }[];
 };
@@ -150,7 +150,7 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
         : null,
       icon: item ? itemIcon({ path: item.path, category: item.category }, roll, artifactPath) : null,
       description: item?.description ?? null,
-      facts: item?.facts ?? [],
+      facts: item ? catalogFacts(item) : { facts: [], rarity: roll.rarity },
       ciphers: footprint.ports.flatMap((port) => {
         if (!port.expansion || !port.cipher) return [];
         const cipher = catalog.ciphers?.get(port.cipher);

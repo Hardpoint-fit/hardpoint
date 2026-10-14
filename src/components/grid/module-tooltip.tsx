@@ -36,7 +36,7 @@ export function ModuleTooltip({ module }: { module: GridModule }) {
         </div>
       </div>
       <ItemDescription text={module.description} />
-      {module.known && <TooltipFacts item={module.item} catalogFacts={module.facts} />}
+      {module.known && <TooltipFacts item={module.item} catalog={module.facts} />}
       {module.issues.length > 0 && (
         <>
           <div className="plate__divider" />

@@ -1,14 +1,14 @@
 // The item tooltip's facts for rolled items, asked of the engine (/v1/item-facts) one at a time.
 //
-// The catalog already carries each item's facts for its plainest roll (Standard quality, Normal
-// rarity, nothing rolled), so only other rolls are asked about, and the caller shows the catalog's
+// The catalog already carries each item's facts for its plainest roll (Standard quality, the item's
+// lowest rarity, nothing rolled), so only other rolls are asked about, and the caller shows the catalog's
 // rows until the answer lands. Asks wait 250 ms for the next change (a slider being dragged), then go
 // one at a time, newest first; an ask nobody needs any more is released before it is sent, and
 // disposing aborts the one in flight. A 429 holds every ask until Retry-After (or 5 s) has passed. A
 // refusal (the engine can't produce that roll) is final for that roll; an outage isn't cached, so the
 // next ask tries again. Framework-free with injectable timers, so it is unit-tested.
 import type { EngineResult } from "./client";
-import type { FactRow, FactsBody, OpenItem } from "./types";
+import type { CatalogItem, FactRow, FactsBody, OpenItem } from "./types";
 
 export const FACTS_DELAY_MS = 250;
 export const FACTS_RETRY_MS = 5_000;
@@ -25,12 +25,23 @@ const MAX_WAITING = 8;
 export type FactsStatus = "default" | "loading" | "ready" | "refused" | "down" | "limited";
 export type FactsState = { status: FactsStatus; facts: readonly FactRow[] };
 
-/** The roll the catalog's `facts` describe: Standard quality, Normal rarity, nothing rolled or slotted. */
-export function isPlainestRoll(item: OpenItem): boolean {
+/** A catalog item's `facts` and the rarity they were read at: its lowest (the engine's default roll). */
+export type CatalogFacts = { facts: readonly FactRow[]; rarity: string };
+
+/** The catalog's facts for an item. Its `roll.rarities` are in ModuleRarity order, so the first is the lowest. */
+export function catalogFacts(item: Pick<CatalogItem, "facts" | "roll">): CatalogFacts {
+  return { facts: item.facts, rarity: item.roll.rarities[0] };
+}
+
+/**
+ * The roll the catalog's `facts` describe (ItemFacts.Default): Standard quality, the item's lowest
+ * rarity, nothing rolled or slotted.
+ */
+export function isPlainestRoll(item: OpenItem, lowestRarity: string): boolean {
   const roll = item.roll;
   return (
     roll.quality === "Standard" &&
-    roll.rarity === "Normal" &&
+    roll.rarity === lowestRarity &&
     roll.modifiers.length === 0 &&
     roll.ports.every((port) => port.cipher === null) &&
     roll.artifact === null &&
@@ -54,9 +65,9 @@ export type Timers = {
 
 export type FactsLoader = {
   /** What to show for this item now, given its catalog entry's facts. Asks nothing. */
-  state(item: OpenItem, catalogFacts: readonly FactRow[]): FactsState;
+  state(item: OpenItem, catalog: CatalogFacts): FactsState;
   /** Asks for the item's facts, unless they are the catalog's or already known. */
-  request(item: OpenItem): void;
+  request(item: OpenItem, catalog: CatalogFacts): void;
   /** The asker no longer needs this item: if it hasn't been sent, it won't be. */
   release(item: OpenItem): void;
   /** Called after every change of any item's state. Returns the unsubscribe. */
@@ -135,18 +146,18 @@ export function createFactsLoader(options: {
   }
 
   return {
-    state(item, catalogFacts) {
-      if (isPlainestRoll(item)) return { status: "default", facts: catalogFacts };
+    state(item, catalog) {
+      if (isPlainestRoll(item, catalog.rarity)) return { status: "default", facts: catalog.facts };
       const key = factsKey(item);
       const answer = answers.get(key);
       if (answer?.status === "ready") return { status: "ready", facts: answer.facts };
-      if (answer?.status === "refused") return { status: "refused", facts: catalogFacts };
-      if (outage === "limited" && waiting.has(key)) return { status: "limited", facts: catalogFacts };
-      if (failed.has(key) && !waiting.has(key) && inFlight?.key !== key) return { status: "down", facts: catalogFacts };
-      return { status: "loading", facts: catalogFacts };
+      if (answer?.status === "refused") return { status: "refused", facts: catalog.facts };
+      if (outage === "limited" && waiting.has(key)) return { status: "limited", facts: catalog.facts };
+      if (failed.has(key) && !waiting.has(key) && inFlight?.key !== key) return { status: "down", facts: catalog.facts };
+      return { status: "loading", facts: catalog.facts };
     },
-    request(item) {
-      if (disposed || isPlainestRoll(item)) return;
+    request(item, catalog) {
+      if (disposed || isPlainestRoll(item, catalog.rarity)) return;
       const key = factsKey(item);
       if (answers.has(key) || inFlight?.key === key) return;
       waiting.delete(key);
