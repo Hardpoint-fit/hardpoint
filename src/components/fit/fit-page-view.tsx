@@ -23,7 +23,7 @@ import { affinityTypeLabel } from "#/components/affinity/affinity";
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
 const GRID_NOTES: Record<Exclude<Ready["grid"]["status"], "ready">, string> = {
-  no_catalog: "THE GRID NEEDS THE LOADOUT ENGINE, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
+  no_catalog: "THE GRID NEEDS THE ENGINE, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
   unknown_hull: "THIS HULL ISN'T IN THE CURRENT BUILD.",
   unreadable: "THIS FIT CAN'T BE DRAWN.",
 };
@@ -200,7 +200,7 @@ function FitAffinity({ progression, catalog }: { progression: Ready["progression
   if (!catalog) {
     return (
       <Panel title="AFFINITY">
-        <p className="note">THE AFFINITY TREE NEEDS THE LOADOUT ENGINE, WHICH ISN&apos;T ANSWERING.</p>
+        <p className="note">THE AFFINITY TREE NEEDS THE ENGINE, WHICH ISN&apos;T ANSWERING.</p>
         {progression.affinityType !== "None" && <p className="note">{affinityTypeLabel(null, progression.affinityType)} AFFINITY · {progression.affinityXp} XP</p>}
       </Panel>
     );
@@ -244,7 +244,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
   const own = viewer.authEnabled && viewer.userId !== null && viewer.userId === fit.authorUserId;
   const hullName = data.hull?.name ?? "UNKNOWN HULL";
   const rating = shown.reference?.rating ?? null;
-  const hullIcon = data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
+  const hullIcon = data.hull ? itemIcon({ art: data.hull.art, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
   return (
     <main className="page">
       <EngineBanner engine={engine} />

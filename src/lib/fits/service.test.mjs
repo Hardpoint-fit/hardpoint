@@ -108,7 +108,7 @@ test("editing a draft: new content replaces the old verdict, a metadata edit kee
   assert.equal(meta.evaluation, "skipped");
   assert.equal(meta.fit.title, "Renamed");
   assert.equal((await read(fit.id)).evaluation.valid, true, "same content, same verdict");
-  assert.equal(stub.requests.filter((r) => r.path === "/v1/evaluate").length, 1, "no engine call without new content");
+  assert.equal(stub.requests.filter((r) => r.path === "/v1/fits/evaluate").length, 1, "no API call without new content");
 
   const changed = await saveDraft({ db, engine: down }, { ...ALICE, fitId: fit.id, title: "Renamed", fit: OVERLAPPING });
   assert.equal(changed.ok, true);
@@ -133,7 +133,7 @@ test("publish checks the fit with the engine and publishes a valid one", async (
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.fit.status, "published");
   assert.equal(result.fit.evaluation.buildSha, SHA);
-  assert.equal(stub.requests.filter((r) => r.path === "/v1/evaluate").length, 1, "evaluated again, not trusted from the draft");
+  assert.equal(stub.requests.filter((r) => r.path === "/v1/fits/evaluate").length, 1, "evaluated again, not trusted from the draft");
 });
 
 test("publish refuses cleanly when the engine is down, even if the draft has a valid verdict", async () => {
@@ -248,7 +248,7 @@ test("publish tells an unreachable engine, a failing engine and a refusing engin
   const unreachable = await publish({ db, engine: via({ kind: "timeout", message: "slow" }) }, { fitId: fit.id, authorUserId: ALICE.authorUserId });
   assert.match(unreachable.message, /can't be reached right now/);
   const failing = await publish({ db, engine: via({ kind: "failed", message: ENGINE_FAILED_MESSAGE }) }, { fitId: fit.id, authorUserId: ALICE.authorUserId });
-  assert.equal(failing.message, "The fit check failed on the loadout engine. Your draft is saved; try again, and report the fit if it keeps failing.");
+  assert.equal(failing.message, "The fit check failed on the engine. Your draft is saved; try again, and report the fit if it keeps failing.");
   const refusing = await publish({ db, engine: via({ kind: "rejected", message: "modules[1]: no such port" }) }, { fitId: fit.id, authorUserId: ALICE.authorUserId });
   assert.match(refusing.message, /modules\[1\]: no such port/);
   assert.equal((await read(fit.id)).status, "draft");

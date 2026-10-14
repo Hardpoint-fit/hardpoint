@@ -1,0 +1,27 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "ciphers": [
+  {
+   "def": "1283267483210613362",
+   "name": "DRUX",
+   "stat": "DroneOutput",
+   "operation": "Multiply",
+   "value": "73400",
+   "pointRating": 350,
+   "art": {
+    "base": "/v1/art/ad6ee91c0cc6948bd85afe5f9cf4148c.2a4065791c5d469b.webp"
+   }
+  },
+  {
+   "def": "1305220033100729446",
+   "name": "SYN",
+   "stat": "Thrust",
+   "operation": "Multiply",
+   "value": "76022",
+   "pointRating": 150,
+   "art": {
+    "base": "/v1/art/ad6ee91c0cc6948bd85afe5f9cf4148c.2a4065791c5d469b.webp"
+   }
+  }
+ ]
+}

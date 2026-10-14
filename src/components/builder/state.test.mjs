@@ -10,7 +10,7 @@ import { SCARAB, SERAPH, itemNamed, richCatalog } from "./test-catalog.mjs";
 const catalog = richCatalog();
 const cat = indexCatalog(catalog);
 const item = (name) => itemNamed(catalog, name);
-const TURRET = item("OMNI REPAIRER TURRET").def;
+const TURRET = item("REPAIR PROJECTOR").def;
 const HEATSINK = item("HEATSINK MAGAZINE").def;
 const COOLANT = item("COOLANT RESERVOIR").def;
 const TRACER = item("TRACER ROUNDS").def;
@@ -363,7 +363,7 @@ test("a rolled edit for a roll that has changed since, another item, or a rarity
   const edited = run(state, { type: "roll", target: 0, edit: { kind: "quality", quality: "Masterwork" } });
   assert.notEqual(edited.fit, state.fit);
   assert.equal(run(edited, stale).fit, edited.fit, "an answer to an older roll is dropped");
-  const otherItem = { ...stale, edit: { ...stale.edit, def: FIXTURES.fit.modules[1].item.def } };
+  const otherItem = { ...stale, edit: { ...stale.edit, def: FIXTURES.fit.modules.find((module) => module.item.def !== stale.edit.def).item.def } };
   assert.equal(run(state, otherItem).fit, state.fit);
   const normal = state.fit.modules[1].item;
   const onNormal = { type: "roll", target: 1, edit: { kind: "rolled", def: normal.def, sent: normal.roll, rolled: { ...normal.roll, modifiers: FIXTURES.roll.item.roll.modifiers } } };

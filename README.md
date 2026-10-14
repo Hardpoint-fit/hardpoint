@@ -15,7 +15,7 @@ SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates tha
 
 `pnpm build`, `pnpm dev` and `pnpm test` first run `scripts/prepare-game-assets.mjs`, which reads files from the Unity tree and so needs the whole repo checkout, not only this folder.
 
-`pnpm smoke` seeds the fixture fits (`src/lib/site/seed.mjs`) into a throwaway Postgres, serves the engine fixtures from `src/lib/engine/stub-engine.mjs`, and starts the standalone server with the engine up, with it down, and with no database, fetching every route. Add `--serve` (`node --import ./scripts/node-hooks.mjs scripts/smoke.mjs --serve`) to leave the seeded site running for a look. For a database: `docker run --rm -e POSTGRES_PASSWORD=smoke -p 127.0.0.1:55437:5432 postgres:17-alpine`.
+`pnpm smoke` seeds the fixture fits (`src/lib/site/seed.mjs`) into a throwaway Postgres, serves the game data API fixtures from `src/lib/engine/stub-engine.mjs`, and starts the standalone server with the API up, with it down, and with no database, fetching every route. The "up" run names a public API address nothing listens on and reaches the stub on the internal one, so it also proves art URLs use the first and the share card's art fetch the second. Add `--serve` (`node --import ./scripts/node-hooks.mjs scripts/smoke.mjs --serve`) to leave the seeded site running for a look. For a database: `docker run --rm -e POSTGRES_PASSWORD=smoke -p 127.0.0.1:55437:5432 postgres:17-alpine`.
 
 ## Routes
 
@@ -27,7 +27,7 @@ SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates tha
 | `/admin/reports` | Open reports with hide and resolve. A 404 for anyone but a moderator; a moderator whose role has expired gets a RE-VERIFY TO MODERATE link and no data. |
 | `/admin/pilots` | Pilots, searched by name or user id: ban state, BAN (a reason, a confirm step, optionally hiding all their fits and comments) and UNBAN. Same access as `/admin/reports`. |
 
-Pages read through `src/lib/site/loaders.ts` and write through the server actions in `src/app/actions.ts` (work in `src/lib/site/actions-core.ts`). With the engine down they render the stored verdicts under a banner; without a database they show an unavailable state. The grid is `src/components/grid/` (see its `geometry.ts` and `model.ts`); `scale.ts` owns its cell size, from the game's 48px up to 88px as its panel allows.
+Pages read through `src/lib/site/loaders.ts` and write through the server actions in `src/app/actions.ts` (work in `src/lib/site/actions-core.ts`). With the API down they render the stored verdicts under a banner; without a database they show an unavailable state. The grid is `src/components/grid/` (see its `geometry.ts` and `model.ts`); `scale.ts` owns its cell size, from the game's 48px up to 88px as its panel allows.
 
 ## Game tokens, font, grid art and stat wording
 
@@ -38,9 +38,18 @@ The Unity files own all of these; the site holds no copy of their values.
 - `FittingPanel.fixture.json`, `InventoryGrid.fixture.json` (exported by Unity for the UI prototype), the `hardpoint-*.svg` icons and the tier tokens: written to `src/components/grid/fitting-art.generated.json` (port notch rectangles at the game's 48px cell, hardpoint glyphs, grid state colours, tier values for the share card).
 - `StatTypeText.cs`, `StatTypeRules.cs`, `Modules.qtn`: written to `src/lib/fits/stat-text.generated.json` (each stat's label, whole-number, lower-is-better and inverted-sign rules). A stat without copy fails the build.
 - `Modules.qtn` (`ModuleType`), `Effects.qtn` (the affinity bounds) and `AffinityThresholdResolver.cs` (`SelectionUnset`): written to `src/lib/engine/progression-layout.generated.json`, where an open fit's affinity progression keeps each point and threshold choice. The builder edits progressions through it.
-- Item prefabs, `ArtifactItemDefinition` and recipe assets, `EntityOverlayHudConfig.asset`, `Items.qtn` and the icon PNGs (Git LFS, so `git lfs pull` first; a pointer file fails the build): read by `tools/ship-restore/lib/game-assets.js` (shared with the killboard) and written by `tools/game-data-api/art/game-art.mjs` (the game data API's extractor, which this build runs until the site reads the API's art) to `public/art/<guid>.<hash>.webp` (128px) and `<guid>.<hash>@2x.webp` (256px), with `src/lib/art/art-manifest.generated.json` mapping each item to its base and rarity images. `<hash>` is of the images' bytes, so `/art` is served `immutable` for a year. The site finds art by the engine catalog's `path` (items, hulls, ciphers with `findModuleArt`, artifacts with `findArtifactArt`): keys are the `iconKeys` normalization (lower-case, a-z0-9 only, `EntityPrototype` and ` Hull` stripped), documented in `src/lib/art/art-key.ts`. Unchanged images are skipped on later runs (`.cache/game-art.json`).
+- Item art is not derived here: the game data API serves it (`/v1/art/...`), and the catalog it sends carries each entity's `art` URLs. See "Item art" below.
 
 All outputs are git-ignored. Change the Unity files, never the outputs. `globals.css` binds `--font-family` to the loaded font; `game-ui.css` holds the game-UI primitives (chamfered panel, tooltip plate, buttons, tier accents).
+
+## The game data API and item art
+
+The site is a client of the public API (`tools/game-data-api`, contract in its `openapi/openapi.json`, served at `https://api.thecitadel.com`). `src/lib/engine/` holds the client:
+
+- `catalog-resources.ts` is the one module that knows which resource routes make up the catalog (`/v1/items`, `/v1/hulls`, `/v1/ciphers`, `/v1/artifacts`, `/v1/regalia-sets`, `/v1/affinity`, `/v1/regalia`, `/v1/heretical-specials`, `/v1/harmonic-sets`, `/v1/modifier-pools`, `/v1/qualities`, `/v1/placement-rules`, `/v1/grid-consumables`, `/v1/breach-tiers`) and assembles their bodies into the `Catalog` the builder and pages read.
+- `client.ts` fetches them together, each with its own `If-None-Match`, so a revalidation is fourteen 304s; parts of two builds (a deploy landed between the requests) are fetched again once. It also calls `/v1/status`, `/v1/fits/evaluate`, `/v1/fits/import`, `/v1/fits/export`, `/v1/items/facts`, `/v1/grid-mods` and `/v1/roll`, reads the `{ error: { code, message } }` envelope (any 4xx is `rejected` with its message), and keeps a 429 (`rateLimited`, with `Retry-After`) and an unreachable API (`unavailable`: no answer, or a proxy's 502/503/504) apart from an API that answered with another 5xx (`failed`).
+- Art: the API gives each item, hull, cipher, artifact and grid consumable an `art` object of `/v1/art/...` URLs (128px WebP; `@2x` before `.webp` is the 256px twin). The client makes them absolute with the **public** URL (`GAME_DATA_API_URL`), so the browser loads them straight from the API; nothing in the site names a host. `src/lib/art/item-icon.ts` applies the game's icon-choice rule over those URLs (identified artifact icon, else the rarity variant, else the base, else a placeholder). The share card is rendered on the server, which fetches its art from `GAME_DATA_API_INTERNAL_URL` instead.
+- The tests run on responses recorded from the live API: `node scripts/record-fixtures.mjs <API URL>` rewrites `src/lib/engine/__fixtures__` (cut down to the items the tests use; the fits in it are the inputs), and `scripts/record-placement-oracle.mjs <local API URL>` the placement verdicts. `types.test.mjs` checks every fixture against `types.ts`.
 
 ## Environment
 
@@ -48,8 +57,8 @@ All optional, read at run time by `src/lib/config.ts` (through the server-only `
 
 | Variable | Use |
 | --- | --- |
-| `LOADOUT_ENGINE_URL` | Public engine URL. Browsers call it; also the server's fallback. |
-| `LOADOUT_ENGINE_INTERNAL_URL` | Engine URL for the server (Railway private network). |
+| `GAME_DATA_API_URL` | The game data API's public URL (`https://api.thecitadel.com`). Browsers call it for evaluate, import, export, item facts, grid mods and rolls, and load item art from it: the catalog's `/v1/art/...` URLs are made absolute with it. Also the server's fallback. |
+| `GAME_DATA_API_INTERNAL_URL` | The API's URL for the server (Railway private network). Server reads, the cron, and the share card's art fetches use it. |
 | `DATABASE_URL` | Fits database (Postgres). `node src/lib/fits/migrate.mjs` applies `src/lib/fits/schema.sql` and runs before the server in the container. |
 | `CITADEL_OAUTH_CLIENT_ID`, `CITADEL_OAUTH_CLIENT_SECRET`, `SESSION_SECRET` | "Sign in with Citadel". `authEnabled` is true only when all three are set. `SESSION_SECRET` is base64 of at least 32 random bytes (`openssl rand -base64 48`); it keys the session cookies, so changing it signs everyone out. |
 | `CITADEL_OAUTH_ISSUER` | The OpenID provider. Default `https://clerk.alpha.thecitadel.com`, the game's production Clerk instance. |
@@ -57,7 +66,7 @@ All optional, read at run time by `src/lib/config.ts` (through the server-only `
 | `SITE_ADMIN_USER_IDS` | Comma-separated Clerk user ids that may moderate, besides the Clerk `admin` role in public metadata. |
 | `PORT` | Listen port (default 3000). |
 
-The browser learns its config from the server: the root layout reads the environment per request and passes the public part (`engineUrl`, `authEnabled`) to `PublicConfigProvider`; client code calls `usePublicConfig()`. Nothing is inlined at build time, so one image serves every environment.
+The browser learns its config from the server: the root layout reads the environment per request and passes the public part (`apiUrl`, `authEnabled`) to `PublicConfigProvider`; client code calls `usePublicConfig()`. Nothing is inlined at build time, so one image serves every environment.
 
 ## Sign in with Citadel
 
@@ -74,19 +83,19 @@ Tests run the whole flow against a local fake provider (`src/lib/fake-idp.mjs`),
 
 ## Re-evaluation job
 
-When the engine ships a new build, every published fit needs a fresh verdict. `src/jobs/reevaluate.ts` does that: it reads the build from the engine's `/healthz`, evaluates published (not hidden) fits that have no verdict for it in batches of 50 with at most 4 requests in flight, and stores each one through the same revision guard the site uses, so a fit edited meanwhile keeps its newer content. It is idempotent, logs counts only (never fit contents), waits out an engine 429 (`Retry-After`, at most 5 waits), stops quietly if the engine is down or erroring (exit 0; the next run continues), stops after 10 minutes, and exits 1 only when the database fails or `DATABASE_URL` / `LOADOUT_ENGINE_INTERNAL_URL` is missing.
+When the game data API ships a new build, every published fit needs a fresh verdict. `src/jobs/reevaluate.ts` does that: it reads the build from the API's `/v1/status`, evaluates published (not hidden) fits that have no verdict for it in batches of 50 with at most 4 requests in flight, and stores each one through the same revision guard the site uses, so a fit edited meanwhile keeps its newer content. It is idempotent, logs counts only (never fit contents), waits out an API 429 (`Retry-After`, at most 5 waits), stops quietly if the API is down or erroring (exit 0; the next run continues), stops after 10 minutes, and exits 1 only when the database fails or `DATABASE_URL` / `GAME_DATA_API_INTERNAL_URL` is missing.
 
 It runs from the site's own image, with no build step: Node strips the types, and the image carries the job's few files next to the standalone `node_modules` (`pg`). On Railway add a second service from the same repo and Dockerfile, with:
 
 - Start command: `node src/jobs/reevaluate.ts`
 - Cron schedule: `*/15 * * * *`
-- Variables: `DATABASE_URL` (same database) and `LOADOUT_ENGINE_INTERNAL_URL` (the engine's private-network URL, so it uses the private bucket).
+- Variables: `DATABASE_URL` (same database) and `GAME_DATA_API_INTERNAL_URL` (the API's private-network URL, so it uses the private bucket).
 
-Locally: `DATABASE_URL=... LOADOUT_ENGINE_INTERNAL_URL=http://localhost:8080 node src/jobs/reevaluate.ts`. Keep the job's imports to erasable TypeScript with explicit `.ts` paths and nothing from Next.
+Locally: `DATABASE_URL=... GAME_DATA_API_INTERNAL_URL=http://localhost:8080 node src/jobs/reevaluate.ts`. Keep the job's imports to erasable TypeScript with explicit `.ts` paths and nothing from Next.
 
 ## Docker
 
-The build context is the **repo root**, because the build reads the Unity tokens and font:
+The build context is the **repo root**, because the build reads the Unity tokens, font and the few other files listed above (about 100 KB beside the app; no item art):
 
 ```
 docker build -f js/projects/theorycrafting/Dockerfile -t citadel-theorycrafting .

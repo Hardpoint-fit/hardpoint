@@ -86,7 +86,7 @@ test("a refused, rate-limited, cancelled or unanswered roll says so and edits no
 });
 
 test("the inspector shows RANDOMIZE ROLL, the breach tier at the highest, and a die per line, only where the engine can roll", () => {
-  const render = (target, { roller } = { roller: engine }, fit = FIXTURES.fit) => renderToStaticMarkup(h(PublicConfigProvider, { config: { engineUrl: stub.url, authEnabled: false } }, h(Inspector, { cat, fit, target, dispatch: () => {}, roller })));
+  const render = (target, { roller } = { roller: engine }, fit = FIXTURES.fit) => renderToStaticMarkup(h(PublicConfigProvider, { config: { apiUrl: stub.url, authEnabled: false } }, h(Inspector, { cat, fit, target, dispatch: () => {}, roller })));
   const html = render(0);
   assert.match(html, />RANDOMIZE ROLL</);
   assert.match(html, /BREACH TIER/);

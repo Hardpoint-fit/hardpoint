@@ -13,19 +13,19 @@ import { FactRows } from "./item-text";
 /** One loader per engine URL for the page's life, however many clients the components make. */
 const loaders = new Map<string | null, FactsLoader>();
 
-function loaderFor(engineUrl: string | null): FactsLoader {
-  let loader = loaders.get(engineUrl);
+function loaderFor(apiUrl: string | null): FactsLoader {
+  let loader = loaders.get(apiUrl);
   if (!loader) {
-    const engine = createEngineClient({ baseUrl: engineUrl });
+    const engine = createEngineClient({ baseUrl: apiUrl });
     loader = createFactsLoader({ fetchFacts: (item, signal) => engine.itemFacts(item, { signal }) });
-    loaders.set(engineUrl, loader);
+    loaders.set(apiUrl, loader);
   }
   return loader;
 }
 
 /** The item's facts to show now; asks the engine while `active` and the roll isn't the plainest. */
 export function useItemFacts(item: OpenItem | null, catalog: CatalogFacts, active = true): FactsState {
-  const loader = loaderFor(usePublicConfig().engineUrl);
+  const loader = loaderFor(usePublicConfig().apiUrl);
   const [, changed] = useReducer((n: number) => n + 1, 0);
   useEffect(() => loader.subscribe(changed), [loader]);
   const key = item ? factsKey(item) : null;

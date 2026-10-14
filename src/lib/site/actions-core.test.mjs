@@ -494,7 +494,7 @@ test("publish refusals say whether the engine was unreachable, failed, or refuse
   assert.match(unreachable.message, /can't be reached right now/);
   const failed = await publishFit(via({ kind: "failed", message: "x" }), { fitId: ids.draft });
   assert.deepEqual([failed.reason, failed.status], ["engine", 502]);
-  assert.match(failed.message, /^The fit check failed on the loadout engine\./);
+  assert.match(failed.message, /^The fit check failed on the engine\./);
   const refused = await publishFit(via({ kind: "rejected", message: "modules[0]: bad port" }), { fitId: ids.draft });
   assert.deepEqual([refused.reason, refused.status], ["engine", 422]);
   assert.match(refused.message, /modules\[0\]: bad port/);

@@ -1,0 +1,1421 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "hulls": [
+  {
+   "def": "1274722114706556685",
+   "name": "SCARAB",
+   "shipClass": "Cruiser",
+   "role": "Destroyer",
+   "rows": 15,
+   "cols": 15,
+   "slots": [
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Battery",
+    "None",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Battery",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Subsystem",
+    "Subsystem",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Subsystem",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Propulsion",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Propulsion",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Propulsion",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None"
+   ],
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "79298",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70123",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "ConduitThroughput",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "70778",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretDamage",
+       "operation": "Multiply",
+       "pool": "Role:Destroyer",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66191",
+         "max": "66846",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileDamage",
+       "operation": "Multiply",
+       "pool": "Role:Destroyer",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66191",
+         "max": "66846",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxArmor",
+       "operation": "Multiply",
+       "pool": "Role:Destroyer",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "3342336",
+         "max": "4718592",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "4915200",
+         "max": "6094848",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "7274496",
+         "max": "9502720",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "8585216",
+         "max": "11272192",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Torque",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "74055",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "BarrierMaxHP",
+       "operation": "Multiply",
+       "pool": "Role:Destroyer",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "72744",
+         "max": "81264",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileRechargeTime",
+       "operation": "Multiply",
+       "pool": "Role:Destroyer",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "60949",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "58983",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "56361",
+         "max": "61604",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "53740",
+         "max": "60949",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "ArmorResistKinetic",
+       "operation": "DamageReduction",
+       "pool": "Role:Destroyer",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "1966",
+         "max": "3932",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "2621",
+         "max": "4587",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "3932",
+         "max": "7208",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [],
+    "artifacts": [
+     "295810116418873646"
+    ],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [],
+    "rating": {
+     "base": 2560,
+     "scalesWithQuality": true,
+     "tierShares": [
+      102,
+      204,
+      307,
+      409
+     ],
+     "regaliaShare": 1920,
+     "hereticalShare": 1791,
+     "ascendedHereticalShare": 4479
+    },
+    "authored": []
+   },
+   "art": {
+    "base": "/v1/art/3b5bfb8779c2248eabc531349b075c32.fcc0bca49e0e54cf.webp",
+    "Augmented": "/v1/art/9d83a39667ae44c2ebbd8f9d4750889c.9c9dda8264d93912.webp",
+    "Prototype": "/v1/art/118872ccd9bc74b42924d811e1b9bb9f.b416066f83472338.webp",
+    "Artifact": "/v1/art/64f7862c553124176be2b5326b620a93.190feca0b00bd6d7.webp",
+    "Heretical": "/v1/art/118872ccd9bc74b42924d811e1b9bb9f.b416066f83472338.webp"
+   }
+  },
+  {
+   "def": "1421202711594240286",
+   "name": "SERAPH",
+   "shipClass": "Cruiser",
+   "role": "Interceptor",
+   "rows": 15,
+   "cols": 15,
+   "slots": [
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Battery",
+    "Subsystem",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Battery",
+    "Core",
+    "Subsystem",
+    "Core",
+    "Battery",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Core",
+    "Propulsion",
+    "Core",
+    "Propulsion",
+    "Core",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "Propulsion",
+    "None",
+    "Core",
+    "None",
+    "Propulsion",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None",
+    "None"
+   ],
+   "roll": {
+    "qualities": [
+     "Faction",
+     "Flawed",
+     "Standard",
+     "Superior",
+     "Masterwork"
+    ],
+    "rarities": [
+     "Normal",
+     "Augmented",
+     "Prototype",
+     "Artifact"
+    ],
+    "modifierCounts": [
+     {
+      "rarity": "Augmented",
+      "min": 1,
+      "max": 2
+     },
+     {
+      "rarity": "Prototype",
+      "min": 2,
+      "max": 4
+     }
+    ],
+    "modifierPool": {
+     "prefix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "75366",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "79298",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70123",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "70123",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "ConduitThroughput",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "70778",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretCycleDuration",
+       "operation": "Multiply",
+       "pool": "Role:Interceptor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "64226",
+         "max": "64881",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "63570",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretCritChance",
+       "operation": "Multiply",
+       "pool": "Role:Interceptor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        }
+       ]
+      }
+     ],
+     "suffix": [
+      {
+       "stat": "MaxHull",
+       "operation": "Add",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "3342336",
+         "max": "4718592",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "4915200",
+         "max": "6094848",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "7274496",
+         "max": "9502720",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "8585216",
+         "max": "11272192",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Torque",
+       "operation": "Multiply",
+       "pool": "Hull",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "74055",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "76021",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "TurretRotationRate",
+       "operation": "Multiply",
+       "pool": "Role:Interceptor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Role:Interceptor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "60294",
+         "max": "62260",
+         "allowed": true
+        }
+       ]
+      }
+     ]
+    },
+    "typeOverrides": [],
+    "artifacts": [
+     "323613845660499413"
+    ],
+    "regalia": [],
+    "hereticals": [],
+    "harmonicSets": [],
+    "rating": {
+     "base": 2200,
+     "scalesWithQuality": true,
+     "tierShares": [
+      87,
+      176,
+      263,
+      352
+     ],
+     "regaliaShare": 1650,
+     "hereticalShare": 1539,
+     "ascendedHereticalShare": 3849
+    },
+    "authored": [
+     {
+      "source": "newPlayerShip",
+      "quality": "Faction",
+      "rarity": "Normal",
+      "isIdentified": true,
+      "pointRating": 1870
+     }
+    ]
+   },
+   "art": {
+    "base": "/v1/art/938b64f8878654275bf856d65799cfad.cd9530262ac32891.webp",
+    "Augmented": "/v1/art/f5197642151a04227a33625d13484e27.60e0708d5b3aa0f4.webp",
+    "Prototype": "/v1/art/ed5339ca4b28e49f290811adf779ebda.c177eb0be4e12d9c.webp",
+    "Artifact": "/v1/art/ce41d2a16269c4cadb2b52ea3c1fc6a4.3275a60b73aa99c0.webp",
+    "Heretical": "/v1/art/ed5339ca4b28e49f290811adf779ebda.c177eb0be4e12d9c.webp"
+   }
+  }
+ ]
+}

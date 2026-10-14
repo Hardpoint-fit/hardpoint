@@ -75,9 +75,9 @@ test("harmonic sets match the effective pool type and fit the item's port count"
     assert.ok(set.moduleTypes.length === 0 || set.moduleTypes.includes("Utility"));
     assert.ok(set.ciphers.length <= coolant.portRules.maxPorts);
   }
-  // A turret of no type matches harmonics as Hull (ModifierRoller.PoolModuleType).
-  const repairer = subject("OMNI REPAIRER TURRET");
-  assert.deepEqual(harmonicOptions(cat, repairer, defaultRoll(repairer)), []);
+  // A harmonic set lists the module types it takes; an item of another type matches none of them.
+  const tracer = subject("TRACER ROUNDS");
+  assert.deepEqual(harmonicOptions(cat, tracer, defaultRoll(tracer)), []);
 });
 
 test("modifier counts follow the rarity; templates hold their line count", () => {

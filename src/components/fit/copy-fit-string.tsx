@@ -9,14 +9,14 @@ import type { OpenFit } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
 import { slowDownMessage } from "#/lib/slow-down";
 
-export const ENGINE_DOWN_FOR_STRINGS = "THE LOADOUT ENGINE CAN'T BE REACHED, SO FIT STRINGS CAN'T BE MADE OR READ RIGHT NOW.";
+export const ENGINE_DOWN_FOR_STRINGS = "THE ENGINE CAN'T BE REACHED, SO FIT STRINGS CAN'T BE MADE OR READ RIGHT NOW.";
 
 /** What to show when the engine didn't turn a fit or a string around; `refused` words a 400. */
 export function fitStringProblem(error: EngineError, refused: string): string {
   if (error.kind === "rejected") return `${refused}: ${error.message.toUpperCase()}`;
   if (error.kind === "rateLimited") return slowDownMessage(error.retryAfterMs ?? 1_000);
   if (error.kind === "tooLarge") return "THIS FIT IS TOO LARGE FOR A FIT STRING.";
-  if (error.kind === "failed") return "THE FIT CHECK FAILED ON THE LOADOUT ENGINE. TRY AGAIN, AND REPORT THE FIT IF IT KEEPS FAILING.";
+  if (error.kind === "failed") return "THE FIT CHECK FAILED ON THE ENGINE. TRY AGAIN, AND REPORT THE FIT IF IT KEEPS FAILING.";
   return ENGINE_DOWN_FOR_STRINGS;
 }
 

@@ -1,0 +1,55 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "gridConsumables": [
+  {
+   "def": "1271244689970087494",
+   "name": "SKULD OMEN",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "RandomCorrupt",
+   "fixedTargetSlotType": null,
+   "art": {
+    "base": "/v1/art/3c3658724e42e4429ab48c19c7ecfd3b.0cc5c4f00344808d.webp"
+   }
+  },
+  {
+   "def": "1300562256569024070",
+   "name": "BROKKR SLOT",
+   "kind": "FittingGridExtender",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": null,
+   "art": {
+    "base": "/v1/art/23bd35cdebd534c02bc2d0187dd513a2.eebcf2fa7078e240.webp"
+   }
+  },
+  {
+   "def": "1307464005327200117",
+   "name": "ANDVARI COIL",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": "Battery",
+   "art": {
+    "base": "/v1/art/1c90e0a29e6404018b769cf882a799b4.14e359cc930115b8.webp"
+   }
+  },
+  {
+   "def": "1390159403341153497",
+   "name": "EITRI ARC",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": "Subsystem",
+   "art": {
+    "base": "/v1/art/9a4141a8f69a3405cb3990b31cbe2773.9aa526ec6f1b853e.webp"
+   }
+  },
+  {
+   "def": "1429554554519939890",
+   "name": "VOLUNDR JET",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": "Propulsion",
+   "art": {
+    "base": "/v1/art/1a5e1383441294059b9db3be36420dfe.e7c0af5eb2b4b706.webp"
+   }
+  }
+ ]
+}

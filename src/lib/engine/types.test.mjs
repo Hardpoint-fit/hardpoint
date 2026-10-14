@@ -1,5 +1,6 @@
-// Checks types.ts against JSON recorded from the real engine (see __fixtures__): every object must have
-// exactly the declared keys, each of the declared kind. Re-record the fixtures when the C# records change.
+// Checks types.ts against JSON recorded from the real game data API (see __fixtures__): every object must
+// have exactly the declared keys (an optional one may be missing), each of the declared kind. Re-record the
+// fixtures (scripts/record-fixtures.mjs) when the API's contract changes.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -53,13 +54,12 @@ function check(value, node, path, errors, seen) {
         return errors.push(`${path}: expected object, got ${JSON.stringify(value)?.slice(0, 40)}`);
       }
       const declared = node.members.map((m) => m.name.text);
-      for (const key of Object.keys(value)) if (!declared.includes(key)) errors.push(`${path}.${key}: the engine sends it, types.ts doesn't declare it`);
+      for (const key of Object.keys(value)) if (!declared.includes(key)) errors.push(`${path}.${key}: the API sends it, types.ts doesn't declare it`);
       for (const member of node.members) {
         const key = member.name.text;
         if (!(key in value)) {
-          if (!member.questionToken) errors.push(`${path}.${key}: declared in types.ts, missing from the engine's JSON`);
-        }
-        else check(value[key], member.type, `${path}.${key}`, errors, seen);
+          if (!member.questionToken) errors.push(`${path}.${key}: declared in types.ts, missing from the API's JSON`);
+        } else check(value[key], member.type, `${path}.${key}`, errors, seen);
       }
       return;
     }
@@ -75,58 +75,53 @@ function conforms(value, typeName) {
   return { errors, seen };
 }
 
+// Each recorded response and the type that describes it. The catalog fixture is the site's assembly of
+// the resource fixtures (catalog-resources.ts), which must also fit its own type.
 const cases = [
-  ["health.json", "HealthResponse"],
-  ["catalog.json", "Catalog"],
-  ["fit.json", "OpenFit"],
-  ["evaluate-valid.json", "EvaluationResponse"],
-  ["evaluate-invalid.json", "EvaluationResponse"],
-  ["evaluate-showcase.json", "EvaluationResponse"],
-  ["evaluate-removed-item.json", "EvaluationResponse"],
-  ["fit-showcase.json", "OpenFit"],
-  ["fit-removed-item.json", "OpenFit"],
-  ["export.json", "FitStringBody"],
-  ["import.json", "FitBody"],
-  ["error.json", "ErrorBody"],
-  ["item-facts-request.json", "ItemBody"],
-  ["item-facts.json", "FactsBody"],
-  ["grid-mods.json", "GridModsResponse"],
-  ["roll-request.json", "RollRequest"],
-  ["roll.json", "RollResponse"],
-  ["roll-line-request.json", "RollRequest"],
-  ["roll-line.json", "RollResponse"],
+  ["status.json", "StatusResponse", FIXTURES.status],
+  ["items.json", "ItemsBody", FIXTURES.parts.items],
+  ["hulls.json", "HullsBody", FIXTURES.parts.hulls],
+  ["ciphers.json", "CiphersBody", FIXTURES.parts.ciphers],
+  ["artifacts.json", "ArtifactsBody", FIXTURES.parts.artifacts],
+  ["regalia-sets.json", "RegaliaSetsBody", FIXTURES.parts.regaliaSets],
+  ["affinity.json", "AffinityBody", FIXTURES.parts.affinity],
+  ["regalia.json", "RegaliaBody", FIXTURES.parts.regalia],
+  ["heretical-specials.json", "HereticalSpecialsBody", FIXTURES.parts.hereticalSpecials],
+  ["harmonic-sets.json", "HarmonicSetsBody", FIXTURES.parts.harmonicSets],
+  ["modifier-pools.json", "ModifierPoolsBody", FIXTURES.parts.modifierPools],
+  ["qualities.json", "QualitiesBody", FIXTURES.parts.qualities],
+  ["placement-rules.json", "PlacementRulesBody", FIXTURES.parts.placementRules],
+  ["grid-consumables.json", "GridConsumablesBody", FIXTURES.parts.gridConsumables],
+  ["breach-tiers.json", "BreachTiersBody", FIXTURES.parts.breachTiers],
+  ["the assembled catalog", "Catalog", FIXTURES.catalog],
+  ["fit.json", "OpenFit", FIXTURES.fit],
+  ["evaluate-valid.json", "EvaluationResponse", FIXTURES.evaluateValid],
+  ["evaluate-invalid.json", "EvaluationResponse", FIXTURES.evaluateInvalid],
+  ["evaluate-showcase.json", "EvaluationResponse", FIXTURES.evaluateShowcase],
+  ["evaluate-removed-item.json", "EvaluationResponse", FIXTURES.evaluateRemovedItem],
+  ["fit-showcase.json", "OpenFit", FIXTURES.fitShowcase],
+  ["fit-removed-item.json", "OpenFit", FIXTURES.fitRemovedItem],
+  ["export.json", "FitStringBody", FIXTURES.exported],
+  ["import.json", "FitBody", FIXTURES.imported],
+  ["error.json", "ErrorBody", FIXTURES.error],
+  ["item-facts-request.json", "ItemBody", FIXTURES.itemFactsRequest],
+  ["item-facts.json", "FactsBody", FIXTURES.itemFacts],
+  ["grid-mods.json", "GridModsResponse", FIXTURES.gridMods],
+  ["roll-request.json", "RollRequest", FIXTURES.rollRequest],
+  ["roll.json", "RollResponse", FIXTURES.roll],
+  ["roll-line-request.json", "RollRequest", FIXTURES.rollLineRequest],
+  ["roll-line.json", "RollResponse", FIXTURES.rollLine],
 ];
-const byName = {
-  "health.json": FIXTURES.health,
-  "catalog.json": FIXTURES.catalog,
-  "fit.json": FIXTURES.fit,
-  "evaluate-valid.json": FIXTURES.evaluateValid,
-  "evaluate-invalid.json": FIXTURES.evaluateInvalid,
-  "evaluate-showcase.json": FIXTURES.evaluateShowcase,
-  "evaluate-removed-item.json": FIXTURES.evaluateRemovedItem,
-  "fit-showcase.json": FIXTURES.fitShowcase,
-  "fit-removed-item.json": FIXTURES.fitRemovedItem,
-  "export.json": FIXTURES.exported,
-  "import.json": FIXTURES.imported,
-  "error.json": FIXTURES.error,
-  "item-facts-request.json": FIXTURES.itemFactsRequest,
-  "item-facts.json": FIXTURES.itemFacts,
-  "grid-mods.json": FIXTURES.gridMods,
-  "roll-request.json": FIXTURES.rollRequest,
-  "roll.json": FIXTURES.roll,
-  "roll-line-request.json": FIXTURES.rollLineRequest,
-  "roll-line.json": FIXTURES.rollLine,
-};
 
-for (const [file, typeName] of cases) {
+for (const [file, typeName, value] of cases) {
   test(`${file} matches ${typeName} in types.ts`, () => {
-    assert.deepEqual(conforms(byName[file], typeName).errors, []);
+    assert.deepEqual(conforms(value, typeName).errors, []);
   });
 }
 
 test("the fixtures exercise every type in types.ts", () => {
   const covered = new Set();
-  for (const [file, typeName] of cases) for (const name of conforms(byName[file], typeName).seen) covered.add(name);
+  for (const [, typeName, value] of cases) for (const name of conforms(value, typeName).seen) covered.add(name);
   // A type no fixture reaches (an empty array, a null) would be checked by nothing.
   assert.deepEqual([...aliases.keys()].filter((name) => !covered.has(name)), []);
 });

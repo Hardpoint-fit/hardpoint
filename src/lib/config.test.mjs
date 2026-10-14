@@ -4,35 +4,35 @@ import { parseConfig, toPublicConfig } from "./config.ts";
 
 test("an empty environment gives a usable, read-only config", () => {
   const config = parseConfig({});
-  assert.equal(config.engineUrl, null);
-  assert.equal(config.engineInternalUrl, null);
+  assert.equal(config.apiUrl, null);
+  assert.equal(config.apiInternalUrl, null);
   assert.equal(config.databaseUrl, null);
   assert.equal(config.authEnabled, false);
   assert.deepEqual(config.adminUserIds, []);
 });
 
 test("blank values count as missing", () => {
-  const config = parseConfig({ DATABASE_URL: "  ", LOADOUT_ENGINE_URL: "", CITADEL_OAUTH_CLIENT_SECRET: " ", SESSION_SECRET: " " });
+  const config = parseConfig({ DATABASE_URL: "  ", GAME_DATA_API_URL: "", CITADEL_OAUTH_CLIENT_SECRET: " ", SESSION_SECRET: " " });
   assert.equal(config.databaseUrl, null);
-  assert.equal(config.engineUrl, null);
+  assert.equal(config.apiUrl, null);
   assert.equal(config.oauthClientSecret, null);
   assert.equal(config.sessionSecret, null);
 });
 
 test("present values are read, and URLs lose trailing slashes", () => {
   const config = parseConfig({
-    LOADOUT_ENGINE_URL: "https://engine.example.com//",
-    LOADOUT_ENGINE_INTERNAL_URL: "http://engine.railway.internal:8080/",
+    GAME_DATA_API_URL: "https://engine.example.com//",
+    GAME_DATA_API_INTERNAL_URL: "http://engine.railway.internal:8080/",
     DATABASE_URL: "postgres://u:p@db/fits",
   });
-  assert.equal(config.engineUrl, "https://engine.example.com");
-  assert.equal(config.engineInternalUrl, "http://engine.railway.internal:8080");
+  assert.equal(config.apiUrl, "https://engine.example.com");
+  assert.equal(config.apiInternalUrl, "http://engine.railway.internal:8080");
   assert.equal(config.databaseUrl, "postgres://u:p@db/fits");
 });
 
-test("the server falls back to the public engine URL when no internal one is set", () => {
-  const config = parseConfig({ LOADOUT_ENGINE_URL: "https://engine.example.com" });
-  assert.equal(config.engineInternalUrl, "https://engine.example.com");
+test("the server falls back to the public API URL when no internal one is set", () => {
+  const config = parseConfig({ GAME_DATA_API_URL: "https://engine.example.com" });
+  assert.equal(config.apiInternalUrl, "https://engine.example.com");
 });
 
 const SESSION_SECRET = Buffer.alloc(48, 9).toString("base64");
@@ -73,8 +73,8 @@ test("admin user ids are split on commas and trimmed", () => {
 
 test("the public config carries no secret or server-only value", () => {
   const config = parseConfig({
-    LOADOUT_ENGINE_URL: "https://engine.example.com",
-    LOADOUT_ENGINE_INTERNAL_URL: "http://engine.railway.internal",
+    GAME_DATA_API_URL: "https://engine.example.com",
+    GAME_DATA_API_INTERNAL_URL: "http://engine.railway.internal",
     DATABASE_URL: "postgres://u:p@db/fits",
     CITADEL_OAUTH_CLIENT_ID: "client_x",
     CITADEL_OAUTH_CLIENT_SECRET: "oauth_secret",
@@ -82,7 +82,7 @@ test("the public config carries no secret or server-only value", () => {
     SITE_ADMIN_USER_IDS: "user_1",
   });
   const publicConfig = toPublicConfig(config);
-  assert.deepEqual(Object.keys(publicConfig).sort(), ["authEnabled", "engineUrl"]);
+  assert.deepEqual(Object.keys(publicConfig).sort(), ["apiUrl", "authEnabled"]);
   assert.equal(publicConfig.authEnabled, true);
   assert.equal(JSON.stringify(publicConfig).includes("secret"), false);
   assert.equal(JSON.stringify(publicConfig).includes("postgres"), false);

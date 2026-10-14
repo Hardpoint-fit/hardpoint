@@ -1,3 +1,6 @@
 {
- "error": "Fit string must start with CFIT1. (wrong prefix)."
+ "error": {
+  "code": "bad_request",
+  "message": "Fit string must start with CFIT1. (wrong prefix)."
+ }
 }

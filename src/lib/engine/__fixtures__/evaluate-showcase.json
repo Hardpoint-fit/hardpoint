@@ -1,5 +1,5 @@
 {
- "buildSha": "c919ec0e11b9ba74824d1509cb2a123b317f67da",
+ "buildSha": "d38e3a515e8548daaf0562260b059a783a159bb3",
  "valid": true,
  "issues": [],
  "conduits": [
@@ -93,7 +93,7 @@
    "stat": "MaxSpeed",
    "stage": "Fitted",
    "operation": "Multiply",
-   "total": 0.1876983642578125,
+   "total": 0.193511962890625,
    "sources": [
     {
      "kind": "Module",
@@ -117,18 +117,9 @@
      "kind": "RegaliaPiece",
      "asset": "376835473569659020",
      "affinityType": "None",
-     "raw": 0.0200042724609375,
-     "ratio": 0.677001953125,
-     "effective": 0.0135498046875,
-     "isStackingExempt": false
-    },
-    {
-     "kind": "RegaliaPiece",
-     "asset": "376835473569659020",
-     "affinityType": "None",
-     "raw": 0.079986572265625,
+     "raw": 0.0999908447265625,
      "ratio": 1,
-     "effective": 0.079986572265625,
+     "effective": 0.0999908447265625,
      "isStackingExempt": false
     }
    ]
@@ -218,7 +209,7 @@
    "sources": [
     {
      "kind": "Module",
-     "asset": "1284176030826467319",
+     "asset": "1480822076687262645",
      "affinityType": "None",
      "raw": 0.029998779296875,
      "ratio": 1,
@@ -265,15 +256,15 @@
    "stat": "MaxHeat",
    "stage": "Fitted",
    "operation": "Multiply",
-   "total": 0.1953125,
+   "total": 0.1975860595703125,
    "sources": [
     {
      "kind": "Module",
      "asset": "1276464883135659217",
      "affinityType": "None",
      "raw": 0.149993896484375,
-     "ratio": 1,
-     "effective": 0.149993896484375,
+     "ratio": 0.9579925537109375,
+     "effective": 0.1436920166015625,
      "isStackingExempt": false
     },
     {
@@ -298,18 +289,9 @@
      "kind": "RegaliaPiece",
      "asset": "359734331002714082",
      "affinityType": "None",
-     "raw": 0.149993896484375,
-     "ratio": 0.9579925537109375,
-     "effective": 0.1436920166015625,
-     "isStackingExempt": false
-    },
-    {
-     "kind": "RegaliaPiece",
-     "asset": "359734331002714082",
-     "affinityType": "None",
-     "raw": 0.0699920654296875,
-     "ratio": 0.84100341796875,
-     "effective": 0.058868408203125,
+     "raw": 0.2199859619140625,
+     "ratio": 1,
+     "effective": 0.2199859619140625,
      "isStackingExempt": false
     }
    ]
@@ -318,15 +300,15 @@
    "stat": "DroneOutput",
    "stage": "Fitted",
    "operation": "Multiply",
-   "total": 0.149993896484375,
+   "total": 0.1199951171875,
    "sources": [
     {
-     "kind": "Cipher",
-     "asset": "1283267483210613362",
+     "kind": "Module",
+     "asset": "1278500398224355069",
      "affinityType": "None",
-     "raw": 0.149993896484375,
+     "raw": 0.1199951171875,
      "ratio": 1,
-     "effective": 0.149993896484375,
+     "effective": 0.1199951171875,
      "isStackingExempt": false
     }
    ]
@@ -477,7 +459,7 @@
    ]
   }
  ],
- "rating": 5682,
+ "rating": 6150,
  "sections": [
   {
    "id": "defense",
@@ -535,9 +517,9 @@
      "id": "armor-repair",
      "label": "ARMOR REPAIR",
      "primary": {
-      "text": "45.5",
+      "text": "70",
       "unit": "/S",
-      "number": 45.499573
+      "number": 70
      },
      "secondary": null,
      "primaryTone": "Neutral",
@@ -551,9 +533,9 @@
      "id": "sustain",
      "label": "SUSTAIN",
      "primary": {
-      "text": "45.5",
+      "text": "70",
       "unit": "/S",
-      "number": 45.499573
+      "number": 70
      },
      "secondary": null,
      "primaryTone": "Neutral",
@@ -647,9 +629,9 @@
      "id": "time-to-scram",
      "label": "TIME TO SCRAM",
      "primary": {
-      "text": "STABLE",
+      "text": "01:04",
       "unit": "",
-      "number": null
+      "number": 64.02557
      },
      "secondary": null,
      "primaryTone": "Neutral",
@@ -663,9 +645,9 @@
      "id": "max-heat",
      "label": "MAX HEAT CAPACITY",
      "primary": {
-      "text": "628",
+      "text": "629",
       "unit": "GJ",
-      "number": 627.53906
+      "number": 628.73267
      },
      "secondary": null,
      "primaryTone": "Neutral",
@@ -695,9 +677,9 @@
      "id": "heat-generation",
      "label": "HEAT GENERATION",
      "primary": {
-      "text": "2.5",
+      "text": "14.5",
       "unit": "/S",
-      "number": 2.5
+      "number": 14.5
      },
      "secondary": null,
      "primaryTone": "Neutral",
@@ -711,9 +693,9 @@
      "id": "net-heat",
      "label": "NET HEAT",
      "primary": {
-      "text": "-2.2",
+      "text": "9.8",
       "unit": "/S",
-      "number": -2.1799774
+      "number": 9.820023
      },
      "secondary": null,
      "primaryTone": "Neutral",
@@ -766,7 +748,7 @@
      "label": "ACCELERATION",
      "primary": {
       "text": "72",
-      "unit": "M/S\u00b2",
+      "unit": "M/S²",
       "number": 72.04727
      },
      "secondary": null,
@@ -782,7 +764,7 @@
      "label": "TURN ACCELERATION",
      "primary": {
       "text": "62.7",
-      "unit": "\u00b0/S\u00b2",
+      "unit": "°/S²",
       "number": 62.73021
      },
      "secondary": null,
@@ -798,7 +780,7 @@
      "label": "TURN RATE",
      "primary": {
       "text": "26.1",
-      "unit": "\u00b0/S",
+      "unit": "°/S",
       "number": 26.137878
      },
      "secondary": null,
@@ -813,9 +795,9 @@
      "id": "max-speed",
      "label": "MAX VELOCITY",
      "primary": {
-      "text": "345",
+      "text": "346.7",
       "unit": "M/S",
-      "number": 345.00357
+      "number": 346.69232
      },
      "secondary": null,
      "primaryTone": "Neutral",

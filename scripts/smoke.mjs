@@ -1,5 +1,5 @@
 // Smoke test of the built standalone server: seeds a disposable Postgres with the fixture fits,
-// serves the engine fixtures from the stub, starts `.next/standalone/server.js` three ways (engine
+// serves the game data API fixtures from the stub, starts `.next/standalone/server.js` three ways (engine
 // up, engine down, no database) and fetches every route for its status and key text.
 //
 //   pnpm build
@@ -18,7 +18,6 @@ import pg from "pg";
 import { startStubEngine } from "../src/lib/engine/stub-engine.mjs";
 import { applySchema } from "../src/lib/fits/migrate.mjs";
 import { seedSite } from "../src/lib/site/seed.mjs";
-import { artManifest } from "../src/lib/art/art-manifest.ts";
 import { startFakeIdp } from "../src/lib/fake-idp.mjs";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -28,10 +27,9 @@ const serve = process.argv.includes("--serve");
 
 if (!databaseUrl) throw new Error("Set SMOKE_DATABASE_URL to a throwaway Postgres database.");
 if (!existsSync(join(standalone, "server.js"))) throw new Error("Run `pnpm build` first.");
-// As the Dockerfile does: the standalone server serves the static assets and public/ (the game art) from beside it.
+// As the Dockerfile does: the standalone server serves the static assets and public/ from beside it.
 cpSync(join(appRoot, ".next/static"), join(standalone, ".next/static"), { recursive: true });
 cpSync(join(appRoot, "public"), join(standalone, "public"), { recursive: true });
-const ART_URL = Object.values(artManifest.modules)[0].base;
 
 async function freePort() {
   const server = createServer();
@@ -126,12 +124,16 @@ async function checkWww(site, host, path, location) {
 const cookiesOf = (response) => Object.fromEntries(response.headers.getSetCookie().map((line) => line.split(";")[0].split(/=(.*)/s).slice(0, 2)));
 
 const ALICE_ID = "user_alice";
+const PUBLIC_API = "https://api.example.test";
+const ART_SRC = `class="item-icon" src="${PUBLIC_API}/v1/art/`;
 const ids = await seed();
 const stub = await startStubEngine();
 const sites = [];
 try {
   // ---- Engine up, database seeded, no sign-in -----------------------------------------------
-  const up = await startSite({ DATABASE_URL: databaseUrl, LOADOUT_ENGINE_URL: stub.url });
+  // The public API address is one nothing listens on: the page must only name it in its art URLs, and
+  // the server must read the API (and fetch the share card's art) at the internal address.
+  const up = await startSite({ DATABASE_URL: databaseUrl, GAME_DATA_API_URL: PUBLIC_API, GAME_DATA_API_INTERNAL_URL: stub.url });
   sites.push(up);
   if (serve) {
     console.log(`site ${up.url}  fits ${JSON.stringify(ids)}`);
@@ -150,17 +152,16 @@ try {
   });
   // Icons, descriptions, fact rows and the stored hull specs on the fit page; hull art on the cards.
   await check(up, `/fits/${ids.showcase}`, {
-    has: ['class="fg-module__icon"', 'class="item-icon" src="/art/', "AUTOMATICALLY VENTS HEAT WHEN UNSTABLE", "DEACTIVATION COOLDOWN", "HULL SPECS", 'data-spec="effective-health"', "TIME TO SCRAM"],
+    has: ['class="fg-module__icon"', ART_SRC, "AUTOMATICALLY VENTS HEAT WHEN UNSTABLE", "DEACTIVATION COOLDOWN", "HULL SPECS", 'data-spec="effective-health"', "TIME TO SCRAM"],
     lacks: ["STATS APPEAR AFTER THE NEXT CHECK"],
   });
   await check(up, `/fits/${ids.pending}`, { has: ["STATS APPEAR AFTER THE NEXT CHECK", 'class="fg-module__icon"'] });
-  await check(up, "/", { has: ['class="item-icon" src="/art/'] });
-  // Art names carry their content's hash, so they are cached for good.
-  const IMMUTABLE = "public, max-age=31536000, immutable";
-  await check(up, ART_URL, { type: "image/webp", cacheControl: IMMUTABLE });
-  await check(up, ART_URL.replace(".webp", "@2x.webp"), { type: "image/webp", cacheControl: IMMUTABLE });
+  await check(up, "/", { has: [ART_SRC] });
   await check(up, `/fits/${ids.removed}`, { has: ["UNKNOWN ITEM", "OUTDATED", "doesn&#x27;t exist in the current build", "LAST VALID"] });
+  stub.requests.length = 0;
   await check(up, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
+  // The share card fetches the art it draws from the API's internal address, never the public one.
+  assert.ok(stub.requests.some((request) => request.path.startsWith("/v1/art/") && request.path.endsWith("@2x.webp")), "the share card read art from the API");
   await check(up, `/fits/${ids.draft}`, { status: 404 });
   await check(up, "/fits/nosuchfit0", { status: 404, has: ["NOTHING HERE"] });
   await check(up, `/u/${ALICE_ID}`, { has: ["ALICE", "Scarab cipher brawler", "UPVOTES RECEIVED", "pilot-avatar--none"], lacks: ["Unfinished idea"] });
@@ -171,7 +172,7 @@ try {
   // it holds when the engine stops answering (Review Focus #4).
   await check(up, "/fits/new", { has: ["LOADING THE CATALOG"] });
   await check(up, `/fits/new?from=${ids.showcase}`, { has: ["LOADING THE CATALOG"] });
-  await check(up, "/api/catalog", { has: ["SCARAB", "OMNI REPAIRER TURRET", "affinity"] });
+  await check(up, "/api/catalog", { has: ["SCARAB", "REPAIR PROJECTOR", "affinity"] });
   await check(up, "/api/catalog", { encoding: "br", has: ["SCARAB"] });
   await check(up, "/api/catalog", { encoding: "gzip", has: ["SCARAB"] });
   // A crafted cursor is the first page; a path that doesn't decode is not found, not a 500.
@@ -189,7 +190,6 @@ try {
   await check(up, "/auth/signin?returnTo=%2F", { status: 503, has: ["Sign-in isn&#39;t configured on this site yet"] });
   await check(up, "/auth/callback?code=x&state=y", { status: 503 });
   await checkWww(up, "www.hardpoint.fit", "/fits/abc?x=1", "https://hardpoint.fit/fits/abc?x=1");
-  await checkWww(up, "www.hardpoint.fit", ART_URL, `https://hardpoint.fit${ART_URL}`);
   up.child.kill();
 
   // ---- Sign in with Citadel, against a local fake provider -----------------------------------
@@ -197,7 +197,7 @@ try {
   try {
     const authed = await startSite((origin) => ({
       DATABASE_URL: databaseUrl,
-      LOADOUT_ENGINE_URL: stub.url,
+      GAME_DATA_API_URL: stub.url,
       CITADEL_OAUTH_ISSUER: idp.issuer,
       CITADEL_OAUTH_CLIENT_ID: idp.clientId,
       CITADEL_OAUTH_CLIENT_SECRET: idp.clientSecret,
@@ -235,11 +235,11 @@ try {
   }
 
   // ---- Engine down since start: stored verdicts, a banner, no 500 --------------------------
-  const down = await startSite({ DATABASE_URL: databaseUrl, LOADOUT_ENGINE_URL: "http://127.0.0.1:9" });
+  const down = await startSite({ DATABASE_URL: databaseUrl, GAME_DATA_API_URL: "http://127.0.0.1:9" });
   sites.push(down);
   results.push("== engine down");
   await check(down, "/", { has: ["ISN&#x27;T ANSWERING", "Scarab cipher brawler"] });
-  await check(down, `/fits/${ids.showcase}`, { has: ["ISN&#x27;T ANSWERING", "MAX VELOCITY", "THE GRID NEEDS THE LOADOUT ENGINE", 'data-spec="effective-health"', "EFFECTIVE HEALTH"] });
+  await check(down, `/fits/${ids.showcase}`, { has: ["ISN&#x27;T ANSWERING", "MAX VELOCITY", "THE GRID NEEDS THE ENGINE", 'data-spec="effective-health"', "EFFECTIVE HEALTH"] });
   await check(down, `/fits/${ids.removed}`, { has: ["ISN&#x27;T ANSWERING", "Old build regalia runner"] });
   await check(down, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(down, `/u/${ALICE_ID}`, { has: ["Scarab cipher brawler"] });
@@ -248,7 +248,7 @@ try {
   down.child.kill();
 
   // ---- No database: an unavailable state, not a 500 -----------------------------------------
-  const noDb = await startSite({ LOADOUT_ENGINE_URL: stub.url });
+  const noDb = await startSite({ GAME_DATA_API_URL: stub.url });
   sites.push(noDb);
   results.push("== no database");
   await check(noDb, "/", { has: ["UNAVAILABLE RIGHT NOW"] });

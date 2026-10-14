@@ -1,13 +1,25 @@
-// A stand-in loadout engine for tests: a real HTTP server that answers with the responses recorded from
-// the real engine in __fixtures__. Not a test file. Pass `overrides` to replace a route's behaviour.
+// A stand-in game data API for tests: a real HTTP server that answers with the responses recorded from
+// the real API in __fixtures__ (scripts/record-fixtures.mjs). Not a test file. Pass `overrides` to
+// replace a route's behaviour.
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
+import { assembleCatalog, CATALOG_PARTS, CATALOG_ROUTES } from "./catalog-resources.ts";
 
 const fixture = (name) => JSON.parse(readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), "utf8"));
+/** The routes' recorded bodies, by catalog part. */
+const parts = Object.fromEntries(
+  CATALOG_PARTS.map((part) => [part, fixture(`${CATALOG_ROUTES[part].path.replace("/v1/", "")}.json`)]),
+);
+/** The origin the fixture catalog's art URLs are made absolute with when it is not read through a client. */
+export const FIXTURE_ART_BASE = "https://api.example.test";
+
 export const FIXTURES = {
-  health: fixture("health.json"),
-  catalog: fixture("catalog.json"),
+  status: fixture("status.json"),
+  /** The resource routes' bodies as recorded, by catalog part (see catalog-resources.ts). */
+  parts,
+  /** The catalog the site holds: the parts assembled, art URLs absolute under FIXTURE_ART_BASE. */
+  catalog: assembleCatalog(parts, FIXTURE_ART_BASE),
   fit: fixture("fit.json"),
   evaluateValid: fixture("evaluate-valid.json"),
   evaluateInvalid: fixture("evaluate-invalid.json"),
@@ -17,14 +29,14 @@ export const FIXTURES = {
   /** fit.json with module 2's item replaced by one no build has: what a removed item looks like. */
   fitRemovedItem: fixture("fit-removed-item.json"),
   evaluateRemovedItem: fixture("evaluate-removed-item.json"),
-  /** Engine verdicts for fit-showcase.json with module 5 at each rotation (two overlap the cipher's cell). */
+  /** API verdicts for fit-showcase.json with module 5 at each rotation (two overlap the cipher's cell). */
   rotationOracle: fixture("rotation-oracle.json"),
-  /** Engine verdicts for single palette drops on empty hulls and fit.json (scripts/record-placement-oracle.mjs). */
+  /** API verdicts for single palette drops on empty hulls and fit.json (scripts/record-placement-oracle.mjs). */
   placementOracle: fixture("placement-oracle.json"),
   exported: fixture("export.json"),
   imported: fixture("import.json"),
   error: fixture("error.json"),
-  /** A rolled module from fit.json, and the engine's facts for it. */
+  /** A rolled module from fit.json, and the API's facts for it. */
   itemFactsRequest: fixture("item-facts-request.json"),
   itemFacts: fixture("item-facts.json"),
   /** The engine's /v1/grid-mods answer for fit.json. */
@@ -37,6 +49,11 @@ export const FIXTURES = {
 };
 
 const MAX_BODY = 262_144;
+
+/** A 1x1 lossless WebP: what the stub serves for any /v1/art/ file. */
+const WEBP = Buffer.from("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==", "base64");
+
+const envelope = (code, message) => ({ error: { code, message } });
 
 function send(res, status, body, headers = {}) {
   const text = body === undefined ? "" : JSON.stringify(body);
@@ -60,7 +77,7 @@ async function readBody(req) {
   }
 }
 
-/** Like the real engine, a fit whose modules share an origin cell is invalid. */
+/** Like the real API, a fit whose modules share an origin cell is invalid. */
 function overlaps(fit) {
   const seen = new Set();
   for (const m of fit?.modules ?? []) {
@@ -71,7 +88,7 @@ function overlaps(fit) {
   return false;
 }
 
-const knownItems = new Set(FIXTURES.catalog.items.map((item) => item.def));
+const knownItems = new Set(FIXTURES.parts.items.items.map((item) => item.def));
 
 /** The recorded verdict that fits this fit: a removed item, an overlap, the showcase fit, or valid. */
 function evaluate(fit) {
@@ -94,14 +111,14 @@ const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
  */
 function roll(request) {
   const item = request?.item;
-  if (!item) return [400, { error: "Body must be { item, breachTier?, seed?, line? }." }];
-  if (!knownItems.has(item.def)) return [400, { error: "item: unknown item" }];
-  if (!ROLLED_RARITIES.has(item.roll?.rarity)) return [400, { error: `rarity: ${item.roll?.rarity} rolls no modifiers from a pool here` }];
+  if (!item) return [400, envelope("bad_request", "Body must be { item, breachTier?, seed?, line? }.")];
+  if (!knownItems.has(item.def)) return [400, envelope("bad_request", "item: unknown item")];
+  if (!ROLLED_RARITIES.has(item.roll?.rarity)) return [400, envelope("bad_request", `rarity: ${item.roll?.rarity} rolls no modifiers from a pool here`)];
   const tiers = FIXTURES.catalog.breachTiers.length;
   const breachTier = request.breachTier ?? tiers - 1;
-  if (!Number.isInteger(breachTier) || breachTier < 0 || breachTier >= tiers) return [400, { error: `breachTier: 0 to ${tiers - 1}` }];
+  if (!Number.isInteger(breachTier) || breachTier < 0 || breachTier >= tiers) return [400, envelope("bad_request", `breachTier: 0 to ${tiers - 1}`)];
   const count = item.roll.modifiers.length;
-  if (request.line !== undefined && (!Number.isInteger(request.line) || request.line < 0 || request.line >= count)) return [400, { error: `line: 0 to ${count - 1}` }];
+  if (request.line !== undefined && (!Number.isInteger(request.line) || request.line < 0 || request.line >= count)) return [400, envelope("bad_request", `line: 0 to ${count - 1}`)];
   if (sameJson(request, FIXTURES.rollRequest)) return [200, FIXTURES.roll];
   if (sameJson(request, FIXTURES.rollLineRequest)) return [200, FIXTURES.rollLine];
   const seed = request.seed ?? 4242;
@@ -114,14 +131,14 @@ function roll(request) {
 
 /**
  * Starts the stub on a free port. `requests` records every call as `{ method, path, headers, body }`.
- * `overrides["POST /v1/evaluate"] = (req, res, body) => ...` replaces a route; `stub.fail(status)` makes
- * every route answer with that status until `stub.fail(null)`.
+ * `overrides["POST /v1/fits/evaluate"] = (req, res, body) => ...` replaces a route; `stub.fail(status)`
+ * makes every route answer with that status until `stub.fail(null)`. Resource routes carry an ETag (the
+ * build and the route) and answer 304 to it, as the API does.
  */
 export async function startStubEngine(overrides = {}, port = 0) {
   const requests = [];
   let failing = null;
   const routes = { ...overrides };
-  const catalogSha = () => FIXTURES.catalog.buildSha;
 
   const server = createServer(async (req, res) => {
     const path = new URL(req.url, "http://stub").pathname;
@@ -129,31 +146,36 @@ export async function startStubEngine(overrides = {}, port = 0) {
     requests.push({ method: req.method, path, headers: req.headers, body: body.json });
     const route = routes[`${req.method} ${path}`];
     if (route) return route(req, res, body.json);
-    if (failing !== null) return send(res, failing, { error: `stub failing with ${failing}` });
-    if (body.tooLarge) return send(res, 413, undefined);
+    if (failing !== null) return send(res, failing, envelope("internal", `stub failing with ${failing}`));
+    if (body.tooLarge) return send(res, 413, envelope("too_large", "Body is over 256 KB."));
 
-    if (req.method === "GET" && path === "/healthz") return send(res, 200, FIXTURES.health);
-    if (req.method === "GET" && path === "/v1/catalog") {
-      const etag = `"${catalogSha()}"`;
-      if (req.headers["if-none-match"] === etag) return send(res, 304, undefined, { etag });
-      return send(res, 200, FIXTURES.catalog, { etag, "cache-control": "public, max-age=300" });
+    if (req.method === "GET" && path === "/v1/status") return send(res, 200, FIXTURES.status);
+    if (req.method === "GET" && path.startsWith("/v1/art/")) {
+      res.writeHead(200, { "content-type": "image/webp", "cache-control": "public, max-age=31536000, immutable" });
+      return res.end(WEBP);
     }
-    if (req.method === "POST" && path === "/v1/evaluate") {
-      if (!body.json?.fit) return send(res, 400, { error: "Body must be { fit }." });
+    const part = CATALOG_PARTS.find((each) => CATALOG_ROUTES[each].path === path);
+    if (req.method === "GET" && part) {
+      const etag = `"${FIXTURES.status.build}:${part}"`;
+      if (req.headers["if-none-match"] === etag) return send(res, 304, undefined, { etag });
+      return send(res, 200, FIXTURES.parts[part], { etag, "cache-control": "public, max-age=300" });
+    }
+    if (req.method === "POST" && path === "/v1/fits/evaluate") {
+      if (!body.json?.fit) return send(res, 400, envelope("bad_request", "Body must be { fit }."));
       return send(res, 200, evaluate(body.json.fit));
     }
-    if (req.method === "POST" && path === "/v1/item-facts") {
+    if (req.method === "POST" && path === "/v1/items/facts") {
       const item = body.json?.item;
-      if (!item) return send(res, 400, { error: "Body must be { item }." });
+      if (!item) return send(res, 400, envelope("bad_request", "Body must be { item }."));
       if (JSON.stringify(item) === JSON.stringify(FIXTURES.itemFactsRequest.item)) return send(res, 200, FIXTURES.itemFacts);
       // Any other known item answers with its catalog facts (the plainest roll's); an unknown one is refused.
-      const known = FIXTURES.catalog.items.find((entry) => entry.def === item.def);
-      return known ? send(res, 200, { facts: known.facts }) : send(res, 400, { error: "item: not a fittable item in this build" });
+      const known = FIXTURES.parts.items.items.find((entry) => entry.def === item.def);
+      return known ? send(res, 200, { facts: known.facts }) : send(res, 400, envelope("bad_request", "item: not a fittable item in this build"));
     }
     if (req.method === "POST" && path === "/v1/grid-mods") {
       // The recorded answer is fit.json's; any other fit gets it too, as the stub doesn't run the rules.
-      if (!body.json?.fit) return send(res, 400, { error: "Body must be { fit }." });
-      if (body.json.fit.version !== 1) return send(res, 400, { error: "version: expected 1" });
+      if (!body.json?.fit) return send(res, 400, envelope("bad_request", "Body must be { fit }."));
+      if (body.json.fit.version !== 1) return send(res, 400, envelope("bad_request", "version: expected 1"));
       return send(res, 200, FIXTURES.gridMods);
     }
     if (req.method === "POST" && path === "/v1/roll") {
@@ -166,9 +188,9 @@ export async function startStubEngine(overrides = {}, port = 0) {
         : send(res, 400, FIXTURES.error);
     }
     if (req.method === "POST" && path === "/v1/fits/export") {
-      return body.json?.fit ? send(res, 200, FIXTURES.exported) : send(res, 400, { error: "Body must be { fit }." });
+      return body.json?.fit ? send(res, 200, FIXTURES.exported) : send(res, 400, envelope("bad_request", "Body must be { fit }."));
     }
-    return send(res, 404, undefined);
+    return send(res, 404, envelope("not_found", "No such route."));
   });
 
   await new Promise((resolve) => server.listen(port, "127.0.0.1", resolve));
@@ -191,7 +213,7 @@ export async function startStubEngine(overrides = {}, port = 0) {
   };
 }
 
-/** A URL nothing listens on, for "engine is down". */
+/** A URL nothing listens on, for "the API is down". */
 export async function deadEngineUrl() {
   const stub = await startStubEngine();
   const { url } = stub;
@@ -202,5 +224,5 @@ export async function deadEngineUrl() {
 // `node src/lib/engine/stub-engine.mjs [port]` serves the fixtures for local development and the smoke test.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const stub = await startStubEngine({}, Number(process.argv[2] ?? 18082));
-  console.log(`stub engine on ${stub.url}`);
+  console.log(`stub game data API on ${stub.url}`);
 }

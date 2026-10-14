@@ -50,7 +50,7 @@ async function renderFit(url, id, viewer, rev) {
   const data = await loadFitPage(deps(url), id, viewer, rev);
   assert.equal(data.status, "ok");
   // The page's client controls read the public config, as under the root layout.
-  const config = { engineUrl: url, authEnabled: viewer.authEnabled };
+  const config = { apiUrl: url, authEnabled: viewer.authEnabled };
   return renderToStaticMarkup(h(PublicConfigProvider, { config }, h(FitPageView, { data, viewer })));
 }
 
@@ -79,9 +79,9 @@ test("a cell a grid consumable changed is marked on the grid, with the legend un
 
 test("the fit page shows the hull's art, every module's art, descriptions, fact rows and the stored hull specs", async () => {
   const html = await renderFit(stub.url, ids.showcase, anonymous(false));
-  assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
+  assert.match(html, /class="item-icon fit-head__icon" src="https?:\/\/[^"\/]+\/v1\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
   assert.equal(count(html, 'class="fg-module__icon"'), 13 + 1, "each module's art, and the cipher's in its cell");
-  assert.match(html, /item-icon item-icon--mirrored"[^>]* src="\/art\//, "the cipher's art faces the other way, as in the game");
+  assert.match(html, /item-icon item-icon--mirrored"[^>]* src="https?:\/\/[^"\/]+\/v1\/art\//, "the cipher's art faces the other way, as in the game");
   // AUTO VENTING's tooltip: its description and its catalog fact rows.
   assert.match(html, /<p class="item-desc">AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY\.<\/p>/);
   assert.match(html, /<span class="facts__label">DEACTIVATION COOLDOWN<\/span>/);
@@ -92,7 +92,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
   assert.match(html, /HULL SPECS/);
   for (const section of FIXTURES.evaluateShowcase.sections) assert.ok(html.includes(`aria-label="${section.label}"`), section.label);
   assert.match(html, /<span class="specs__title">DEFENSE<\/span><span class="specs__summary"><span class="specs__value ">3,644<\/span><span class="specs__unit">HP<\/span>/);
-  assert.match(html, /data-spec="time-to-scram"><span class="specs__label">TIME TO SCRAM<\/span><span class="specs__values"><span class="specs__value ">STABLE<\/span><\/span>/);
+  assert.match(html, /data-spec="time-to-scram"><span class="specs__label">TIME TO SCRAM<\/span><span class="specs__values"><span class="specs__value ">01:04<\/span><\/span>/);
   assert.match(html, /<span class="specs__value ">24<\/span><span class="specs__arrow">→<\/span><span class="specs__value negative">21<\/span><span class="specs__unit">%<\/span>/, "a comparison row, toned as the engine tones it");
   assert.match(html, /COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE\./, "the row's help");
   assert.match(html, /<span>MODIFIERS<\/span>/);
@@ -100,7 +100,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
 
 test("with the engine down the fit page still shows the stored hull specs (Review Focus #2)", async () => {
   const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
-  assert.match(html, /THE GRID NEEDS THE LOADOUT ENGINE/);
+  assert.match(html, /THE GRID NEEDS THE ENGINE/);
   assert.match(html, /data-spec="effective-health"/);
   assert.match(html, /EFFECTIVE HEALTH/);
 });
@@ -126,9 +126,9 @@ test("a removed item is drawn as UNKNOWN ITEM with its issue, and the fit reads 
 
 test("with the engine down the page renders its stored stats under a banner (Review Focus #4)", async () => {
   const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
-  assert.match(html, /THE LOADOUT ENGINE ISN&#x27;T ANSWERING/);
+  assert.match(html, /THE ENGINE ISN&#x27;T ANSWERING/);
   assert.match(html, /MAX VELOCITY/);
-  assert.match(html, /THE GRID NEEDS THE LOADOUT ENGINE/);
+  assert.match(html, /THE GRID NEEDS THE ENGINE/);
   const up = await renderFit(stub.url, ids.showcase, anonymous(false));
   assert.doesNotMatch(up, /ISN&#x27;T ANSWERING/);
 });
@@ -167,17 +167,17 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.match(html, /ALICE/);
   assert.match(html, /2 UPVOTES/);
   assert.match(html, /1 UPVOTE</);
-  assert.equal(html.match(/class="item-icon fit-card__hull-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
+  assert.equal(html.match(/class="item-icon fit-card__hull-icon" src="https?:\/\/[^"\/]+\/v1\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
   assert.equal(count(html, "badge--outdated"), 1);
   // Each card's modules: one icon per item kind (def), in mount order, by the grid's icon rule.
   const showcase = data.cards.find((card) => card.title === "Scarab cipher brawler");
   assert.equal(showcase.modules.reduce((sum, module) => sum + module.count, 0), 13);
-  assert.equal(showcase.modules[0].name, "OMNI REPAIRER TURRET");
-  assert.ok(showcase.modules.every((module) => module.icon?.startsWith("/art/")));
+  assert.equal(showcase.modules[0].name, "REPAIR PROJECTOR");
+  assert.ok(showcase.modules.every((module) => /^https?:\/\/[^/]+\/v1\/art\//.test(module.icon ?? "")));
   const shown = data.cards.reduce((sum, card) => sum + Math.min(10, card.modules.length), 0);
   assert.equal(count(html, 'class="fit-card__module"'), shown, "ten kinds a card at most");
-  assert.match(html, /<span class="fit-card__modules" role="img" aria-label="Modules: OMNI REPAIRER TURRET, OMNI REPAIRER TURRET, /, "the strip is named for screen readers");
-  assert.match(html, /<span class="fit-card__module-more">\+3<\/span>/, "the showcase's other three summed up");
+  assert.match(html, /<span class="fit-card__modules" role="img" aria-label="Modules: REPAIR PROJECTOR x2, /, "the strip is named for screen readers");
+  assert.match(html, /<span class="fit-card__module-more">\+2<\/span>/, "the showcase's other two summed up");
   // A kind fitted twice is one icon with its count; an item the build lacks is UNKNOWN ITEM with no art.
   const twice = cardModules({ moduleItems: [showcase, showcase].map(() => ({ def: FIXTURES.catalog.items[0].def, rarity: "Normal", isIdentified: true, artifact: null })).concat([{ def: "gone", rarity: "Normal", isIdentified: true, artifact: null }]) }, FIXTURES.catalog);
   assert.deepEqual(twice.map((module) => [module.name, module.count, module.icon === null]), [[FIXTURES.catalog.items[0].name, 2, false], ["UNKNOWN ITEM", 1, true]]);
@@ -235,7 +235,7 @@ test("?rev=N is read-only on that revision: banner, its words and fit string sou
     id: ids.pending,
     authorUserId: BOB.userId,
     content: { hullItem: changed.hull.def, fit: changed },
-    evaluation: { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: FIXTURES.health.buildSha },
+    evaluation: { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: FIXTURES.status.build },
   });
   const html = await renderFit(stub.url, ids.pending, anonymous(false), "1");
   assert.match(html, /REVISION 1 OF 3/);
@@ -264,11 +264,11 @@ async function copyOf(source, owner) {
     authorName: owner.name,
     title: "Showcase copy",
     content: { hullItem: FIXTURES.fit.hull.def, fit: FIXTURES.fit },
-    buildSha: FIXTURES.health.buildSha,
-    evaluation: { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: FIXTURES.health.buildSha },
+    buildSha: FIXTURES.status.build,
+    evaluation: { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: FIXTURES.status.build },
     forkedFrom: source,
   });
-  await publishFit(db, { id: made.id, authorUserId: owner.userId, buildSha: FIXTURES.health.buildSha });
+  await publishFit(db, { id: made.id, authorUserId: owner.userId, buildSha: FIXTURES.status.build });
   return made.id;
 }
 
@@ -289,7 +289,7 @@ test("a copy says what it is based on and the source counts its copies; a delete
   const unseen = await renderFit(stub.url, copy, anonymous(false));
   assert.match(unseen, /BASED ON ANOTHER FIT/);
   assert.doesNotMatch(unseen, /Scarab cipher brawler/);
-  await publishFit(db, { id: ids.showcase, authorUserId: ALICE.userId, buildSha: FIXTURES.health.buildSha });
+  await publishFit(db, { id: ids.showcase, authorUserId: ALICE.userId, buildSha: FIXTURES.status.build });
 
   const gone = await copyOf(ids.pending, BOB);
   await deleteFit(db, { id: ids.pending, authorUserId: BOB.userId });
@@ -308,7 +308,7 @@ test("signed in, a published fit has a bookmark toggle that reads the pilot's ow
 
 test("browse cards carry the bookmark toggle only for a signed-in viewer, and only on published fits", async () => {
   const data = await loadBrowse(deps(stub.url), {}, signedIn(BOB));
-  const cards = (canBookmark) => renderToStaticMarkup(h(PublicConfigProvider, { config: { engineUrl: stub.url, authEnabled: true } }, h(FitCards, { cards: data.cards, empty: "", canBookmark })));
+  const cards = (canBookmark) => renderToStaticMarkup(h(PublicConfigProvider, { config: { apiUrl: stub.url, authEnabled: true } }, h(FitCards, { cards: data.cards, empty: "", canBookmark })));
   assert.equal(count(cards(true), ">BOOKMARKED<"), 1, "the one BOB bookmarked");
   assert.ok(count(cards(true), ">BOOKMARK<") >= 2);
   assert.doesNotMatch(cards(false), /BOOKMARK/);
@@ -406,10 +406,10 @@ async function publishWith(progression, title) {
     authorName: ALICE.name,
     title,
     content: { hullItem: fit.hull.def, fit },
-    buildSha: FIXTURES.health.buildSha,
-    evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.health.buildSha },
+    buildSha: FIXTURES.status.build,
+    evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.status.build },
   });
-  await publishFit(db, { id: created.id, authorUserId: ALICE.userId, buildSha: FIXTURES.health.buildSha });
+  await publishFit(db, { id: created.id, authorUserId: ALICE.userId, buildSha: FIXTURES.status.build });
   return created.id;
 }
 
@@ -437,7 +437,7 @@ test("a fit without an affinity says NO AFFINITY, on the page and on a revision 
   assert.match(affinityPanel(await renderFit(stub.url, ids.showcase, anonymous(false))), /NO AFFINITY\./);
   const id = await publishWith(TURRET_PROGRESSION, "Affinity then none");
   const plain = { ...FIXTURES.fitShowcase, progression: { ...TURRET_PROGRESSION, affinityType: "None", affinityXp: 0, allocatedPoints: [], thresholdSelections: [] } };
-  await updateFit(db, { id, authorUserId: ALICE.userId, content: { hullItem: plain.hull.def, fit: plain }, evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.health.buildSha } });
+  await updateFit(db, { id, authorUserId: ALICE.userId, content: { hullItem: plain.hull.def, fit: plain }, evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.status.build } });
   assert.match(affinityPanel(await renderFit(stub.url, id, anonymous(false))), /NO AFFINITY\./, "the latest has none");
   const older = affinityPanel(await renderFit(stub.url, id, anonymous(false), "1"));
   assert.match(older, /TURRET AFFINITY/, "revision 1 shows its own affinity");
@@ -449,7 +449,7 @@ test("browse cards and the share card tag the affinity type and level, and only 
   const data = await loadBrowse(deps(stub.url), {}, anonymous(false));
   assert.equal(data.cards.find((card) => card.id === id).affinity, "TURRET 5");
   assert.equal(data.cards.find((card) => card.id === ids.showcase).affinity, null);
-  const cards = renderToStaticMarkup(h(PublicConfigProvider, { config: { engineUrl: stub.url, authEnabled: false } }, h(FitCards, { cards: data.cards, empty: "" })));
+  const cards = renderToStaticMarkup(h(PublicConfigProvider, { config: { apiUrl: stub.url, authEnabled: false } }, h(FitCards, { cards: data.cards, empty: "" })));
   assert.ok(count(cards, ">TURRET 5<") >= 1, "the tag is on the card");
   assert.doesNotMatch(cards, />NONE \d|>NONE</, "a fit without a type has no tag");
   const page = await loadFitPage(deps(stub.url), id, anonymous(false));
@@ -497,8 +497,8 @@ test("the same panel is editable with an editor: level select, steppers and thre
 
 test("a stored fit's odd affinity values read as nothing on a card rather than failing the query", async () => {
   const odd = { ...FIXTURES.fitShowcase, progression: { affinityType: 7, affinityXp: 1e300, allocatedPoints: [], thresholdSelections: [] } };
-  const created = await createFit(db, { authorUserId: ALICE.userId, authorName: ALICE.name, title: "Odd affinity", content: { hullItem: odd.hull.def, fit: odd }, buildSha: FIXTURES.health.buildSha, evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.health.buildSha } });
-  await publishFit(db, { id: created.id, authorUserId: ALICE.userId, buildSha: FIXTURES.health.buildSha });
+  const created = await createFit(db, { authorUserId: ALICE.userId, authorName: ALICE.name, title: "Odd affinity", content: { hullItem: odd.hull.def, fit: odd }, buildSha: FIXTURES.status.build, evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.status.build } });
+  await publishFit(db, { id: created.id, authorUserId: ALICE.userId, buildSha: FIXTURES.status.build });
   const data = await loadBrowse(deps(stub.url), {}, anonymous(false));
   assert.equal(data.cards.find((card) => card.id === created.id).affinity, null);
   const page = await loadFitPage(deps(stub.url), created.id, anonymous(false));

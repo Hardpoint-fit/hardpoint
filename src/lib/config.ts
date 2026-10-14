@@ -2,10 +2,10 @@
 // load it; the app reads it through site-config.ts, which is server-only.
 
 export type SiteConfig = {
-  /** Engine URL browsers call. Absent: the builder says it cannot evaluate. */
-  engineUrl: string | null;
-  /** Engine URL the server calls (Railway private network). Falls back to the public one. */
-  engineInternalUrl: string | null;
+  /** Game data API URL (GAME_DATA_API_URL, https://api.thecitadel.com) browsers call and load art from. Absent: the builder says it cannot evaluate. */
+  apiUrl: string | null;
+  /** Game data API URL the server calls (GAME_DATA_API_INTERNAL_URL, Railway private network). Falls back to the public one. */
+  apiInternalUrl: string | null;
   /** Postgres connection string. Absent: fit pages render their "unavailable" state. */
   databaseUrl: string | null;
   /** "Sign in with Citadel": the game's Clerk instance as the OpenID Connect provider. */
@@ -28,7 +28,7 @@ export const SESSION_SECRET_MIN_BYTES = 32;
 
 /** What the browser may know. Rendered into the page at request time, so one image serves every environment. */
 export type PublicConfig = {
-  engineUrl: string | null;
+  apiUrl: string | null;
   authEnabled: boolean;
 };
 
@@ -63,13 +63,13 @@ function secret(env: Env, name: string): Uint8Array | null {
 }
 
 export function parseConfig(env: Env): SiteConfig {
-  const engineUrl = url(env, "LOADOUT_ENGINE_URL");
+  const apiUrl = url(env, "GAME_DATA_API_URL");
   const oauthClientId = text(env, "CITADEL_OAUTH_CLIENT_ID");
   const oauthClientSecret = text(env, "CITADEL_OAUTH_CLIENT_SECRET");
   const sessionSecret = secret(env, "SESSION_SECRET");
   return {
-    engineUrl,
-    engineInternalUrl: url(env, "LOADOUT_ENGINE_INTERNAL_URL") ?? engineUrl,
+    apiUrl,
+    apiInternalUrl: url(env, "GAME_DATA_API_INTERNAL_URL") ?? apiUrl,
     databaseUrl: text(env, "DATABASE_URL"),
     // The issuer is compared exactly with the ID token's `iss`, so it keeps no trailing slash.
     oauthIssuer: url(env, "CITADEL_OAUTH_ISSUER") ?? DEFAULT_OAUTH_ISSUER,
@@ -87,7 +87,7 @@ export function parseConfig(env: Env): SiteConfig {
 
 export function toPublicConfig(config: SiteConfig): PublicConfig {
   return {
-    engineUrl: config.engineUrl,
+    apiUrl: config.apiUrl,
     authEnabled: config.authEnabled,
   };
 }

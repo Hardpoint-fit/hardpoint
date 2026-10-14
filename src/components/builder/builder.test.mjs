@@ -49,7 +49,7 @@ const authAs = (userId, enabled = true) =>
     { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", adminRole: "none" } : null) },
   );
 const HELD_BUILD = "held0build";
-const actionDeps = (auth, engineUrl = stub.url) => ({ database: () => ({ status: "ready", db }), auth, engine: createEngineClient({ baseUrl: engineUrl }), currentBuild: () => HELD_BUILD });
+const actionDeps = (auth, apiUrl = stub.url) => ({ database: () => ({ status: "ready", db }), auth, engine: createEngineClient({ baseUrl: apiUrl }), currentBuild: () => HELD_BUILD });
 
 test("the builder pages load a new fit, a copy, and an edit for its author only", async () => {
   const fresh = await loadBuilder(ready(), {}, viewer(null));
@@ -75,7 +75,7 @@ test("the builder pages load a new fit, a copy, and an edit for its author only"
 });
 
 function render(start, auth) {
-  const config = { engineUrl: stub.url, authEnabled: auth.enabled };
+  const config = { apiUrl: stub.url, authEnabled: auth.enabled };
   return renderToStaticMarkup(h(PublicConfigProvider, { config }, h(Workspace, { cat, start, auth, navigate: { replace() {}, push() {} } })));
 }
 const NEW = { fitId: null, fit: null, meta: { title: "", description: "", tags: [] }, status: null, updatedAt: null, copiedFrom: null, note: null };
@@ -86,7 +86,7 @@ test("the workspace opens on the hull picker, and on a fit draws the grid, palet
   assert.match(picker, /SCARAB/);
   assert.match(picker, /IMPORT A FIT STRING/);
   assert.equal(picker.split('class="hull-card ').length - 1, FIXTURES.catalog.hulls.length);
-  assert.equal(picker.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, FIXTURES.catalog.hulls.length, "every hull card shows its art");
+  assert.equal(picker.match(/class="item-icon" src="https?:\/\/[^"\/]+\/v1\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, FIXTURES.catalog.hulls.length, "every hull card shows its art");
 
   const html = render({ ...NEW, fit: FIXTURES.fit }, { enabled: false, signedIn: false });
   for (const text of ["ITEMS", "SCARAB fitting grid", "AFFINITY", "INSPECTOR", "HULL SPECS", "FIT DETAILS", "EXPORT FIT STRING", "CHECKING"]) assert.ok(html.includes(text), text);
@@ -94,7 +94,7 @@ test("the workspace opens on the hull picker, and on a fit draws the grid, palet
   // Icons: one per palette entry, and one inside each module's footprint on the grid.
   const palette = html.slice(html.indexOf('aria-label="Items"'), html.indexOf("</ul>", html.indexOf('aria-label="Items"')));
   assert.equal(palette.split("data-palette-item").length - 1, FIXTURES.catalog.items.length);
-  assert.equal(palette.match(/class="item-icon" src="\/art\//g)?.length, FIXTURES.catalog.items.length, "every palette entry shows its art");
+  assert.equal(palette.match(/class="item-icon" src="https?:\/\/[^"\/]+\/v1\/art\//g)?.length, FIXTURES.catalog.items.length, "every palette entry shows its art");
   assert.equal(html.split('class="fg-module__icon"').length - 1, FIXTURES.fit.modules.length, "every module has its art in its footprint");
   assert.doesNotMatch(html, /fg-module--no-art/);
   assert.ok(html.includes(SIGN_IN_UNAVAILABLE_MESSAGE.replace("'", "&#x27;")), "sign-in off: the save controls give way to the note");
@@ -114,7 +114,7 @@ test("the workspace opens on the hull picker, and on a fit draws the grid, palet
 async function buildAFit() {
   let state = reduce(cat, initialState(), { type: "start", hull: SCARAB });
   for (const action of [
-    { type: "pickUp", def: itemNamed(FIXTURES.catalog, "OMNI REPAIRER TURRET").def },
+    { type: "pickUp", def: itemNamed(FIXTURES.catalog, "REPAIR PROJECTOR").def },
     { type: "hover", cell: { row: 3, col: 6 } },
     { type: "release" },
     { type: "meta", patch: { title: "Repair picket", tags: ["support"] } },

@@ -6,10 +6,10 @@ function fakeHealth(answers) {
   const calls = [];
   return {
     calls,
-    health: async () => {
+    status: async () => {
       calls.push(1);
       const next = answers.shift();
-      return next ? { ok: true, value: { buildSha: next } } : { ok: false, error: { kind: "unavailable", message: "down" } };
+      return next ? { ok: true, value: { build: next } } : { ok: false, error: { kind: "unavailable", message: "down" } };
     },
   };
 }
@@ -37,7 +37,7 @@ test("down keeps the build the engine last reported; never seen is null", async 
   assert.deepEqual(await monitor.current(), { status: "down", buildSha: "aaa" });
 });
 
-test("concurrent pages share one health check", async () => {
+test("concurrent pages share one status check", async () => {
   const engine = fakeHealth(["aaa"]);
   const monitor = createEngineMonitor(engine);
   const [a, b] = await Promise.all([monitor.current(), monitor.current()]);

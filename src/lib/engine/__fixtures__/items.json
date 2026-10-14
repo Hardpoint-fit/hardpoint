@@ -1,872 +1,9 @@
 {
- "buildSha": "c919ec0e11b9ba74824d1509cb2a123b317f67da",
- "hulls": [
-  {
-   "def": "1274722114706556685",
-   "name": "SCARAB",
-   "path": "Content/SessionDestinations/Shared/Quantum/Ships/SCARAB/SCARAB HullEntityPrototype",
-   "shipClass": "Cruiser",
-   "role": "Destroyer",
-   "rows": 15,
-   "cols": 15,
-   "slots": [
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Battery",
-    "None",
-    "Battery",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Core",
-    "Battery",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Battery",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Subsystem",
-    "Subsystem",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Subsystem",
-    "Core",
-    "Core",
-    "Core",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Core",
-    "Propulsion",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Propulsion",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Propulsion",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None"
-   ],
-   "roll": {
-    "qualities": [
-     "Faction",
-     "Flawed",
-     "Standard",
-     "Superior",
-     "Masterwork"
-    ],
-    "rarities": [
-     "Normal",
-     "Augmented",
-     "Prototype",
-     "Artifact"
-    ],
-    "modifierCounts": [
-     {
-      "rarity": "Augmented",
-      "min": 1,
-      "max": 2
-     },
-     {
-      "rarity": "Prototype",
-      "min": 2,
-      "max": 4
-     }
-    ],
-    "modifierPool": {
-     "prefix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "72089",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "69468",
-         "max": "75366",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70778",
-         "max": "79298",
-         "allowed": true
-        }
-       ]
-      },
-      {
-       "stat": "MaxHeat",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "69468",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "70778",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "68812",
-         "max": "73400",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70123",
-         "max": "75366",
-         "allowed": true
-        }
-       ]
-      }
-     ],
-     "suffix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Add",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": true,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "3342336",
-         "max": "4718592",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "4915200",
-         "max": "6094848",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "7274496",
-         "max": "9502720",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "8585216",
-         "max": "11272192",
-         "allowed": true
-        }
-       ]
-      },
-      {
-       "stat": "Thrust",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "69468",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "70778",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "68812",
-         "max": "72089",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "69468",
-         "max": "74711",
-         "allowed": true
-        }
-       ]
-      }
-     ]
-    },
-    "typeOverrides": [],
-    "artifacts": [
-     "295810116418873646"
-    ],
-    "regalia": [],
-    "hereticals": [],
-    "harmonicSets": [],
-    "rating": {
-     "base": 2560,
-     "scalesWithQuality": true,
-     "tierShares": [
-      102,
-      204,
-      307,
-      409
-     ],
-     "regaliaShare": 1920,
-     "hereticalShare": 1791,
-     "ascendedHereticalShare": 4479
-    },
-    "authored": []
-   }
-  },
-  {
-   "def": "1421202711594240286",
-   "name": "SERAPH",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/ShipItem/Seraph HullEntityPrototype",
-   "shipClass": "Cruiser",
-   "role": "Interceptor",
-   "rows": 15,
-   "cols": 15,
-   "slots": [
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Battery",
-    "Subsystem",
-    "Battery",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Core",
-    "Core",
-    "Core",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Battery",
-    "Core",
-    "Subsystem",
-    "Core",
-    "Battery",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Core",
-    "Propulsion",
-    "Core",
-    "Propulsion",
-    "Core",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "Propulsion",
-    "None",
-    "Core",
-    "None",
-    "Propulsion",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None",
-    "None"
-   ],
-   "roll": {
-    "qualities": [
-     "Faction",
-     "Flawed",
-     "Standard",
-     "Superior",
-     "Masterwork"
-    ],
-    "rarities": [
-     "Normal",
-     "Augmented",
-     "Prototype",
-     "Artifact"
-    ],
-    "modifierCounts": [
-     {
-      "rarity": "Augmented",
-      "min": 1,
-      "max": 2
-     },
-     {
-      "rarity": "Prototype",
-      "min": 2,
-      "max": 4
-     }
-    ],
-    "modifierPool": {
-     "prefix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "72089",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "69468",
-         "max": "75366",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70778",
-         "max": "79298",
-         "allowed": true
-        }
-       ]
-      },
-      {
-       "stat": "MaxHeat",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "69468",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "70778",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "68812",
-         "max": "73400",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70123",
-         "max": "75366",
-         "allowed": true
-        }
-       ]
-      }
-     ],
-     "suffix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Add",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": true,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "3342336",
-         "max": "4718592",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "4915200",
-         "max": "6094848",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "7274496",
-         "max": "9502720",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "8585216",
-         "max": "11272192",
-         "allowed": true
-        }
-       ]
-      },
-      {
-       "stat": "Thrust",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "69468",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "70778",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "68812",
-         "max": "72089",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "69468",
-         "max": "74711",
-         "allowed": true
-        }
-       ]
-      }
-     ]
-    },
-    "typeOverrides": [],
-    "artifacts": [
-     "323613845660499413"
-    ],
-    "regalia": [],
-    "hereticals": [],
-    "harmonicSets": [],
-    "rating": {
-     "base": 2200,
-     "scalesWithQuality": true,
-     "tierShares": [
-      87,
-      176,
-      263,
-      352
-     ],
-     "regaliaShare": 1650,
-     "hereticalShare": 1539,
-     "ascendedHereticalShare": 3849
-    },
-    "authored": [
-     {
-      "source": "newPlayerShip",
-      "quality": "Faction",
-      "rarity": "Normal",
-      "isIdentified": true,
-      "pointRating": 1870
-     }
-    ]
-   }
-  }
- ],
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
  "items": [
   {
    "def": "1276464883135659217",
    "name": "COOLANT RESERVOIR",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Coolant ReservoirEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -1050,6 +187,74 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -1120,6 +325,210 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "63570",
+         "max": "64881",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxRepairAmount",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "BarrierRegenRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "61604",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "59638",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "58983",
+         "max": "61604",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MiningSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "WinchSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -1178,12 +587,14 @@
      "ascendedHereticalShare": 367
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/ba2ae5d10f2b344c7b304e3c2ddaa990.081ab319a8a2d183.webp"
    }
   },
   {
    "def": "1278500398224355069",
    "name": "SURVEY SCANNER",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Survey ScannerEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -1361,6 +772,74 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -1431,6 +910,210 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "63570",
+         "max": "64881",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxRepairAmount",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "BarrierRegenRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "61604",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "59638",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "58983",
+         "max": "61604",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MiningSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "WinchSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -1489,13 +1172,15 @@
      "ascendedHereticalShare": 360
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/d936ad3677ccb4f2183e776a8bf148dc.43859fa9ee53ea0e.webp"
    }
   },
   {
-   "def": "1284176030826467319",
-   "name": "OMNI REPAIRER TURRET",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Turrets/Repairer Variants/OmniRepairerTurretEntityPrototype",
-   "description": null,
+   "def": "1480822076687262645",
+   "name": "REPAIR PROJECTOR",
+   "description": "RAPIDLY CYCLES THE REPAIR BATTERY UNTIL ITS CHARGES ARE EMPTY OR THE SURGE ENDS.",
    "facts": [
     {
      "label": "REPAIR PER VOLLEY",
@@ -1505,32 +1190,26 @@
     },
     {
      "label": "TRACKING SPEED",
-     "value": "87.7",
+     "value": "28.6",
      "unit": "°/S",
      "tone": "Neutral"
     },
     {
      "label": "OPTIMAL RANGE",
-     "value": "1.1",
+     "value": "1.2",
      "unit": "KM",
      "tone": "Neutral"
     },
     {
      "label": "MAX RANGE",
-     "value": "2.5",
+     "value": "2.6",
      "unit": "KM",
      "tone": "Neutral"
     },
     {
-     "label": "FULL RELOAD",
-     "value": "0",
-     "unit": "S",
-     "tone": "Neutral"
-    },
-    {
-     "label": "MAGAZINE SIZE",
-     "value": "1",
-     "unit": null,
+     "label": "HEAT GENERATION",
+     "value": "6",
+     "unit": "GJ/S",
      "tone": "Neutral"
     },
     {
@@ -1543,7 +1222,7 @@
    "category": "Module",
    "slotType": "Battery",
    "slotSize": "ONExONE",
-   "moduleType": "None",
+   "moduleType": "Utility",
    "payloads": [
     "ArmorRepairCharge"
    ],
@@ -1619,7 +1298,7 @@
       {
        "stat": "MaxHull",
        "operation": "Multiply",
-       "pool": "Hull",
+       "pool": "Utility",
        "group": 0,
        "augmentedOnly": false,
        "onlyOnModule": null,
@@ -1632,28 +1311,28 @@
         },
         {
          "tier": 2,
-         "min": "68157",
-         "max": "72089",
+         "min": "68812",
+         "max": "72744",
          "allowed": true
         },
         {
          "tier": 3,
-         "min": "69468",
-         "max": "75366",
+         "min": "70123",
+         "max": "74711",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "70778",
-         "max": "79298",
+         "min": "68812",
+         "max": "76021",
          "allowed": true
         }
        ]
       },
       {
-       "stat": "MaxHeat",
+       "stat": "HeatDissipationRate",
        "operation": "Multiply",
-       "pool": "Hull",
+       "pool": "Utility",
        "group": 0,
        "augmentedOnly": false,
        "onlyOnModule": null,
@@ -1661,69 +1340,67 @@
         {
          "tier": 1,
          "min": "67502",
-         "max": "69468",
+         "max": "68812",
          "allowed": true
         },
         {
          "tier": 2,
          "min": "68157",
-         "max": "70778",
+         "max": "70123",
          "allowed": true
         },
         {
          "tier": 3,
          "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
          "max": "73400",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70123",
-         "max": "75366",
-         "allowed": true
-        }
-       ]
-      }
-     ],
-     "suffix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Add",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": true,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "3342336",
-         "max": "4718592",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "4915200",
-         "max": "6094848",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "7274496",
-         "max": "9502720",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "8585216",
-         "max": "11272192",
          "allowed": true
         }
        ]
       },
       {
-       "stat": "Thrust",
+       "stat": "MaxHeat",
        "operation": "Multiply",
-       "pool": "Hull",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Utility",
        "group": 0,
        "augmentedOnly": false,
        "onlyOnModule": null,
@@ -1754,6 +1431,280 @@
         }
        ]
       }
+     ],
+     "suffix": [
+      {
+       "stat": "ArmorResistKinetic",
+       "operation": "DamageReduction",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "1310",
+         "max": "2621",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "1966",
+         "max": "3276",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "2621",
+         "max": "3932",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "63570",
+         "max": "64881",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxRepairAmount",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "BarrierRegenRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "61604",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "59638",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "58983",
+         "max": "61604",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MiningSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "WinchSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      }
      ]
     },
     "typeOverrides": [
@@ -1769,7 +1720,20 @@
     ],
     "artifacts": [],
     "regalia": [],
-    "hereticals": [],
+    "hereticals": [
+     "273348005033744251",
+     "384198119203812031",
+     "403623045190279764",
+     "404940237732457155",
+     "422246952293803063",
+     "424259342220093921",
+     "427290929439511251",
+     "458925580931376598",
+     "460065845972061300",
+     "464864253914993658",
+     "471124748824829746",
+     "509558342704662516"
+    ],
     "harmonicSets": [
      "355563483137070958",
      "358896232002213805",
@@ -1782,25 +1746,27 @@
      "529371378710448193"
     ],
     "rating": {
-     "base": 0,
+     "base": 222,
      "scalesWithQuality": true,
      "tierShares": [
-      0,
-      0,
-      0,
-      0
+      24,
+      48,
+      73,
+      97
      ],
-     "regaliaShare": 0,
-     "hereticalShare": 0,
-     "ascendedHereticalShare": 0
+     "regaliaShare": 166,
+     "hereticalShare": 155,
+     "ascendedHereticalShare": 388
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/468f6a743da28487ca3f86a0581c57a1.f5e618a1ceb63fdf.webp"
    }
   },
   {
    "def": "1285107459712062168",
    "name": "AUTO VENTING",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Actives/Self/Auto VentingEntityPrototype",
    "description": "AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY.",
    "facts": [
     {
@@ -1984,6 +1950,62 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MineDamage",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxMines",
+       "operation": "Add",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -2054,6 +2076,142 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "61604",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "58328",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "57017",
+         "max": "61604",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MineTriggerRadius",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MineRechargeTime",
+       "operation": "Multiply",
+       "pool": "ECM",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "58328",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "57672",
+         "max": "61604",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "55706",
+         "max": "60949",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -2112,318 +2270,14 @@
      "ascendedHereticalShare": 367
     },
     "authored": []
-   }
-  },
-  {
-   "def": "1297320276078073896",
-   "name": "OMNI REPAIRER TURRET",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Turrets/Repairer Variants/NPC/OmniRepairerTurretEntityPrototype",
-   "description": null,
-   "facts": [
-    {
-     "label": "REPAIR PER VOLLEY",
-     "value": "10.5",
-     "unit": "HP",
-     "tone": "Neutral"
-    },
-    {
-     "label": "TRACKING SPEED",
-     "value": "87.7",
-     "unit": "°/S",
-     "tone": "Neutral"
-    },
-    {
-     "label": "OPTIMAL RANGE",
-     "value": "1.1",
-     "unit": "KM",
-     "tone": "Neutral"
-    },
-    {
-     "label": "MAX RANGE",
-     "value": "2.5",
-     "unit": "KM",
-     "tone": "Neutral"
-    },
-    {
-     "label": "FULL RELOAD",
-     "value": "0",
-     "unit": "S",
-     "tone": "Neutral"
-    },
-    {
-     "label": "MAGAZINE SIZE",
-     "value": "1",
-     "unit": null,
-     "tone": "Neutral"
-    },
-    {
-     "label": "FIRE RATE",
-     "value": "1",
-     "unit": "S",
-     "tone": "Neutral"
-    }
-   ],
-   "category": "Module",
-   "slotType": "Battery",
-   "slotSize": "ONExONE",
-   "moduleType": "None",
-   "payloads": [
-    "ArmorRepairCharge"
-   ],
-   "shape": {
-    "originRow": 2,
-    "originCol": 2,
-    "cells": [
-     {
-      "row": 2,
-      "col": 2
-     }
-    ]
    },
-   "portRules": {
-    "maxPorts": 2,
-    "candidates": [
-     {
-      "row": 2,
-      "col": 2,
-      "direction": "Up"
-     },
-     {
-      "row": 2,
-      "col": 2,
-      "direction": "Down"
-     },
-     {
-      "row": 2,
-      "col": 2,
-      "direction": "Left"
-     },
-     {
-      "row": 2,
-      "col": 2,
-      "direction": "Right"
-     }
-    ]
-   },
-   "roll": {
-    "qualities": [
-     "Faction",
-     "Flawed",
-     "Standard",
-     "Superior",
-     "Masterwork"
-    ],
-    "rarities": [
-     "Normal",
-     "Augmented",
-     "Prototype",
-     "Harmonic",
-     "Heretical"
-    ],
-    "modifierCounts": [
-     {
-      "rarity": "Augmented",
-      "min": 1,
-      "max": 2
-     },
-     {
-      "rarity": "Prototype",
-      "min": 2,
-      "max": 4
-     },
-     {
-      "rarity": "Heretical",
-      "min": 2,
-      "max": 4
-     }
-    ],
-    "modifierPool": {
-     "prefix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "72089",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "69468",
-         "max": "75366",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70778",
-         "max": "79298",
-         "allowed": true
-        }
-       ]
-      },
-      {
-       "stat": "MaxHeat",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "69468",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "70778",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "68812",
-         "max": "73400",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "70123",
-         "max": "75366",
-         "allowed": true
-        }
-       ]
-      }
-     ],
-     "suffix": [
-      {
-       "stat": "MaxHull",
-       "operation": "Add",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": true,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "3342336",
-         "max": "4718592",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "4915200",
-         "max": "6094848",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "7274496",
-         "max": "9502720",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "8585216",
-         "max": "11272192",
-         "allowed": true
-        }
-       ]
-      },
-      {
-       "stat": "Thrust",
-       "operation": "Multiply",
-       "pool": "Hull",
-       "group": 0,
-       "augmentedOnly": false,
-       "onlyOnModule": null,
-       "tiers": [
-        {
-         "tier": 1,
-         "min": "67502",
-         "max": "69468",
-         "allowed": true
-        },
-        {
-         "tier": 2,
-         "min": "68157",
-         "max": "70778",
-         "allowed": true
-        },
-        {
-         "tier": 3,
-         "min": "68812",
-         "max": "72089",
-         "allowed": true
-        },
-        {
-         "tier": 4,
-         "min": "69468",
-         "max": "74711",
-         "allowed": true
-        }
-       ]
-      }
-     ]
-    },
-    "typeOverrides": [
-     "Turret",
-     "Shield",
-     "Propulsion",
-     "Drone",
-     "ECM",
-     "Missile",
-     "Mining",
-     "Armor",
-     "Utility"
-    ],
-    "artifacts": [],
-    "regalia": [],
-    "hereticals": [],
-    "harmonicSets": [
-     "355563483137070958",
-     "358896232002213805",
-     "377848105322041577",
-     "405656166137731046",
-     "450130648934888880",
-     "468976290869027801",
-     "470198298653387211",
-     "503168870180031669",
-     "529371378710448193"
-    ],
-    "rating": {
-     "base": 0,
-     "scalesWithQuality": true,
-     "tierShares": [
-      0,
-      0,
-      0,
-      0
-     ],
-     "regaliaShare": 0,
-     "hereticalShare": 0,
-     "ascendedHereticalShare": 0
-    },
-    "authored": []
+   "art": {
+    "base": "/v1/art/67eacd752d2d344f0942872cba39b7d0.ff3d141aa4bf3e79.webp"
    }
   },
   {
    "def": "1304164571492635706",
    "name": "ARMOR HARDENER",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Actives/Self/ArmorHardenerEntityPrototype",
    "description": "BOOSTS YOUR ARMOR'S KINETIC AND EXPLOSIVE RESISTANCE WHILE ACTIVE.",
    "facts": [
     {
@@ -2615,6 +2469,74 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxRepairAmount",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -2685,6 +2607,164 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74055",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxRepairCharges",
+       "operation": "Add",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "131072",
+         "max": "131072",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "ArmorResistKinetic",
+       "operation": "DamageReduction",
+       "pool": "Armor",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "1310",
+         "max": "3276",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "1966",
+         "max": "3932",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "2621",
+         "max": "4587",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -2751,12 +2831,14 @@
       "pointRating": 261
      }
     ]
+   },
+   "art": {
+    "base": "/v1/art/a9bb5deaad42b4ea4ac08c22718da92a.e765ba993e4a87e6.webp"
    }
   },
   {
    "def": "1304467395283315534",
    "name": "LIGHTFRAME THRUSTERS",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/2x1/Lightframe ThrustersEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -2934,6 +3016,108 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileSpeed",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -3004,6 +3188,40 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -3062,12 +3280,14 @@
      "ascendedHereticalShare": 346
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/2e07f2cd0c8a64467ae17c3764b8009c.b34a7d0447bfe87a.webp"
    }
   },
   {
    "def": "1309670480061494117",
    "name": "INCENDIARY SALVO",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/2x1/Incendiary SalvoEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -3238,6 +3458,108 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SensorRange",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileRange",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "ECMMaxRange",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -3308,6 +3630,74 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxMissiles",
+       "operation": "Add",
+       "pool": "Missile",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -3364,12 +3754,14 @@
      "ascendedHereticalShare": 360
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/240f81d4228e2414aa8d5a69b091f1ce.6a609c4172142e71.webp"
    }
   },
   {
    "def": "1329495787612835751",
    "name": "SLIP COATING",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Slip CoatingEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -3546,6 +3938,74 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "74711",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -3616,6 +4076,210 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "63570",
+         "max": "64881",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxRepairAmount",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "BarrierRegenRate",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68812",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "70778",
+         "max": "75366",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "61604",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "59638",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "58983",
+         "max": "61604",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MiningSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "WinchSpeed",
+       "operation": "Multiply",
+       "pool": "Utility",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -3672,12 +4336,14 @@
      "ascendedHereticalShare": 367
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/929da42b2da6346d3b8c7ae0b983138b.e768963b17ea16a1.webp"
    }
   },
   {
    "def": "1340739176998289780",
    "name": "TRACER ROUNDS",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/2x1/Tracer RoundsEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -3856,6 +4522,40 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "TurretCycleDuration",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "60949",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "59638",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -3926,6 +4626,62 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxAmmoCount",
+       "operation": "Add",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "131072",
+         "max": "131072",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -3986,12 +4742,14 @@
      "ascendedHereticalShare": 360
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/a48cde2a5b27b4f688f7d458c5e097dd.dcaaa5c3923af79e.webp"
    }
   },
   {
    "def": "1343056967634011071",
    "name": "BARRIER RACK",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Defensive/2x1/Barrier RackEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -4168,6 +4926,40 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "72744",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -4238,6 +5030,108 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "Mass",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "63570",
+         "max": "64881",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "61604",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "61604",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "60949",
+         "max": "62915",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "59638",
+         "max": "62260",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "58983",
+         "max": "61604",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "ShieldResistExplosive",
+       "operation": "DamageReduction",
+       "pool": "Shield",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "2621",
+         "max": "4587",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "3276",
+         "max": "5242",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "3932",
+         "max": "5898",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "4587",
+         "max": "6553",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -4294,12 +5188,14 @@
      "ascendedHereticalShare": 367
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/8eecdedbf98ba40a09363ee0e91b3521.24190a2fa2e26f87.webp"
    }
   },
   {
    "def": "1387039041809030747",
    "name": "PROPULSION CONDUIT",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/1x1/Propulsion ConduitEntityPrototype",
    "description": "Connects to ports of propulsion type modules to increase effectiveness. Regalia pieces of the same set that connect to it are linked.",
    "facts": [
     {
@@ -4434,6 +5330,108 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileSpeed",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -4504,6 +5502,40 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -4526,12 +5558,14 @@
      "ascendedHereticalShare": 332
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/2ff7e7854208048deb0cce4f89050eee.aff2aebf4df77936.webp"
    }
   },
   {
    "def": "1442753905704368467",
    "name": "INERTIA COUPLER",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/1x1/Inertia CouplerEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -4690,6 +5724,108 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68157",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "71434",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "HeatDissipationRate",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MissileSpeed",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68812",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -4760,6 +5896,40 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Propulsion",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "66846",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "67502",
+         "max": "69468",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "67502",
+         "max": "70778",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "68157",
+         "max": "72089",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -4819,12 +5989,14 @@
      "ascendedHereticalShare": 283
     },
     "authored": []
+   },
+   "art": {
+    "base": "/v1/art/06fa61383f13d43b9b08733095e0238e.fe0c38ee8d1aea6b.webp"
    }
   },
   {
    "def": "1493464852498204501",
    "name": "HEATSINK MAGAZINE",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/L/Heatsink MagazineEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -5017,6 +6189,40 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "TurretCycleDuration",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "62915",
+         "max": "64226",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "62260",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "60949",
+         "max": "63570",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "59638",
+         "max": "62915",
+         "allowed": true
+        }
+       ]
       }
      ],
      "suffix": [
@@ -5087,6 +6293,62 @@
          "allowed": true
         }
        ]
+      },
+      {
+       "stat": "SalvageLuck",
+       "operation": "Multiply",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": false,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "67502",
+         "max": "68812",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "68157",
+         "max": "70123",
+         "allowed": true
+        },
+        {
+         "tier": 3,
+         "min": "68812",
+         "max": "71434",
+         "allowed": true
+        },
+        {
+         "tier": 4,
+         "min": "69468",
+         "max": "73400",
+         "allowed": true
+        }
+       ]
+      },
+      {
+       "stat": "MaxAmmoCount",
+       "operation": "Add",
+       "pool": "Turret",
+       "group": 0,
+       "augmentedOnly": true,
+       "onlyOnModule": null,
+       "tiers": [
+        {
+         "tier": 1,
+         "min": "65536",
+         "max": "65536",
+         "allowed": true
+        },
+        {
+         "tier": 2,
+         "min": "131072",
+         "max": "131072",
+         "allowed": true
+        }
+       ]
       }
      ]
     },
@@ -5145,1013 +6407,10 @@
      "ascendedHereticalShare": 528
     },
     "authored": []
-   }
-  }
- ],
- "regaliaSets": [
-  {
-   "def": "271759098196484334",
-   "name": "KASSIK'S SEVERANCE",
-   "pieces": [
-    "297276472306431989",
-    "359734331002714082",
-    "376835473569659020",
-    "519416144862481557"
-   ]
-  },
-  {
-   "def": "271842034956224520",
-   "name": "TESSERA'S VIGIL",
-   "pieces": [
-    "332476303812774449",
-    "398496575653313900",
-    "434100042014308992",
-    "460593953622019903"
-   ]
-  }
- ],
- "modifierPools": [
-  {
-   "moduleType": "Turret",
-   "modifiers": {
-    "prefix": [
-     {
-      "stat": "TurretDamage",
-      "operation": "Multiply",
-      "pool": "Turret",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "66191",
-        "max": "66846",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "66846",
-        "max": "67502",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "66846",
-        "max": "68812",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "67502",
-        "max": "69468",
-        "allowed": true
-       }
-      ]
-     },
-     {
-      "stat": "TurretCritChance",
-      "operation": "Multiply",
-      "pool": "Turret",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "66846",
-        "max": "68812",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "67502",
-        "max": "70123",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "68157",
-        "max": "71434",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "68812",
-        "max": "73400",
-        "allowed": true
-       }
-      ]
-     }
-    ],
-    "suffix": [
-     {
-      "stat": "TurretRotationRate",
-      "operation": "Multiply",
-      "pool": "Turret",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "66846",
-        "max": "68812",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "67502",
-        "max": "70123",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "68157",
-        "max": "72744",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "68812",
-        "max": "74711",
-        "allowed": true
-       }
-      ]
-     },
-     {
-      "stat": "TurretRange",
-      "operation": "Multiply",
-      "pool": "Turret",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "66846",
-        "max": "68157",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "67502",
-        "max": "69468",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "68157",
-        "max": "70123",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "68812",
-        "max": "72089",
-        "allowed": true
-       }
-      ]
-     }
-    ]
-   }
-  },
-  {
-   "moduleType": "Shield",
-   "modifiers": {
-    "prefix": [
-     {
-      "stat": "BarrierMaxHP",
-      "operation": "Multiply",
-      "pool": "Shield",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "67502",
-        "max": "70123",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "68812",
-        "max": "72744",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "70123",
-        "max": "74711",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "68812",
-        "max": "76021",
-        "allowed": true
-       }
-      ]
-     },
-     {
-      "stat": "HeatDissipationRate",
-      "operation": "Multiply",
-      "pool": "Shield",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "67502",
-        "max": "68812",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "68157",
-        "max": "70123",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "68812",
-        "max": "71434",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "69468",
-        "max": "73400",
-        "allowed": true
-       }
-      ]
-     }
-    ],
-    "suffix": [
-     {
-      "stat": "BarrierRegenRate",
-      "operation": "Multiply",
-      "pool": "Shield",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "67502",
-        "max": "69468",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "68157",
-        "max": "70778",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "68812",
-        "max": "72089",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "69468",
-        "max": "74711",
-        "allowed": true
-       }
-      ]
-     },
-     {
-      "stat": "SensorRange",
-      "operation": "Multiply",
-      "pool": "Shield",
-      "group": 0,
-      "augmentedOnly": false,
-      "onlyOnModule": null,
-      "tiers": [
-       {
-        "tier": 1,
-        "min": "66846",
-        "max": "68812",
-        "allowed": true
-       },
-       {
-        "tier": 2,
-        "min": "67502",
-        "max": "70123",
-        "allowed": true
-       },
-       {
-        "tier": 3,
-        "min": "68157",
-        "max": "71434",
-        "allowed": true
-       },
-       {
-        "tier": 4,
-        "min": "68812",
-        "max": "72744",
-        "allowed": true
-       }
-      ]
-     }
-    ]
-   }
-  }
- ],
- "artifacts": [
-  {
-   "def": "275107089619583858",
-   "name": "OATH BRINGER",
-   "path": "Config/Quantum/Definitions/Artifacts/OATH",
-   "item": "1442637265074437522",
-   "modifiers": [
-    {
-     "stat": "MaxHeat",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "76021",
-     "max": "83886"
-    },
-    {
-     "stat": "MaxArmor",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "93716",
-     "max": "115343"
-    },
-    {
-     "stat": "Mass",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "93716",
-     "max": "115343"
-    },
-    {
-     "stat": "SignatureRadius",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "340787",
-     "max": "504627"
-    }
-   ],
-   "scaledStat": null,
-   "pointRating": 3850,
-   "patinaMax": 0
-  },
-  {
-   "def": "278460097613111756",
-   "name": "YELLOWJACKET",
-   "path": "Config/Quantum/Definitions/Artifacts/YELLOWJACKET",
-   "item": "1426216244610980278",
-   "modifiers": [
-    {
-     "stat": "MissileDamage",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "72089",
-     "max": "76677"
-    },
-    {
-     "stat": "MissileRechargeTime",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "55051",
-     "max": "58983"
-    },
-    {
-     "stat": "MissileRange",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "47186",
-     "max": "55051"
-    }
-   ],
-   "scaledStat": null,
-   "pointRating": 300,
-   "patinaMax": 0
-  },
-  {
-   "def": "358841703442488635",
-   "name": "EREBOS",
-   "path": "Config/Quantum/Definitions/Artifacts/EREBOS",
-   "item": "1326187971131623458",
-   "modifiers": [
-    {
-     "stat": "HeatDissipationRate",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "76021",
-     "max": "83886"
-    },
-    {
-     "stat": "TurretRange",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "77332",
-     "max": "87818"
-    },
-    {
-     "stat": "ECMMaxRange",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "93716",
-     "max": "115343"
-    },
-    {
-     "stat": "MaxHull",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "33424",
-     "max": "45220"
-    }
-   ],
-   "scaledStat": {
-    "rule": "462345323116144043",
-    "min": "65536",
-    "max": "131072"
    },
-   "pointRating": 3250,
-   "patinaMax": 0
-  },
-  {
-   "def": "522214128622278413",
-   "name": "DREADNOUGHTS BANE",
-   "path": "Config/Quantum/Definitions/Artifacts/DREAD_BANE",
-   "item": "1530715940003253209",
-   "modifiers": [
-    {
-     "stat": "TurretCycleDuration",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "55051",
-     "max": "60949"
-    },
-    {
-     "stat": "SignatureRadius",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "51119",
-     "max": "57672"
-    },
-    {
-     "stat": "TurretDamage",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "70778",
-     "max": "77332"
-    },
-    {
-     "stat": "HeatDissipationRate",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "36701",
-     "max": "53740"
-    }
-   ],
-   "scaledStat": null,
-   "pointRating": 750,
-   "patinaMax": 0
-  }
- ],
- "regalia": [
-  {
-   "def": "270456803905027437",
-   "name": "CULMINAR'S JUDGEMENT",
-   "item": "1530715940003253209",
-   "set": "319623611465924437",
-   "modifiers": [
-    {
-     "stat": "TurretDamage",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "69468",
-     "max": "72744"
-    }
-   ],
-   "scaledStat": null
-  },
-  {
-   "def": "272157818179065936",
-   "name": "KETHANE'S BORE",
-   "item": "1360870965396795462",
-   "set": "509085837970584151",
-   "modifiers": [
-    {
-     "stat": "MiningSpeed",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "74055",
-     "max": "81264"
-    },
-    {
-     "stat": "SalvageLuck",
-     "operation": "Multiply",
-     "tier": 4,
-     "min": "70123",
-     "max": "74711"
-    }
-   ],
-   "scaledStat": null
-  }
- ],
- "hereticalSpecials": [
-  {
-   "def": "268945908987856069",
-   "name": "VIGIL",
-   "heresy": "Vigil",
-   "ascended": false,
-   "moduleTypes": [
-    "Drone"
-   ]
-  },
-  {
-   "def": "271857800551874815",
-   "name": "UNTIRING",
-   "heresy": "Vigil",
-   "ascended": true,
-   "moduleTypes": [
-    "Drone"
-   ]
-  }
- ],
- "harmonicSets": [
-  {
-   "def": "328586449861078631",
-   "name": "LODESTAR ASSAY",
-   "description": "THE ASSAYERS CALLED IT A LUCKY SEAM. THEN THE CACHES STARTED COMING UP IN PAIRS, AND THEY STOPPED CALLING IT ANYTHING.",
-   "moduleTypes": [
-    "Utility"
-   ],
-   "ciphers": [
-    "1396584369443491429",
-    "1506846116601213923",
-    "1312995956356181288"
-   ],
-   "pointRating": 1500
-  },
-  {
-   "def": "355563483137070958",
-   "name": "SALVAGE SHROUD",
-   "description": "TETHER CONTACT SUPPRESSES EMISSION. BUILDER LOGISTICS RAN SILENT DURING RECOVERY OPS. GRAB AND GO QUIET.",
-   "moduleTypes": [
-    "Utility"
-   ],
-   "ciphers": [
-    "1506846116601213923",
-    "1506846116601213923"
-   ],
-   "pointRating": 1000
-  }
- ],
- "ciphers": [
-  {
-   "def": "1283267483210613362",
-   "name": "DRUX",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/TekCiphers/Uncommon/DruxEntityPrototype",
-   "stat": "DroneOutput",
-   "operation": "Multiply",
-   "value": "75366",
-   "pointRating": 350
-  },
-  {
-   "def": "1305220033100729446",
-   "name": "SYN",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/TekCiphers/Common/SynEntityPrototype",
-   "stat": "Thrust",
-   "operation": "Multiply",
-   "value": "78643",
-   "pointRating": 150
-  }
- ],
- "affinity": {
-  "maxLevel": 30,
-  "maxPointsPerCategory": 20,
-  "maxPointsPerBonus": 15,
-  "levelXp": [
-   0,
-   458,
-   960,
-   1510,
-   2164,
-   2879,
-   3671,
-   4605,
-   5626,
-   6766,
-   8100,
-   9555,
-   11199,
-   13101,
-   15176,
-   17542,
-   20257,
-   23216,
-   26623,
-   30496,
-   34714,
-   39621,
-   45147,
-   51159,
-   58225,
-   66108,
-   74676,
-   84850,
-   96095,
-   108305
-  ],
-  "ratingByPoints": [
-   0,
-   30,
-   62,
-   98,
-   136,
-   179,
-   225,
-   275,
-   329,
-   388,
-   453,
-   523,
-   599,
-   683,
-   773,
-   872,
-   980,
-   1097,
-   1224,
-   1363,
-   1514,
-   1679,
-   1858,
-   2053,
-   2265,
-   2497,
-   2748,
-   3022,
-   3321,
-   3646,
-   4000
-  ],
-  "types": [
-   {
-    "moduleType": "Turret",
-    "name": "TURRET AFFINITY",
-    "optionName": "TURRET",
-    "description": "",
-    "bonuses": [
-     {
-      "option": 0,
-      "stat": "TurretDamage",
-      "operation": "Multiply",
-      "valuePerPoint": "52429",
-      "name": "TURRET DAMAGE",
-      "description": "+0.5% TURRET DAMAGE PER POINT",
-      "invertDisplaySign": false
-     },
-     {
-      "option": 1,
-      "stat": "TurretRange",
-      "operation": "Multiply",
-      "valuePerPoint": "65536",
-      "name": "OPTIMAL RANGE",
-      "description": "+0.5% TURRET OPTIMAL RANGE PER POINT",
-      "invertDisplaySign": false
-     },
-     {
-      "option": 2,
-      "stat": "TurretCycleDuration",
-      "operation": "Multiply",
-      "valuePerPoint": "-39322",
-      "name": "RATE OF FIRE",
-      "description": "+0.25% RATE OF FIRE PER POINT",
-      "invertDisplaySign": true
-     },
-     {
-      "option": 3,
-      "stat": "TurretRotationRate",
-      "operation": "Multiply",
-      "valuePerPoint": "65536",
-      "name": "TRACKING SPEED",
-      "description": "+1% TURRET TRACKING PER POINT",
-      "invertDisplaySign": false
-     }
-    ],
-    "thresholds": [
-     {
-      "tier": 0,
-      "requiredPoints": 5,
-      "choices": [
-       {
-        "option": 0,
-        "name": "EXTENDED MAGAZINES",
-        "description": "+25% MAX AMMO CAPACITY"
-       },
-       {
-        "option": 1,
-        "name": "QUICK RELOAD",
-        "description": "TURRET MAGAZINES RELOAD 20% FASTER"
-       }
-      ]
-     },
-     {
-      "tier": 1,
-      "requiredPoints": 10,
-      "choices": [
-       {
-        "option": 0,
-        "name": "SERVO LOCK",
-        "description": "TRACKING SPEED RAMPS UP TO +35% AFTER 10S ON THE SAME TARGET"
-       }
-      ]
-     },
-     {
-      "tier": 2,
-      "requiredPoints": 15,
-      "choices": [
-       {
-        "option": 0,
-        "name": "PRIME AMPLIFIER",
-        "description": "THE TURRET STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
-       }
-      ]
-     },
-     {
-      "tier": 3,
-      "requiredPoints": 20,
-      "choices": [
-       {
-        "option": 0,
-        "name": "MARKSMAN",
-        "description": "-25% TURRET DAMAGE AT 25% OF OPTIMAL RANGE OR CLOSER → +50% AT 125% OR FARTHER"
-       },
-       {
-        "option": 1,
-        "name": "BRAWLER",
-        "description": "+50% TURRET DAMAGE AT 35% OF OPTIMAL RANGE OR CLOSER → -25% AT 125% OR FARTHER"
-       }
-      ]
-     }
-    ]
-   },
-   {
-    "moduleType": "Shield",
-    "name": "SHIELD AFFINITY",
-    "optionName": "SHIELD",
-    "description": "",
-    "bonuses": [
-     {
-      "option": 0,
-      "stat": "BarrierMaxHP",
-      "operation": "Multiply",
-      "valuePerPoint": "65536",
-      "name": "BARRIER HP",
-      "description": "+0.5% BARRIER MAX HP PER POINT",
-      "invertDisplaySign": false
-     },
-     {
-      "option": 1,
-      "stat": "BarrierRegenRate",
-      "operation": "Multiply",
-      "valuePerPoint": "65536",
-      "name": "BARRIER REGENERATION",
-      "description": "+0.5% BARRIER REGEN RATE PER POINT",
-      "invertDisplaySign": false
-     },
-     {
-      "option": 2,
-      "stat": "MaxHeat",
-      "operation": "Multiply",
-      "valuePerPoint": "65536",
-      "name": "MAX HEAT",
-      "description": "+1.25% MAX HEAT PER POINT",
-      "invertDisplaySign": false
-     },
-     {
-      "option": 3,
-      "stat": "HeatDissipationRate",
-      "operation": "Multiply",
-      "valuePerPoint": "52429",
-      "name": "HEAT DISSIPATION",
-      "description": "+1% HEAT DISSIPATION PER POINT",
-      "invertDisplaySign": false
-     }
-    ],
-    "thresholds": [
-     {
-      "tier": 0,
-      "requiredPoints": 5,
-      "choices": [
-       {
-        "option": 0,
-        "name": "FORGE FIELD",
-        "description": "BARRIER REGEN RATE SCALES UP TO +100% WITH SHIP HEAT"
-       },
-       {
-        "option": 1,
-        "name": "INNER KEEP",
-        "description": "+50% MAX HULL"
-       }
-      ]
-     },
-     {
-      "tier": 1,
-      "requiredPoints": 10,
-      "choices": [
-       {
-        "option": 0,
-        "name": "THERMAL FLOW",
-        "description": "BARRIERS VENT 1 HEAT PER 10 DAMAGE THEY ABSORB"
-       }
-      ]
-     },
-     {
-      "tier": 2,
-      "requiredPoints": 15,
-      "choices": [
-       {
-        "option": 0,
-        "name": "PRIME AMPLIFIER",
-        "description": "THE SHIELD STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
-       }
-      ]
-     },
-     {
-      "tier": 3,
-      "requiredPoints": 20,
-      "choices": [
-       {
-        "option": 0,
-        "name": "HELLFIRE BARRIER",
-        "description": "DESTROYED BARRIERS DETONATE OUT TO 20X THEIR RADIUS FOR DAMAGE EQUAL TO HALF THEIR MAX HP"
-       },
-       {
-        "option": 1,
-        "name": "HOLLOW AEGIS",
-        "description": "MAX ARMOR IS ZEROED; +6% MAX BARRIER HP PER 100 MAX ARMOR YOU HAD"
-       }
-      ]
-     }
-    ]
+   "art": {
+    "base": "/v1/art/9c695031e2a34475799df0b5596b03a0.92678a655a59e3a7.webp"
    }
-  ]
- },
- "qualities": [
-  {
-   "quality": "Faction",
-   "multiplier": "55706"
-  },
-  {
-   "quality": "Flawed",
-   "multiplier": "58982"
-  },
-  {
-   "quality": "Standard",
-   "multiplier": "65536"
-  },
-  {
-   "quality": "Superior",
-   "multiplier": "72090"
-  },
-  {
-   "quality": "Masterwork",
-   "multiplier": "78643"
-  }
- ],
- "placement": [
-  {
-   "slotType": "Battery",
-   "covers": [
-    "Battery",
-    "Subsystem",
-    "Core",
-    "Propulsion",
-    "Harpoon"
-   ],
-   "hardpoint": "Battery"
-  },
-  {
-   "slotType": "Subsystem",
-   "covers": [
-    "Battery",
-    "Subsystem",
-    "Core",
-    "Propulsion",
-    "Harpoon"
-   ],
-   "hardpoint": "Subsystem"
-  },
-  {
-   "slotType": "Core",
-   "covers": [
-    "Battery",
-    "Subsystem",
-    "Core",
-    "Propulsion",
-    "Harpoon"
-   ],
-   "hardpoint": null
-  },
-  {
-   "slotType": "Propulsion",
-   "covers": [
-    "Battery",
-    "Subsystem",
-    "Core",
-    "Propulsion",
-    "Harpoon"
-   ],
-   "hardpoint": "Propulsion"
-  },
-  {
-   "slotType": "Harpoon",
-   "covers": [
-    "Battery",
-    "Subsystem",
-    "Core",
-    "Propulsion",
-    "Harpoon"
-   ],
-   "hardpoint": null
-  }
- ],
- "gridConsumables": [
-  {
-   "def": "1271244689970087494",
-   "name": "SKULD OMEN",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/SKULD OmenEntityPrototype",
-   "kind": "FittingCoreSlotTransformer",
-   "behavior": "RandomCorrupt",
-   "fixedTargetSlotType": null
-  },
-  {
-   "def": "1300562256569024070",
-   "name": "BROKKR SLOT",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/BROKKR SlotEntityPrototype",
-   "kind": "FittingGridExtender",
-   "behavior": "FixedTarget",
-   "fixedTargetSlotType": null
-  },
-  {
-   "def": "1307464005327200117",
-   "name": "ANDVARI COIL",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/ANDVARI CoilEntityPrototype",
-   "kind": "FittingCoreSlotTransformer",
-   "behavior": "FixedTarget",
-   "fixedTargetSlotType": "Battery"
-  },
-  {
-   "def": "1390159403341153497",
-   "name": "EITRI ARC",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/EITRI ArcEntityPrototype",
-   "kind": "FittingCoreSlotTransformer",
-   "behavior": "FixedTarget",
-   "fixedTargetSlotType": "Subsystem"
-  },
-  {
-   "def": "1429554554519939890",
-   "name": "VOLUNDR JET",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/VOLUNDR JetEntityPrototype",
-   "kind": "FittingCoreSlotTransformer",
-   "behavior": "FixedTarget",
-   "fixedTargetSlotType": "Propulsion"
-  }
- ],
- "breachTiers": [
-  {
-   "index": 0,
-   "name": "Stratum 0"
-  },
-  {
-   "index": 1,
-   "name": "Stratum 1"
-  },
-  {
-   "index": 2,
-   "name": "Stratum 2"
-  },
-  {
-   "index": 3,
-   "name": "Stratum 3"
-  },
-  {
-   "index": 4,
-   "name": "Stratum 4"
-  },
-  {
-   "index": 5,
-   "name": "Abyssal"
-  },
-  {
-   "index": 6,
-   "name": "The Nest"
-  },
-  {
-   "index": 7,
-   "name": "Deep Strata"
   }
  ]
 }

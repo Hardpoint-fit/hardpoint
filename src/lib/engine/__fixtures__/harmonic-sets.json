@@ -1,0 +1,32 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "harmonicSets": [
+  {
+   "def": "328586449861078631",
+   "name": "LODESTAR ASSAY",
+   "description": "THE ASSAYERS CALLED IT A LUCKY SEAM. THEN THE CACHES STARTED COMING UP IN PAIRS, AND THEY STOPPED CALLING IT ANYTHING.",
+   "moduleTypes": [
+    "Utility"
+   ],
+   "ciphers": [
+    "1396584369443491429",
+    "1506846116601213923",
+    "1312995956356181288"
+   ],
+   "pointRating": 1500
+  },
+  {
+   "def": "355563483137070958",
+   "name": "SALVAGE SHROUD",
+   "description": "TETHER CONTACT SUPPRESSES EMISSION. BUILDER LOGISTICS RAN SILENT DURING RECOVERY OPS. GRAB AND GO QUIET.",
+   "moduleTypes": [
+    "Utility"
+   ],
+   "ciphers": [
+    "1506846116601213923",
+    "1506846116601213923"
+   ],
+   "pointRating": 1000
+  }
+ ]
+}

@@ -69,7 +69,7 @@ export function GridModPanel({
               aria-pressed={on}
               onClick={() => onTool(on ? null : consumable.def)}
             >
-              <ItemIcon src={baseIcon(consumable.path)} size={32} />
+              <ItemIcon src={baseIcon(consumable.art)} size={32} />
               <span className="grid-mod__text">
                 <span className="grid-mod__name">{consumable.name}</span>
                 <span>

@@ -25,7 +25,7 @@ after(async () => {
 beforeEach(async () => {
   await db.exec("TRUNCATE fits, fit_reports CASCADE");
   stub.requests.length = 0;
-  for (const key of ["GET /healthz", "POST /v1/evaluate"]) stub.route(key, null);
+  for (const key of ["GET /v1/status", "POST /v1/fits/evaluate"]) stub.route(key, null);
 });
 
 const json = (res, status, body, headers = {}) => {
@@ -33,10 +33,12 @@ const json = (res, status, body, headers = {}) => {
   res.end(JSON.stringify(body));
 };
 
-/** The engine at build NEW: healthz says so, and every verdict is stamped with it. */
+const refusal = (message) => ({ error: { code: "bad_request", message } });
+
+/** The engine at build NEW: /v1/status says so, and every verdict is stamped with it. */
 function engineAt(sha, evaluate) {
-  stub.route("GET /healthz", (req, res) => json(res, 200, { ...FIXTURES.health, buildSha: sha }));
-  stub.route("POST /v1/evaluate", evaluate ?? ((req, res) => json(res, 200, { ...FIXTURES.evaluateValid, buildSha: sha })));
+  stub.route("GET /v1/status", (req, res) => json(res, 200, { ...FIXTURES.status, build: sha }));
+  stub.route("POST /v1/fits/evaluate", evaluate ?? ((req, res) => json(res, 200, { ...FIXTURES.evaluateValid, buildSha: sha })));
 }
 
 async function publishedFit(title = "A fit", extra = {}) {
@@ -95,7 +97,7 @@ test("a second run for the same build does nothing", async () => {
   const again = await run();
   assert.equal(again.outcome, "done");
   assert.equal(again.evaluated, 0);
-  assert.deepEqual(stub.requests.map((r) => r.path), ["/healthz"]);
+  assert.deepEqual(stub.requests.map((r) => r.path), ["/v1/status"]);
 });
 
 test("an engine that is down leaves the fits and their old verdicts untouched", async () => {
@@ -105,7 +107,7 @@ test("an engine that is down leaves the fits and their old verdicts untouched", 
   const unreachable = await run({ engine: createEngineClient({ baseUrl: await deadEngineUrl() }) });
   assert.equal(unreachable.outcome, "engine");
 
-  engineAt(NEW, (req, res) => json(res, 500, { error: "boom" }));
+  engineAt(NEW, (req, res) => json(res, 500, { error: { code: "internal", message: "boom" } }));
   const failing = await run();
   assert.equal(failing.outcome, "engine");
   assert.equal(failing.evaluated, 0);
@@ -171,7 +173,7 @@ test("a fit the engine refuses is stored as invalid and does not come back", asy
   const bad = await publishedFit("Bad", { Unreadable: true });
   await publishedFit("Good");
   engineAt(NEW, (req, res, body) =>
-    body.fit.Unreadable ? json(res, 400, { error: "unreadable" }) : json(res, 200, { ...FIXTURES.evaluateValid, buildSha: NEW }),
+    body.fit.Unreadable ? json(res, 400, refusal("unreadable")) : json(res, 200, { ...FIXTURES.evaluateValid, buildSha: NEW }),
   );
   const summary = await run();
   assert.equal(summary.outcome, "done");
@@ -224,7 +226,7 @@ test("a run past its time budget stops and leaves the rest", async () => {
 
 test("a uniform refusal stores nothing and ends the run as an engine problem", async () => {
   for (let i = 0; i < 8; i++) await publishedFit(`Fit ${i}`);
-  engineAt(NEW, (req, res) => json(res, 400, { error: "bad request" }));
+  engineAt(NEW, (req, res) => json(res, 400, refusal("bad request")));
   const lines = [];
   const summary = await run({ maxInFlight: 1, log: (l) => lines.push(l) });
   assert.equal(summary.outcome, "engine");
@@ -237,7 +239,7 @@ test("one bad fit among good ones is stored invalid with the engine's message", 
   const bad = await publishedFit("Bad", { Unreadable: true });
   for (let i = 0; i < 4; i++) await publishedFit(`Good ${i}`);
   engineAt(NEW, (req, res, body) =>
-    body.fit.Unreadable ? json(res, 400, { error: "module 3 is unreadable" }) : json(res, 200, { ...FIXTURES.evaluateValid, buildSha: NEW }),
+    body.fit.Unreadable ? json(res, 400, refusal("module 3 is unreadable")) : json(res, 200, { ...FIXTURES.evaluateValid, buildSha: NEW }),
   );
   const summary = await run();
   assert.equal(summary.outcome, "done");

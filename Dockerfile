@@ -1,5 +1,5 @@
-# Build from the REPO ROOT, so the Unity token, font and art files are in the context (the art images are
-# Git LFS: hydrate them first, `git lfs pull`; the build fails on a pointer file):
+# Build from the REPO ROOT, so the few Unity files the site derives its tokens, font and wording from are in the
+# context (Dockerfile.dockerignore lists them). Item art is not among them: the game data API serves it.
 #   docker build -f js/projects/theorycrafting/Dockerfile -t citadel-theorycrafting .
 # Run: docker run --rm -p 3000:3000 -e PORT=3000 citadel-theorycrafting
 # Environment (all optional) is read at run time: see the README.
@@ -27,19 +27,6 @@ COPY src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/StatTypeText.cs src/C
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/StatTypeRules.cs src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Modules/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/Effects.qtn src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs src/Citadel.Unity/Assets/Scripts/Simulation/
-# Item art (tools/game-data-api/art/game-art.mjs, run by prepare-game-assets with this app's sharp): the prefabs and assets that name icons, the images and their .meta files.
-# Dockerfile.dockerignore keeps this to those file types; prepare fails on an image that is an LFS pointer.
-COPY tools/ship-restore/lib/game-assets.js tools/ship-restore/lib/rarity-names.js tools/ship-restore/lib/
-COPY tools/game-data-api/art/game-art.mjs tools/game-data-api/art/
-COPY src/Citadel.Unity/Assets/Scripts/Simulation/Items/Items.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Items/
-COPY src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Modules/ src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Modules/
-COPY src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Ships/ src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Ships/
-COPY src/Citadel.Unity/Assets/Config/Quantum/Definitions/Artifacts/ src/Citadel.Unity/Assets/Config/Quantum/Definitions/Artifacts/
-COPY src/Citadel.Unity/Assets/Config/Quantum/Definitions/Recipes/ src/Citadel.Unity/Assets/Config/Quantum/Definitions/Recipes/
-COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/World/EntityOverlayHudConfig.asset src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/World/
-COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Modules/Icons/ src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Modules/Icons/
-COPY src/Citadel.Unity/Assets/UI/Elements/Icons/Module/ src/Citadel.Unity/Assets/UI/Elements/Icons/Module/
-COPY src/Citadel.Unity/Assets/Art/ShipIndicator/ src/Citadel.Unity/Assets/Art/ShipIndicator/
 WORKDIR /repo/js/projects/theorycrafting
 COPY --from=deps /repo/js/projects/theorycrafting/node_modules ./node_modules
 COPY js/projects/theorycrafting/ ./
@@ -52,7 +39,7 @@ WORKDIR /app
 RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/standalone ./
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/static ./.next/static
-# The item art prepare-game-assets wrote; the standalone output does not include public/.
+# The standalone output does not include public/.
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/public ./public
 # The schema and its apply script run before the server. migrate.mjs needs `pg`, which the standalone
 # trace includes because the pages import src/lib/fits/db.ts (checked by building and running this image).
@@ -61,7 +48,7 @@ COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/
 # the types itself, so there is no compile step: just the job's own files, which import nothing from Next
 # and use `pg` from the standalone node_modules. Start command: `node src/jobs/reevaluate.ts`.
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/jobs/reevaluate.ts ./src/jobs/
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/engine/client.ts /repo/js/projects/theorycrafting/src/lib/engine/types.ts ./src/lib/engine/
+COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/engine/client.ts /repo/js/projects/theorycrafting/src/lib/engine/catalog-resources.ts /repo/js/projects/theorycrafting/src/lib/engine/types.ts ./src/lib/engine/
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/pool-db.ts /repo/js/projects/theorycrafting/src/lib/fits/queries.ts /repo/js/projects/theorycrafting/src/lib/fits/filters.ts /repo/js/projects/theorycrafting/src/lib/fits/limits.ts /repo/js/projects/theorycrafting/src/lib/fits/service.ts /repo/js/projects/theorycrafting/src/lib/fits/notifications.ts ./src/lib/fits/
 # Fails the build if the job's import closure isn't all here (importing runs nothing: main() only runs
 # as the entry point). src/jobs/reevaluate-closure.test.mjs checks the same list from source.

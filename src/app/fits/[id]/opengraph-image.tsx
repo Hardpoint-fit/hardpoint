@@ -5,9 +5,9 @@ import art from "#/components/grid/fitting-art.generated.json";
 import { boundsOf, footprintOutline, iconBox, insetLoop, type Cell, type Point } from "#/components/grid/geometry";
 import { cellSizeFor, SITE_GRID } from "#/components/grid/scale";
 import { moduleCells, type GridModel } from "#/components/grid/model";
-import { art2x } from "#/lib/art/art-manifest";
 import { logoDataUri } from "#/lib/brand/logo";
-import { itemIcon } from "#/lib/art/item-icon";
+import { art2x, itemIcon } from "#/lib/art/item-icon";
+import { getConfig } from "#/lib/site-config";
 import { isOpenFit } from "#/lib/engine/open-fit";
 import { affinityTag } from "#/components/affinity/affinity";
 import { loadFitPage } from "#/lib/site/loaders";
@@ -91,13 +91,18 @@ function MiniGrid({ model, icons }: { model: GridModel; icons: ReadonlyMap<strin
 
 /**
  * Game art as a PNG data URI for the card (the share card's renderer takes PNG, not WebP), or null when
- * there is none or it can't be read: the card then goes without that image.
+ * there is none or it can't be read: the card then goes without that image. `url` is the catalog's absolute
+ * public art URL; the server fetches the same file from the API's internal address.
  */
 async function artPng(url: string | null): Promise<string | null> {
   if (!url) return null;
   try {
+    const internal = getConfig().apiInternalUrl;
+    if (!internal) throw new Error("the game data API isn't configured");
+    const response = await fetch(`${internal}${new URL(art2x(url)).pathname}`, { signal: AbortSignal.timeout(5_000) });
+    if (!response.ok) throw new Error(`the API answered ${response.status}`);
     const { default: sharp } = await import("sharp");
-    const png = await sharp(join(process.cwd(), "public", art2x(url))).png().toBuffer();
+    const png = await sharp(Buffer.from(await response.arrayBuffer())).png().toBuffer();
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch (error) {
     // The card goes out without the art; say why, so a missing sharp build or image shows in the logs.
@@ -125,7 +130,7 @@ export default async function FitCard({ params }: { params: Params }) {
   }
   const { fit, shown, grid } = data;
   const hull = data.hull?.name ?? "UNKNOWN HULL";
-  const icon = await artPng(data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null);
+  const icon = await artPng(data.hull ? itemIcon({ art: data.hull.art, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null);
   const moduleArt = grid.status === "ready" ? [...new Set(grid.model.modules.flatMap((module) => (module.icon ? [module.icon] : [])))] : [];
   const icons = new Map((await Promise.all(moduleArt.map(async (url) => [url, await artPng(url)] as const))).flatMap(([url, png]) => (png ? [[url, png] as const] : [])));
   const rating = shown.reference?.rating ?? null;

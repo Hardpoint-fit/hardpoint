@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { brotliDecompressSync, gunzipSync } from "node:zlib";
-import { readFile } from "node:fs/promises";
 import { catalogResponse, matchesEtag, pickEncoding } from "./catalog-response.ts";
+import { FIXTURES } from "./stub-engine.mjs";
 
-const catalog = JSON.parse(await readFile(new URL("./__fixtures__/catalog.json", import.meta.url), "utf8"));
+const catalog = FIXTURES.catalog;
 const etag = '"engine-content-hash"';
 const get = (headers = {}, engineEtag = etag) => catalogResponse(catalog, new Request("http://site/api/catalog", { headers }), engineEtag);
 const json = JSON.stringify(catalog);
@@ -36,14 +36,14 @@ test("a held build is a 304, whatever form the etag comes back in", () => {
   assert.equal(get({ "if-none-match": '"old-build"' }).status, 200);
 });
 
-test("the etag follows the engine's tag: new content on the same build is a new tag and a 200", () => {
+test("the etag follows the API's tag: new content on the same build is a new tag and a 200", () => {
   const fresh = '"engine-content-hash-2"';
   assert.equal(get({}, fresh).headers.get("etag"), fresh);
   assert.equal(get({ "if-none-match": etag }, fresh).status, 200);
   assert.equal(get({ "if-none-match": fresh }, fresh).status, 304);
 });
 
-test("without an engine tag the etag is a hash of the body, and changes with the content", () => {
+test("without an API tag the etag is a hash of the body, and changes with the content", () => {
   const own = catalogResponse(catalog, new Request("http://site/api/catalog")).headers.get("etag");
   assert.match(own, /^"[0-9a-f]{64}"$/);
   const changed = { ...catalog, items: catalog.items.slice(1) };

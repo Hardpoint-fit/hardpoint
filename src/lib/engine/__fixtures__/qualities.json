@@ -1,0 +1,25 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "qualities": [
+  {
+   "quality": "Faction",
+   "multiplier": "55706"
+  },
+  {
+   "quality": "Flawed",
+   "multiplier": "58982"
+  },
+  {
+   "quality": "Standard",
+   "multiplier": "65536"
+  },
+  {
+   "quality": "Superior",
+   "multiplier": "72090"
+  },
+  {
+   "quality": "Masterwork",
+   "multiplier": "78643"
+  }
+ ]
+}

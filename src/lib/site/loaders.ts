@@ -4,7 +4,7 @@
 // the verdicts already stored, with `engine.state.status === "down"` for the banner.
 import type { EngineResult } from "../engine/client";
 import type { EngineMonitor, EngineState } from "../engine/engine-state";
-import type { Catalog, CatalogHull, OpenFit } from "../engine/types";
+import type { ArtKeys, Catalog, CatalogHull, OpenFit } from "../engine/types";
 import type { DatabaseState, Queryable } from "../fits/db";
 import { parseBrowseParams, type BrowseQuery, type SearchParamsInput } from "../fits/filters";
 import {
@@ -115,12 +115,12 @@ export type FitCard = {
 export type CardModule = { def: string; name: string; icon: string | null; count: number };
 
 /** Catalog lookups for cards, built once per catalog (the catalog object is replaced on a new build). */
-const cardLookups = new WeakMap<Catalog, { items: Map<string, Catalog["items"][number]>; artifacts: Map<string, string> }>();
+const cardLookups = new WeakMap<Catalog, { items: Map<string, Catalog["items"][number]>; artifacts: Map<string, ArtKeys | null> }>();
 
 function lookupsFor(catalog: Catalog) {
   let lookups = cardLookups.get(catalog);
   if (!lookups) {
-    lookups = { items: new Map(catalog.items.map((item) => [item.def, item])), artifacts: new Map(catalog.artifacts.map((artifact) => [artifact.def, artifact.path])) };
+    lookups = { items: new Map(catalog.items.map((item) => [item.def, item])), artifacts: new Map(catalog.artifacts.map((artifact) => [artifact.def, artifact.art])) };
     cardLookups.set(catalog, lookups);
   }
   return lookups;
@@ -137,11 +137,11 @@ export function cardModules(fit: Pick<FitSummary, "moduleItems">, catalog: Catal
       continue;
     }
     const item = lookups?.items.get(ref.def);
-    const artifactPath = ref.artifact ? (lookups?.artifacts.get(ref.artifact) ?? null) : null;
+    const artifactArt = ref.artifact ? (lookups?.artifacts.get(ref.artifact) ?? null) : null;
     byDef.set(ref.def, {
       def: ref.def,
       name: item?.name ?? UNKNOWN_ITEM_NAME,
-      icon: item ? itemIcon({ path: item.path, category: item.category }, ref, artifactPath) : null,
+      icon: item ? itemIcon({ art: item.art, category: item.category }, ref, artifactArt) : null,
       count: 1,
     });
   }
@@ -156,7 +156,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
     id: fit.id,
     title: fit.title,
     hullName: hull?.name ?? "UNKNOWN HULL",
-    hullIcon: hull ? baseIcon(hull.path) : null,
+    hullIcon: hull ? baseIcon(hull.art) : null,
     authorUserId: fit.authorUserId,
     authorName: fit.authorName,
     tags: fit.tags,
