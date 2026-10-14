@@ -1,6 +1,9 @@
 // Applies schema.sql. Run before the server starts:  node src/lib/fits/migrate.mjs
 // Idempotent, and safe when several containers start at once: the whole apply runs in one transaction
 // that first takes a transaction-scoped advisory lock, so the others wait and then find nothing to do.
+// Every lock after that one waits at most 5 s (lock_timeout, local to the transaction): a migration stuck
+// behind a long-running query fails the start, and the platform keeps the running site, instead of the
+// statement queueing every later reader and writer of that table behind it.
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
@@ -12,7 +15,7 @@ const schemaPath = fileURLToPath(new URL("./schema.sql", import.meta.url));
 /** @param {{ exec(sql: string): Promise<unknown> }} target  anything that runs a multi-statement script */
 export async function applySchema(target) {
   const schema = await readFile(schemaPath, "utf8");
-  await target.exec(`BEGIN;\nSELECT pg_advisory_xact_lock(${LOCK_KEY});\n${schema}\nCOMMIT;`);
+  await target.exec(`BEGIN;\nSELECT pg_advisory_xact_lock(${LOCK_KEY});\nSET LOCAL lock_timeout = '5s';\n${schema}\nCOMMIT;`);
 }
 
 async function main() {

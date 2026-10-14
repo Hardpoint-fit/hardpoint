@@ -111,13 +111,40 @@ CREATE TABLE IF NOT EXISTS pilots (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Before schema 4 the name was copied onto every fit and comment at write time. Backfill each writer's
--- most recent copy, then drop the copies below. Guarded so it (and its lock) runs only while those columns exist: once
--- they are dropped this block finds nothing to read and does nothing.
+-- Before schema 4 the name was copied onto every fit and comment at write time (fits.author_name and
+-- fit_comments.author_name, NOT NULL). This release keeps those columns but stops using them: no code here
+-- reads or writes them. They stay because the previous site and `reevaluate` cron keep running while Railway
+-- rolls this one out (and keep running if this start fails its health check), and they still insert names.
+-- So: allow NULL (this code inserts none), backfill pilots once, add the foreign keys.
+-- Follow-up (plan: "Follow-up: drop fits/fit_comments.author_name"): once no instance of the old code runs, a
+-- later schema version drops both columns.
+-- Rollout window: the old code inserting a fit or comment for an author who has no pilot row is refused by the
+-- foreign keys below (it never creates pilot rows). Every author who wrote before this start has a row from
+-- the backfill, so only a first-ever write through an old instance fails, and that pilot can retry on the new one.
+DO $$
+BEGIN
+  -- Checked first so a later start never takes ALTER TABLE's exclusive lock for a no-op.
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'fits' AND column_name = 'author_name' AND is_nullable = 'NO') THEN
+    ALTER TABLE fits ALTER COLUMN author_name DROP NOT NULL;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'fit_comments' AND column_name = 'author_name' AND is_nullable = 'NO') THEN
+    ALTER TABLE fit_comments ALTER COLUMN author_name DROP NOT NULL;
+  END IF;
+END $$;
+
+-- The backfill runs once: in the transaction that first records schema version 4 (at the end of this file), and
+-- only where the copies exist. A later start, or a database this schema created, skips it and locks nothing.
+-- Each writer gets their most recent non-blank copy ('PILOT' only when every copy is blank). ON CONFLICT DO
+-- NOTHING keeps any pilot row that already exists, so the backfill never renames a pilot.
 DO $$
 DECLARE
   sources text[] := '{}';
 BEGIN
+  IF EXISTS (SELECT 1 FROM schema_version WHERE version = 4) THEN
+    RETURN;
+  END IF;
   IF EXISTS (SELECT 1 FROM information_schema.columns
              WHERE table_schema = current_schema() AND table_name = 'fits' AND column_name = 'author_name') THEN
     sources := sources || 'SELECT author_user_id, author_name, created_at FROM fits'::text;
@@ -127,15 +154,14 @@ BEGIN
     sources := sources || 'SELECT author_user_id, author_name, created_at FROM fit_comments'::text;
   END IF;
   IF cardinality(sources) > 0 THEN
-    -- A site still running the old code keeps writing names onto rows while this runs. Hold its writes
-    -- (reads go on) until this transaction commits, so no author without a pilot row lands between the
-    -- backfill and the foreign keys below. Taken only while the copies exist: later starts lock nothing.
+    -- The old site keeps writing names onto rows while this runs. Hold its writes (reads go on) until this
+    -- transaction commits, so no author without a pilot row lands between the backfill and the foreign keys.
     LOCK TABLE fits, fit_comments IN SHARE ROW EXCLUSIVE MODE;
     EXECUTE format(
       'INSERT INTO pilots (user_id, name)
        SELECT DISTINCT ON (user_id) user_id, COALESCE(NULLIF(btrim(name), ''''), ''PILOT'')
        FROM (%s) AS written (user_id, name, at)
-       ORDER BY user_id, at DESC, name
+       ORDER BY user_id, NULLIF(btrim(name), '''') IS NULL, at DESC, name
        ON CONFLICT (user_id) DO NOTHING',
       array_to_string(sources, ' UNION ALL '));
   END IF;
@@ -151,9 +177,6 @@ BEGIN
     ALTER TABLE fit_comments ADD CONSTRAINT fit_comments_author_pilot_fk FOREIGN KEY (author_user_id) REFERENCES pilots (user_id);
   END IF;
 END $$;
-
-ALTER TABLE fits DROP COLUMN IF EXISTS author_name;
-ALTER TABLE fit_comments DROP COLUMN IF EXISTS author_name;
 
 -- Who follows whom. Counts are computed from these rows.
 CREATE TABLE IF NOT EXISTS pilot_follows (

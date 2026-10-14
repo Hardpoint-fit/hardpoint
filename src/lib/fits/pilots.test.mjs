@@ -34,31 +34,50 @@ async function published(author, title = "A fit") {
   return fit;
 }
 
-const nameOf = async (userId) => (await db.query("SELECT name FROM pilots WHERE user_id = $1", [userId])).rows[0]?.name;
+const nameOfIn = async (target, userId) => (await target.query("SELECT name FROM pilots WHERE user_id = $1", [userId])).rows[0]?.name;
+const nameOf = (userId) => nameOfIn(db, userId);
 
 // --- migration from copied names ---------------------------------------------------------------
 
-test("the schema backfills pilots from the names copied onto fits and comments, then drops the copies", async () => {
-  const old = await PGlite.create();
-  await applySchema(old);
-  // Put the database back the way schema 3 left it: names copied onto rows, no pilots, no foreign keys.
-  await old.exec(`
+// Puts a database back the way schema 3 left it: names copied onto rows (NOT NULL), no pilots, no foreign keys.
+async function rewindToCopiedNames(target) {
+  await target.exec(`
     ALTER TABLE fits DROP CONSTRAINT fits_author_pilot_fk;
     ALTER TABLE fit_comments DROP CONSTRAINT fit_comments_author_pilot_fk;
     DROP TABLE pilot_follows;
     DROP TABLE pilot_bans;
     TRUNCATE pilots;
-    DELETE FROM schema_version WHERE version = 4;
-    ALTER TABLE fits ADD COLUMN author_name text;
-    ALTER TABLE fit_comments ADD COLUMN author_name text;
+    DELETE FROM schema_version WHERE version >= 4;
+    ALTER TABLE fits ADD COLUMN author_name text NOT NULL DEFAULT '';
+    ALTER TABLE fit_comments ADD COLUMN author_name text NOT NULL DEFAULT '';
+    ALTER TABLE fits ALTER COLUMN author_name DROP DEFAULT;
+    ALTER TABLE fit_comments ALTER COLUMN author_name DROP DEFAULT;
+  `);
+}
+
+const copiedNameColumns = async (target) =>
+  (
+    await target.query(
+      "SELECT table_name, is_nullable FROM information_schema.columns WHERE column_name = 'author_name' AND table_name IN ('fits', 'fit_comments') ORDER BY table_name",
+    )
+  ).rows;
+
+test("the schema backfills pilots from the names copied onto fits and comments, and keeps the copies nullable", async () => {
+  const old = await PGlite.create();
+  await applySchema(old);
+  await rewindToCopiedNames(old);
+  await old.exec(`
     INSERT INTO fits (id, author_user_id, author_name, title, hull_item, fit, created_build_sha, status, published_at, created_at)
       VALUES ('aaaaaaaaaa', 'user_alice', 'alice-old', 'Old fit', '1000', '{}', 'sha', 'published', now(), '2026-01-01'),
              ('bbbbbbbbbb', 'user_alice', 'alice-new', 'Newer fit', '1000', '{}', 'sha', 'draft', NULL, '2026-03-01'),
-             ('cccccccccc', 'user_bob', 'bob', 'Bob fit', '1000', '{}', 'sha', 'published', now(), '2026-01-01');
+             ('cccccccccc', 'user_bob', 'bob', 'Bob fit', '1000', '{}', 'sha', 'published', now(), '2026-01-01'),
+             ('dddddddddd', 'user_dave', 'dave', 'Dave fit', '1000', '{}', 'sha', 'published', now(), '2026-01-01');
     INSERT INTO fit_comments (fit_id, author_user_id, author_name, body, created_at)
       VALUES ('cccccccccc', 'user_alice', 'alice-mid', 'hi', '2026-02-01'),
              ('aaaaaaaaaa', 'user_bob', 'bob-latest', 'yo', '2026-05-01'),
-             ('aaaaaaaaaa', 'user_carol', 'carol', 'only commented', '2026-04-01');
+             ('aaaaaaaaaa', 'user_carol', 'carol', 'only commented', '2026-04-01'),
+             ('aaaaaaaaaa', 'user_dave', '  ', 'a later blank copy is skipped', '2026-06-01'),
+             ('aaaaaaaaaa', 'user_erin', '', 'only blank copies', '2026-06-01');
   `);
   await applySchema(old);
   const { rows } = await old.query("SELECT user_id, name FROM pilots ORDER BY user_id");
@@ -66,28 +85,55 @@ test("the schema backfills pilots from the names copied onto fits and comments, 
     { user_id: "user_alice", name: "alice-new" },
     { user_id: "user_bob", name: "bob-latest" },
     { user_id: "user_carol", name: "carol" },
+    { user_id: "user_dave", name: "dave" },
+    { user_id: "user_erin", name: "PILOT" },
   ]);
-  const { rows: columns } = await old.query(
-    "SELECT table_name FROM information_schema.columns WHERE column_name = 'author_name' AND table_name IN ('fits', 'fit_comments')",
+  assert.deepEqual(
+    await copiedNameColumns(old),
+    [
+      { table_name: "fit_comments", is_nullable: "YES" },
+      { table_name: "fits", is_nullable: "YES" },
+    ],
+    "the copies stay for the old code still running, and accept the NULLs this code leaves",
   );
-  assert.deepEqual(columns, [], "the copies are gone");
 
   // Old rows read through the pilots join.
-  const shaped = { query: (text, params) => old.query(text, params ? [...params] : undefined) };
+  const shaped = {
+    query: (text, params) => old.query(text, params ? [...params] : undefined),
+    transaction: (work) => old.transaction((tx) => work({ query: (text, params) => tx.query(text, params ? [...params] : undefined) })),
+  };
   assert.equal((await getFit(shaped, "aaaaaaaaaa")).authorName, "alice-new");
   const comments = await listComments(shaped, "aaaaaaaaaa");
-  assert.deepEqual(comments.map((c) => c.authorName).sort(), ["bob-latest", "carol"]);
+  assert.deepEqual(comments.map((c) => c.authorName).sort(), ["PILOT", "bob-latest", "carol", "dave"]);
 
-  // A second apply is a no-op: the guarded backfill finds no columns, and a renamed pilot keeps their name.
+  // This code writes no copy, so its rows carry NULL.
+  const fresh = await createFit(shaped, { authorUserId: "user_frank", authorName: "FRANK", title: "New code", content: sampleFit(), buildSha: SHA });
+  await createComment(shaped, { fitId: "cccccccccc", authorUserId: "user_alice", authorName: "ALICE", body: "new comment" });
+  assert.equal((await old.query("SELECT author_name FROM fits WHERE id = $1", [fresh.id])).rows[0].author_name, null);
+  assert.deepEqual((await old.query("SELECT author_name FROM fit_comments WHERE body = 'new comment'")).rows, [{ author_name: null }]);
+
+  // The old code during the rollout: a write by an author with a pilot row goes through; a first-ever author is
+  // refused by the foreign key (documented in schema.sql).
+  await old.exec(
+    "INSERT INTO fits (id, author_user_id, author_name, title, hull_item, fit, created_build_sha) VALUES ('eeeeeeeeee', 'user_bob', 'bob', 'Old code', '1000', '{}', 'sha')",
+  );
+  await assert.rejects(
+    old.exec("INSERT INTO fits (id, author_user_id, author_name, title, hull_item, fit, created_build_sha) VALUES ('ffffffffff', 'user_new', 'new', 'Old code', '1000', '{}', 'sha')"),
+    /fits_author_pilot_fk/,
+  );
+
+  // Later starts don't backfill again: renamed pilots keep their names, NULL copies change nothing.
   await old.query("UPDATE pilots SET name = 'ALICE' WHERE user_id = 'user_alice'");
   await applySchema(old);
-  assert.equal((await old.query("SELECT name FROM pilots WHERE user_id = 'user_alice'")).rows[0].name, "ALICE");
+  assert.equal(await nameOfIn(old, "user_alice"), "ALICE");
+  assert.equal(await nameOfIn(old, "user_frank"), "FRANK");
   assert.equal((await old.query("SELECT count(*)::int AS n FROM schema_version WHERE version = 4")).rows[0].n, 1);
   await old.close();
 });
 
-test("the backfill holds writes to fits and comments until its transaction ends, and later starts don't", async () => {
+test("the backfill holds writes to fits and comments only in the start that records schema 4", async () => {
   const schema = await readFile(new URL("./schema.sql", import.meta.url), "utf8");
+  // Whether the schema holds writes to fits and fit_comments, seen from inside its transaction.
   const lockModes = async (target) => {
     await target.exec(`BEGIN;\n${schema}`);
     const { rows } = await target.query(
@@ -96,17 +142,28 @@ test("the backfill holds writes to fits and comments until its transaction ends,
     await target.exec("ROLLBACK");
     return rows.map((row) => row.mode);
   };
-  const fresh = await PGlite.create();
-  await applySchema(fresh);
-  assert.deepEqual(await lockModes(fresh), [], "steady state: no lock on writes");
-  await fresh.exec(`
-    ALTER TABLE fits DROP CONSTRAINT fits_author_pilot_fk;
-    ALTER TABLE fit_comments DROP CONSTRAINT fit_comments_author_pilot_fk;
-    ALTER TABLE fits ADD COLUMN author_name text;
-    ALTER TABLE fit_comments ADD COLUMN author_name text;
-  `);
-  assert.deepEqual(await lockModes(fresh), ["ShareRowExclusiveLock"], "while the copies exist, writes wait for the migration");
-  await fresh.close();
+  const target = await PGlite.create();
+  await applySchema(target);
+  assert.deepEqual(await lockModes(target), [], "a database this schema created: no lock on writes");
+
+  await rewindToCopiedNames(target);
+  assert.deepEqual(
+    await lockModes(target),
+    ["ShareRowExclusiveLock"],
+    "the first start: the backfill holds writes until the migration commits",
+  );
+  await applySchema(target);
+  assert.deepEqual(await lockModes(target), [], "later starts, columns still present: no lock on writes");
+  await target.close();
+});
+
+test("applySchema bounds every lock wait after the advisory lock, for that transaction only", async () => {
+  const scripts = [];
+  const target = await PGlite.create();
+  await applySchema({ exec: (sql) => (scripts.push(sql), target.exec(sql)) });
+  assert.match(scripts[0], /^BEGIN;\nSELECT pg_advisory_xact_lock\(\d+\);\nSET LOCAL lock_timeout = '5s';\n/);
+  assert.equal((await target.query("SHOW lock_timeout")).rows[0].lock_timeout, "0", "SET LOCAL ends with the migration");
+  await target.close();
 });
 
 // --- sign-in and the write guard ---------------------------------------------------------------
