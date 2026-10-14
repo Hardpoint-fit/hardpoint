@@ -23,7 +23,7 @@ import { affinityTypeLabel } from "#/components/affinity/affinity";
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
 const GRID_NOTES: Record<Exclude<Ready["grid"]["status"], "ready">, string> = {
-  no_catalog: "THE GRID NEEDS THE ENGINE, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
+  no_catalog: "THE GRID NEEDS THE ENGINE, WHICH ISN'T ANSWERING. THE STATS BELOW WERE SAVED AT THE LAST CHECK.",
   unknown_hull: "THIS HULL ISN'T IN THE CURRENT BUILD.",
   unreadable: "THIS FIT CAN'T BE DRAWN.",
 };

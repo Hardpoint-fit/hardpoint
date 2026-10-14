@@ -369,7 +369,7 @@ test("compare choices are the pilot's own bookmarks and fits only, capped", asyn
 // ---------------------------------------------------------------------------------------------------
 // Bans
 
-const BANNED = { ok: false, reason: "banned", status: 403, message: "Your account is suspended from posting." };
+const BANNED = { ok: false, reason: "banned", status: 403, message: "Your account is banned, so you can't post, vote, comment or save." };
 /** A pilot with the Clerk admin role now (not in SITE_ADMIN_USER_IDS). */
 const MOD = { userId: "user_mod", name: "MOD" };
 

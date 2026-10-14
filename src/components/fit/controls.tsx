@@ -211,7 +211,7 @@ export function DeleteComment({ fitId, id, hasReplies }: { fitId: string; id: st
     });
   return (
     <span className="flex flex-wrap items-center gap-2">
-      <span className="note">{hasReplies ? "THE COMMENT IS REMOVED; ITS REPLIES STAY." : "THE COMMENT IS REMOVED."}</span>
+      <span className="note">{hasReplies ? "THIS REMOVES THE COMMENT. ITS REPLIES STAY." : "THIS REMOVES THE COMMENT."}</span>
       <button type="button" className="btn" disabled={pending} onClick={confirm}>
         CONFIRM DELETE
       </button>

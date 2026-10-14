@@ -15,7 +15,7 @@ function describe(n: Notification): string {
     case "follow_fit":
       return `${who} PUBLISHED ${n.fitTitle}`;
     case "fit_broken":
-      return `${n.fitTitle} NO LONGER PASSES VALIDATION ON THE LATEST BUILD`;
+      return `${n.fitTitle} FAILS ON THE CURRENT BUILD`;
   }
 }
 

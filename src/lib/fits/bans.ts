@@ -8,7 +8,7 @@ import { BAN_REASON_MAX } from "./limits.ts";
 import { FitDataError } from "./queries.ts";
 import { safeAvatarUrl } from "./pilots.ts";
 
-export const BANNED_MESSAGE = "Your account is suspended from posting.";
+export const BANNED_MESSAGE = "Your account is banned, so you can't post, vote, comment or save.";
 
 /** Thrown by assertNotBanned; actions-core turns it into a 403 refusal with BANNED_MESSAGE. */
 export class PilotBannedError extends Error {
