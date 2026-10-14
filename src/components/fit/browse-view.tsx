@@ -1,10 +1,12 @@
 // Fit cards and the browse filters. The filters are a plain GET form, so the URL holds the whole
 // browse state and the page works without JavaScript.
 import Link from "next/link";
-import { toBrowseSearch, type BrowseQuery, type SortKey } from "#/lib/fits/filters";
+import { MAX_SEARCH_LENGTH, toBrowseSearch, type BrowseQuery, type SortKey } from "#/lib/fits/filters";
 import type { FitCard, HullInfo } from "#/lib/site/loaders";
 import { StandingBadge, count } from "#/components/ui";
 import { ItemIcon } from "#/components/item-text";
+import { ModuleFilter } from "#/components/fit/module-filter";
+import type { ModuleInfo } from "#/lib/site/module-search";
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "top-week", label: "TOP THIS WEEK" },
@@ -72,11 +74,14 @@ const words = (value: string) => value.replace(/([a-z])([A-Z])/g, "$1 $2").toUpp
 export function BrowseFilters({
   query,
   hulls,
+  selectedModules = [],
   action = "/",
   signedIn = false,
 }: {
   query: BrowseQuery;
   hulls: HullInfo[];
+  /** The names of `query.modules`, for their chips. */
+  selectedModules?: ModuleInfo[];
   action?: string;
   signedIn?: boolean;
 }) {
@@ -84,6 +89,11 @@ export function BrowseFilters({
   const roles = unique(hulls.map((hull) => hull.role).filter((role) => role !== "None"));
   return (
     <form className="filters" method="get" action={action} aria-label="Filters">
+      <label className="field filters__search">
+        SEARCH
+        <input className="input" type="search" name="q" defaultValue={query.q ?? ""} placeholder="TITLE, DESCRIPTION OR PILOT" maxLength={MAX_SEARCH_LENGTH} />
+      </label>
+      <ModuleFilter selected={selectedModules} />
       <label className="field">
         HULL
         <select className="select" name="hull" defaultValue={query.hull ?? ""}>

@@ -220,3 +220,13 @@ test("?rev=N is read-only on that revision: banner, its words and fit string sou
   assert.match(html, /\/fits\/new\?from=[A-Za-z0-9]+&amp;rev=1"/, "copy to builder carries the revision");
   assert.equal(count(html, 'data-module="'), FIXTURES.fit.modules.length, "the revision's own modules, not the current one's");
 });
+
+test("each distinct module on a fit page links to the fits that use it", async () => {
+  const html = await renderFit(stub.url, ids.showcase, anonymous(false));
+  const omni = FIXTURES.fitShowcase.modules[0].item.def;
+  assert.match(html, /MODULES/);
+  assert.ok(html.includes(`href="/?module=${omni}"`));
+  assert.match(html, /Fits using this module/);
+  const defs = new Set(FIXTURES.fitShowcase.modules.map((module) => module.item.def));
+  assert.equal(html.split("Fits using this module").length - 1, defs.size, "one link per distinct module");
+});

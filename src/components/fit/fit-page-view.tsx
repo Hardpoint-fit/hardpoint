@@ -6,6 +6,7 @@ import { renderMarkdown } from "#/lib/fits/markdown";
 import type { FitPageData } from "#/lib/site/loaders";
 import type { PageViewer } from "#/lib/site/server";
 import { FittingGrid } from "#/components/grid/fitting-grid";
+import type { GridModule } from "#/components/grid/model";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
 import { CommentForm, DeleteComment, DeleteFitButton, EditComment, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
 import { StatsTable } from "./stats-table";
@@ -121,6 +122,33 @@ function History({ fitId, revisions, viewing }: { fitId: string; revisions: Read
   );
 }
 
+/** The fit's distinct modules, each linking to the browse page of fits that carry it. */
+function ModuleList({ modules }: { modules: GridModule[] }) {
+  const distinct = new Map<string, { module: GridModule; count: number }>();
+  for (const module of modules) {
+    const entry = distinct.get(module.def);
+    if (entry) entry.count += 1;
+    else distinct.set(module.def, { module, count: 1 });
+  }
+  return (
+    <Panel title="MODULES">
+      <ul className="module-list">
+        {[...distinct.values()].map(({ module, count: n }) => (
+          <li key={module.def} className="module-list__row">
+            <ItemIcon src={module.icon} size={24} />
+            <span className="module-list__name">
+              {n > 1 ? `${module.name} ×${n}` : module.name}
+            </span>
+            <Link className="link" href={`/?module=${encodeURIComponent(module.def)}`}>
+              Fits using this module
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
 export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer }) {
   const { fit, shown, engine, grid, revision } = data;
   // A revision with no verdict of its own has no stats to draw (only the latest does).
@@ -185,6 +213,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               </div>
             )}
           </Panel>
+          {grid.status === "ready" && grid.model.modules.length > 0 && <ModuleList modules={grid.model.modules} />}
           <Panel title="DESCRIPTION">
             {fit.description.trim() ? <Markdown source={fit.description} /> : <p className="note">NO DESCRIPTION.</p>}
             {fit.tags.length > 0 && (

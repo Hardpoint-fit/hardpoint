@@ -23,6 +23,7 @@ import { getPilotProfile, type PilotProfile } from "../fits/pilots";
 import { getRevision, listRevisions, parseRevisionParam, type Revision, type RevisionSummary } from "../fits/revisions";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
+import { moduleInfos, type ModuleInfo } from "./module-search";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
 import { baseIcon } from "../art/item-icon";
 
@@ -118,7 +119,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
 
 export type BrowseData =
   | Unavailable
-  | { status: "ok"; engine: PageEngine; query: BrowseQuery; cards: FitCard[]; nextCursor: string | null; hulls: HullInfo[] };
+  | { status: "ok"; engine: PageEngine; query: BrowseQuery; cards: FitCard[]; nextCursor: string | null; hulls: HullInfo[]; selectedModules: ModuleInfo[] };
 
 export async function loadBrowse(
   deps: SiteDeps,
@@ -150,6 +151,7 @@ export async function loadBrowse(
     cards: page.fits.map((fit) => toCard(fit, engine.catalog, engine.currentSha)),
     nextCursor: page.nextCursor,
     hulls: hullInfos(engine.catalog),
+    selectedModules: moduleInfos(engine.catalog, query.modules),
   };
 }
 
@@ -173,7 +175,7 @@ export async function loadAuthor(
   params: SearchParamsInput,
   viewer: Viewer & { name?: string | null },
 ): Promise<AuthorData> {
-  const data = await loadBrowse(deps, params, viewer, { author: userId, hull: undefined, hullClass: undefined, role: undefined, tags: [], following: false });
+  const data = await loadBrowse(deps, params, viewer, { author: userId, hull: undefined, hullClass: undefined, role: undefined, tags: [], following: false, q: undefined, modules: [] });
   if (data.status !== "ok") return data;
   const db = databaseOf(deps)!;
   const profile = await guarded("pilot", async () => ({ found: await getPilotProfile(db, userId, viewer) }));

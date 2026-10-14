@@ -13,6 +13,7 @@ import { randomBytes } from "node:crypto";
 import {
   decodeCursor,
   encodeCursor,
+  filtersKey,
   normalizeTag,
   MAX_TAGS,
   type BrowseQuery,
@@ -347,7 +348,7 @@ export async function getFit(db: Queryable, id: string, options: GetFitOptions =
 
 export type BrowseOptions = {
   query: BrowseQuery;
-  /** The opaque cursor from the previous page's `nextCursor`. A cursor made for another sort is ignored. */
+  /** The opaque cursor from the previous page's `nextCursor`. A cursor made for another sort or other filters is ignored. */
   cursor?: string;
   limit?: number;
   /** The engine's current build. Needed for "works on current build" and for each fit's `evaluation`. */
@@ -385,6 +386,20 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
     where.push(`f.author_user_id IN (SELECT followee_user_id FROM pilot_follows WHERE follower_user_id = ${viewerRef}::text)`);
   }
 
+  if (query.q) {
+    // One branch per column so each can use its trigram index; the pattern is escaped and the query capped.
+    const pattern = p.add(`%${query.q.replace(/[\\%_]/g, "\\$&")}%`);
+    where.push(`f.id IN (
+      SELECT id FROM fits WHERE title ILIKE ${pattern}
+      UNION SELECT id FROM fits WHERE description ILIKE ${pattern}
+      UNION SELECT fp.id FROM fits fp JOIN pilots pp ON pp.user_id = fp.author_user_id WHERE pp.name ILIKE ${pattern})`);
+  }
+  if (query.modules.length > 0) {
+    // The fit JSON owns its modules: containment on fits.fit, answered by the jsonb_path_ops index.
+    const wanted = { modules: query.modules.map((def) => ({ item: { def } })) };
+    where.push(`f.fit @> ${p.add(JSON.stringify(wanted))}::jsonb`);
+  }
+
   if (query.hullClass || query.role) {
     const hulls = [...(options.hulls ?? [])]
       .filter(([, h]) => (!query.hullClass || h.hullClass === query.hullClass) && (!query.role || h.role === query.role))
@@ -400,7 +415,7 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
     );
   }
 
-  const cursor = options.cursor ? decodeCursor(options.cursor, query.sort) : undefined;
+  const cursor = options.cursor ? decodeCursor(options.cursor, query.sort, filtersKey(query)) : undefined;
   // A later page of "top this week" keeps the week its first page counted.
   const now = cursor?.now ?? (options.now ?? new Date()).toISOString();
   const scoreSql =
@@ -441,6 +456,7 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
           score: last.score,
           at: last.sort_at_text,
           id: last.id,
+          filters: filtersKey(query),
           ...(query.sort === "top-week" ? { now } : {}),
         })
       : null;

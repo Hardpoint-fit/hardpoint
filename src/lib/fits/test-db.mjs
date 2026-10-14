@@ -1,9 +1,10 @@
 // A throwaway in-process Postgres (pglite) with the real schema applied, shaped like db.ts's Db.
 import { PGlite } from "@electric-sql/pglite";
+import { pg_trgm } from "@electric-sql/pglite/contrib/pg_trgm";
 import { applySchema } from "./migrate.mjs";
 
 export async function createTestDb() {
-  const pglite = await PGlite.create();
+  const pglite = await PGlite.create({ extensions: { pg_trgm } });
   await applySchema(pglite);
   const db = {
     query: (text, params) => pglite.query(text, params ? [...params] : undefined),

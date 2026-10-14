@@ -186,8 +186,29 @@ CREATE TABLE IF NOT EXISTS fit_revisions (
   PRIMARY KEY (fit_id, revision)
 );
 
+-- Module search: `fit @> '{"modules":[{"item":{"def":"<def>"}}]}'`. The fit JSON stays the only owner of which
+-- modules a fit carries; this index only speeds up reading it.
+CREATE INDEX IF NOT EXISTS fits_fit_modules_idx ON fits USING gin (fit jsonb_path_ops);
+
+-- Text search (ILIKE on title, description and pilot name) uses trigram indexes when the server has pg_trgm
+-- (Railway's Postgres does). Where the extension isn't installed or can't be created, the search still works,
+-- just without the indexes, so the schema never requires it.
+DO $trgm$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = 'pg_trgm') THEN
+    CREATE EXTENSION IF NOT EXISTS pg_trgm;
+    CREATE INDEX IF NOT EXISTS fits_title_trgm_idx ON fits USING gin (title gin_trgm_ops);
+    CREATE INDEX IF NOT EXISTS fits_description_trgm_idx ON fits USING gin (description gin_trgm_ops);
+    CREATE INDEX IF NOT EXISTS pilots_name_trgm_idx ON pilots USING gin (name gin_trgm_ops);
+  END IF;
+EXCEPTION WHEN insufficient_privilege THEN
+  RAISE NOTICE 'pg_trgm not created: text search runs without trigram indexes';
+END
+$trgm$;
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (4) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (5) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (6) ON CONFLICT DO NOTHING;

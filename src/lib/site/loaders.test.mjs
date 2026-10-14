@@ -346,3 +346,19 @@ test("the builder treats a repeated rev like the fit page does: copy unavailable
   assert.equal(result.start.fit, null);
   assert.ok(result.start.note);
 });
+
+test("browse searches by text and module, names the chosen modules, and the author page ignores both", async () => {
+  const survey = FIXTURES.fitShowcase.modules[3].item.def; // SURVEY SCANNER
+  const bySearch = await loadBrowse(depsFor(stub.url), { q: "scarab cipher" }, ANONYMOUS);
+  assert.equal(bySearch.status, "ok");
+  assert.deepEqual(bySearch.cards.map((card) => card.title), ["Scarab cipher brawler"]);
+  const byModule = await loadBrowse(depsFor(stub.url), { module: [survey, "not-a-def"], q: "scarab" }, ANONYMOUS);
+  assert.deepEqual(byModule.cards.map((card) => card.title), ["Scarab cipher brawler"]);
+  assert.deepEqual(byModule.selectedModules, [{ def: survey, name: "SURVEY SCANNER" }]);
+  const none = await loadBrowse(depsFor(stub.url), { module: "1" }, ANONYMOUS);
+  assert.equal(none.cards.length, 0);
+  assert.deepEqual(none.selectedModules, [{ def: "1", name: "UNKNOWN MODULE" }]);
+  const author = await loadAuthor(depsFor(stub.url), ALICE.userId, { q: "zzz", module: "1" }, ANONYMOUS);
+  assert.equal(author.status, "ok");
+  assert.ok(author.cards.length > 0);
+});

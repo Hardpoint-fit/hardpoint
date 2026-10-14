@@ -7,6 +7,8 @@ export type SortKey = (typeof SORT_KEYS)[number];
 export const DEFAULT_SORT: SortKey = "top-week";
 export const MAX_TAGS = 8;
 export const MAX_TAG_LENGTH = 24;
+export const MAX_SEARCH_LENGTH = 80;
+export const MAX_MODULES = 8;
 
 export type BrowseQuery = {
   /** Hull item definition GUID (decimal string). */
@@ -19,6 +21,10 @@ export type BrowseQuery = {
   tags: string[];
   /** Clerk user id. */
   author?: string;
+  /** Text that the title, description or pilot name must contain (trimmed, at most MAX_SEARCH_LENGTH). */
+  q?: string;
+  /** A fit must carry every one of these module item definitions (decimal strings). */
+  modules: string[];
   /** Only fits with a valid evaluation on the current build. */
   currentBuild: boolean;
   /** Only fits by pilots the viewer follows. Ignored for a signed-out viewer. */
@@ -62,6 +68,24 @@ export function normalizeTags(raw: readonly string[]): string[] {
   return tags;
 }
 
+/** Trims, cleans and caps free search text; undefined when nothing is left. */
+export function normalizeSearch(raw: string): string | undefined {
+  // Control characters (NUL is a database error) become spaces; lone surrogates become U+FFFD.
+  const clean = raw.toWellFormed().replace(/[\u0000-\u001f\u007f]/g, " ");
+  const text = [...clean.trim()].slice(0, MAX_SEARCH_LENGTH).join("").trim();
+  return text === "" ? undefined : text;
+}
+
+/** The valid, distinct module definitions of the raw values, in order, at most MAX_MODULES. */
+export function normalizeModules(raw: readonly string[]): string[] {
+  const modules: string[] = [];
+  for (const value of raw) {
+    if (GUID.test(value) && !modules.includes(value)) modules.push(value);
+    if (modules.length === MAX_MODULES) break;
+  }
+  return modules;
+}
+
 function matching(value: string | undefined, pattern: RegExp): string | undefined {
   return value !== undefined && pattern.test(value) ? value : undefined;
 }
@@ -73,7 +97,10 @@ export function parseBrowseParams(input: SearchParamsInput): BrowseQuery {
     tags: normalizeTags(all(input, "tag")),
     currentBuild: first(input, "current") === "1",
     following: first(input, "following") === "1",
+    modules: normalizeModules(all(input, "module")),
   };
+  const q = normalizeSearch(first(input, "q") ?? "");
+  if (q !== undefined) query.q = q;
   const hull = matching(first(input, "hull"), GUID);
   const hullClass = matching(first(input, "class"), NAME);
   const role = matching(first(input, "role"), NAME);
@@ -93,6 +120,8 @@ export function toBrowseSearch(query: BrowseQuery): string {
   if (query.role) params.set("role", query.role);
   for (const tag of query.tags) params.append("tag", tag);
   if (query.author) params.set("author", query.author);
+  if (query.q) params.set("q", query.q);
+  for (const module of query.modules) params.append("module", module);
   if (query.currentBuild) params.set("current", "1");
   if (query.following) params.set("following", "1");
   if (query.sort !== DEFAULT_SORT) params.set("sort", query.sort);
@@ -105,7 +134,7 @@ export function toBrowseSearch(query: BrowseQuery): string {
  * A "top-week" cursor also carries `now`, the moment its week counts back from, so every page of one
  * browse ranks by the same week.
  */
-export type Cursor = { sort: SortKey; score: number; at: string; id: string; now?: string };
+export type Cursor = { sort: SortKey; score: number; at: string; id: string; now?: string; filters?: string };
 
 const INT4_MAX = 2_147_483_647;
 const FIT_ID = /^[0-9A-Za-z]{10}$/;
@@ -148,24 +177,40 @@ function fromBase64Url(text: string): string {
   return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(binary, (char) => char.charCodeAt(0)));
 }
 
+/**
+ * A short fingerprint of every filter but the sort, so a cursor only pages the browse it came from. It is
+ * a stable FNV-1a hash of the filters' URL form; a collision only means a stale cursor pages the wrong
+ * filters, which is the same as no check at all.
+ */
+export function filtersKey(query: BrowseQuery): string {
+  const params = new URLSearchParams(toBrowseSearch({ ...query, sort: DEFAULT_SORT }));
+  params.sort();
+  let hash = 0x811c9dc5;
+  for (const byte of new TextEncoder().encode(params.toString())) hash = Math.imul(hash ^ byte, 0x01000193) >>> 0;
+  return hash.toString(16).padStart(8, "0");
+}
+
 export function encodeCursor(cursor: Cursor): string {
   return toBase64Url(JSON.stringify(cursor));
 }
 
-/** The cursor, or undefined for one made for another sort or anything that isn't a cursor this site made. */
-export function decodeCursor(text: string, sort: SortKey): Cursor | undefined {
+/**
+ * The cursor, or undefined for one made for another sort or other filters (`filters` is filtersKey of the
+ * browse being paged), or anything that isn't a cursor this site made.
+ */
+export function decodeCursor(text: string, sort: SortKey, filters: string): Cursor | undefined {
   if (!text || text.length > 300) return undefined;
   try {
     const value: unknown = JSON.parse(fromBase64Url(text));
     if (typeof value !== "object" || value === null) return undefined;
-    const { sort: cursorSort, score, at, id, now } = value as Record<string, unknown>;
-    if (cursorSort !== sort) return undefined;
+    const { sort: cursorSort, score, at, id, now, filters: cursorFilters } = value as Record<string, unknown>;
+    if (cursorSort !== sort || cursorFilters !== filters) return undefined;
     if (typeof score !== "number" || !Number.isInteger(score) || score < 0 || score > INT4_MAX) return undefined;
     if (typeof at !== "string" || !isPgTimestamp(at)) return undefined;
     if (typeof id !== "string" || !FIT_ID.test(id)) return undefined;
-    if (sort !== "top-week") return { sort, score, at, id };
+    if (sort !== "top-week") return { sort, score, at, id, filters };
     if (typeof now !== "string" || !isIsoInstant(now)) return undefined;
-    return { sort, score, at, id, now };
+    return { sort, score, at, id, now, filters };
   } catch {
     return undefined;
   }

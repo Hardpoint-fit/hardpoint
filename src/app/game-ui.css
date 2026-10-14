@@ -898,6 +898,78 @@ a.chip:hover {
   padding: var(--spacing-lg) 0;
 }
 
+.filters__search,
+.module-filter {
+  grid-column: span 2;
+}
+
+@media (max-width: 420px) {
+  .filters__search,
+  .module-filter {
+    grid-column: auto;
+  }
+}
+
+.module-filter {
+  position: relative;
+}
+
+.module-filter__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module-filter__chip {
+  gap: var(--spacing-xs);
+}
+
+.module-filter__remove {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  color: var(--text-primary-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.module-filter__remove:hover,
+.module-filter__remove:focus-visible {
+  color: var(--accent-orange);
+}
+
+.module-filter__options {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--accent-muted);
+  background: var(--plate-bg);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.module-filter__option {
+  padding: 6px var(--spacing-sm);
+  font-size: var(--font-size-normal);
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.module-filter__option--active,
+.module-filter__option:hover {
+  background: var(--tooltip-badge-bg);
+  color: var(--accent-orange);
+}
+
 .filters__check {
   min-height: 30px;
 }
@@ -1139,4 +1211,30 @@ a.chip:hover {
 .pilot-stat dd {
   margin: 0;
   font-size: var(--font-size-small);
+}
+
+/* ---- Fit page module list ---------------------------------------------------------------------- */
+
+.module-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module-list__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-small, var(--font-size-normal));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.module-list__name {
+  flex: 1 1 12rem;
+  min-width: 0;
 }

@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { decodeCursor, encodeCursor, parseBrowseParams, toBrowseSearch } from "./filters.ts";
+import { MAX_MODULES, decodeCursor, encodeCursor, filtersKey, parseBrowseParams, toBrowseSearch } from "./filters.ts";
 
 test("no params gives the defaults", () => {
   const query = parseBrowseParams({});
-  assert.deepEqual(query, { sort: "top-week", tags: [], currentBuild: false, following: false });
+  assert.deepEqual(query, { sort: "top-week", tags: [], modules: [], currentBuild: false, following: false });
 });
 
 test("all filters parse from a URLSearchParams", () => {
@@ -19,6 +19,7 @@ test("all filters parse from a URLSearchParams", () => {
     author: "user_2abc",
     currentBuild: true,
     following: true,
+    modules: [],
     sort: "new",
   });
 });
@@ -57,7 +58,7 @@ test("tags are deduplicated and capped", () => {
 });
 
 test("toBrowseSearch round-trips and omits defaults", () => {
-  assert.equal(toBrowseSearch({ sort: "top-week", tags: [], currentBuild: false, following: false }), "");
+  assert.equal(toBrowseSearch({ sort: "top-week", tags: [], modules: [], currentBuild: false, following: false }), "");
   const query = {
     hull: "99",
     hullClass: "Cruiser",
@@ -66,34 +67,38 @@ test("toBrowseSearch round-trips and omits defaults", () => {
     author: "user_1",
     currentBuild: true,
     following: true,
+    modules: [],
     sort: "top-all",
   };
   assert.deepEqual(parseBrowseParams(new URLSearchParams(toBrowseSearch(query))), query);
   assert.match(toBrowseSearch(query), /(^|&)following=1(&|$)/);
-  const followingOnly = { sort: "top-week", tags: [], currentBuild: false, following: true };
+  const followingOnly = { sort: "top-week", tags: [], modules: [], currentBuild: false, following: true };
   assert.equal(toBrowseSearch(followingOnly), "following=1");
   assert.deepEqual(parseBrowseParams(new URLSearchParams(toBrowseSearch(followingOnly))), followingOnly);
 });
 
+const F = "abcd0123";
+
 test("cursors round-trip and bind to the sort they were made for", () => {
-  const cursor = { sort: "top-all", score: 7, at: "2026-10-13 10:00:00.123456+00", id: "abc123DEF4" };
+  const cursor = { sort: "top-all", score: 7, at: "2026-10-13 10:00:00.123456+00", id: "abc123DEF4", filters: F };
   const text = encodeCursor(cursor);
   assert.match(text, /^[A-Za-z0-9_-]+$/);
-  assert.deepEqual(decodeCursor(text, "top-all"), cursor);
-  assert.equal(decodeCursor(text, "new"), undefined);
+  assert.deepEqual(decodeCursor(text, "top-all", F), cursor);
+  assert.equal(decodeCursor(text, "new", F), undefined);
+  assert.equal(decodeCursor(text, "top-all", "ffffffff"), undefined, "another set of filters");
 });
 
 test("a top-week cursor carries the moment its week counts back from", () => {
-  const cursor = { sort: "top-week", score: 2, at: "2026-10-13 10:00:00+00", id: "abc123DEF4", now: "2026-10-14T12:00:00.000Z" };
-  assert.deepEqual(decodeCursor(encodeCursor(cursor), "top-week"), cursor);
+  const cursor = { sort: "top-week", score: 2, at: "2026-10-13 10:00:00+00", id: "abc123DEF4", now: "2026-10-14T12:00:00.000Z", filters: F };
+  assert.deepEqual(decodeCursor(encodeCursor(cursor), "top-week", F), cursor);
   const { now: _now, ...without } = cursor;
-  assert.equal(decodeCursor(encodeCursor(without), "top-week"), undefined);
-  assert.equal(decodeCursor(encodeCursor({ ...cursor, now: "last week" }), "top-week"), undefined);
+  assert.equal(decodeCursor(encodeCursor(without), "top-week", F), undefined);
+  assert.equal(decodeCursor(encodeCursor({ ...cursor, now: "last week" }), "top-week", F), undefined);
 });
 
 test("a cursor's fields are checked before they reach the database", () => {
-  const good = { sort: "new", score: 0, at: "2026-10-13 10:00:00.5+05:30", id: "abc123DEF4" };
-  assert.deepEqual(decodeCursor(encodeCursor(good), "new"), good);
+  const good = { sort: "new", score: 0, at: "2026-10-13 10:00:00.5+05:30", id: "abc123DEF4", filters: F };
+  assert.deepEqual(decodeCursor(encodeCursor(good), "new", F), good);
   for (const bad of [
     { at: "2026-10-13T10:00:00Z" },
     { at: "2026-13-01 10:00:00+00" },
@@ -105,18 +110,49 @@ test("a cursor's fields are checked before they reach the database", () => {
     { id: "short" },
     { id: "abc123DEF4'" },
   ]) {
-    assert.equal(decodeCursor(encodeCursor({ ...good, ...bad }), "new"), undefined, JSON.stringify(bad));
+    assert.equal(decodeCursor(encodeCursor({ ...good, ...bad }), "new", F), undefined, JSON.stringify(bad));
   }
 });
 
 test("cursors are made without Node's Buffer, so client code can load filters.ts", () => {
-  const text = encodeCursor({ sort: "new", score: 0, at: "2026-10-13 10:00:00+00", id: "ÅbcdefghiJ" });
+  const text = encodeCursor({ sort: "new", score: 0, at: "2026-10-13 10:00:00+00", id: "ÅbcdefghiJ", filters: F });
   assert.equal(Buffer.from(text, "base64url").toString("utf8").includes("ÅbcdefghiJ"), true);
 });
 
 test("garbage cursors are ignored", () => {
-  assert.equal(decodeCursor("not a cursor", "new"), undefined);
-  assert.equal(decodeCursor("", "new"), undefined);
-  assert.equal(decodeCursor(Buffer.from('{"sort":"new","score":"x"}').toString("base64url"), "new"), undefined);
-  assert.equal(decodeCursor(Buffer.from("[1,2]").toString("base64url"), "new"), undefined);
+  assert.equal(decodeCursor("not a cursor", "new", F), undefined);
+  assert.equal(decodeCursor("", "new", F), undefined);
+  assert.equal(decodeCursor(Buffer.from('{"sort":"new","score":"x"}').toString("base64url"), "new", F), undefined);
+  assert.equal(decodeCursor(Buffer.from("[1,2]").toString("base64url"), "new", F), undefined);
+});
+
+test("q is trimmed, capped at 80 characters and round-trips; blank is no search", () => {
+  assert.equal(parseBrowseParams(new URLSearchParams("q=%20%20scarab%20")).q, "scarab");
+  assert.equal(parseBrowseParams(new URLSearchParams("q=%20%20")).q, undefined);
+  assert.equal(parseBrowseParams(new URLSearchParams("q=" + "a".repeat(200))).q, "a".repeat(80));
+  assert.equal(parseBrowseParams({ q: ["first", "second"] }).q, "first");
+  const query = parseBrowseParams(new URLSearchParams("q=heat+sink&module=12"));
+  assert.deepEqual(parseBrowseParams(new URLSearchParams(toBrowseSearch(query))), query);
+});
+
+test("module defs must be decimal, are de-duplicated and capped, and invalid ones are ignored", () => {
+  const many = Array.from({ length: 12 }, (_, i) => `module=${i + 1}`).join("&");
+  assert.deepEqual(parseBrowseParams(new URLSearchParams(many)).modules, ["1", "2", "3", "4", "5", "6", "7", "8"].slice(0, MAX_MODULES));
+  assert.deepEqual(parseBrowseParams(new URLSearchParams("module=5&module=5&module=x&module=-1&module=1.5&module=&module=123456789012345678901&module=12345678901234567890")).modules, ["5", "12345678901234567890"]);
+  assert.deepEqual(parseBrowseParams({}).modules, []);
+});
+
+test("filtersKey ignores the sort and changes with every other filter", () => {
+  const key = (search) => filtersKey(parseBrowseParams(new URLSearchParams(search)));
+  assert.match(key(""), /^[0-9a-f]{8}$/);
+  assert.equal(key("sort=new"), key("sort=top-all"));
+  assert.equal(key("module=1&module=2"), key("module=1&module=2"));
+  for (const other of ["q=a", "module=1", "tag=x", "hull=5", "current=1", "author=u"]) assert.notEqual(key(other), key(""), other);
+  assert.notEqual(key("q=a"), key("q=b"));
+});
+
+test("control characters and lone surrogates never reach a search", () => {
+  assert.equal(parseBrowseParams({ q: "a\u0000b" }).q, "a b");
+  assert.equal(parseBrowseParams({ q: "\u0000\u0001" }).q, undefined);
+  assert.equal(parseBrowseParams({ q: "x\ud800y" }).q, "x\ufffdy");
 });

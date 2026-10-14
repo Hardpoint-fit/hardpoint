@@ -89,7 +89,7 @@ test("applying the schema again is a no-op, and schema_version records each vers
   await applySchema(db);
   await applySchema(db);
   const { rows } = await db.query("SELECT version FROM schema_version ORDER BY version");
-  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }]);
+  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }, { version: 6 }]);
 });
 
 test("concurrent applies on a fresh database all succeed", async () => {
@@ -98,7 +98,7 @@ test("concurrent applies on a fresh database all succeed", async () => {
   const fresh = await PGlite.create();
   await Promise.all([applySchema(fresh), applySchema(fresh), applySchema(fresh)]);
   const { rows } = await fresh.query("SELECT count(*)::int AS n FROM schema_version");
-  assert.equal(rows[0].n, 5);
+  assert.equal(rows[0].n, 6);
   await fresh.close();
 });
 
@@ -904,4 +904,85 @@ test("a draft's save ignores a note it won't store, even one that would be refus
   await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Still a draft", note: "x".repeat(500) });
   assert.equal((await getFit(db, fit.id, { viewer: ALICE })).title, "Still a draft");
   assert.deepEqual(await revisionsOf(fit.id), []);
+});
+
+// --- text and module search ---------------------------------------------------------------------
+
+async function withModules(owner, title, defs, extra = {}) {
+  const fit = await createFit(db, {
+    authorUserId: owner.userId,
+    authorName: owner.userId.replace("user_", ""),
+    title,
+    description: extra.description,
+    content: { hullItem: "1000", fit: { hull: { def: "1000" }, modules: defs.map((def) => ({ item: { def, patina: 0 } })), Nonce: title } },
+    buildSha: SHA,
+    evaluation: good,
+  });
+  await publishFit(db, { id: fit.id, authorUserId: owner.userId, buildSha: SHA });
+  return fit.id;
+}
+
+const titles = (page) => page.fits.map((fit) => fit.title).sort();
+
+test("text search matches title, description and pilot name, case-insensitively, and keeps the other filters", async () => {
+  await withModules(ALICE, "Scarab brawler", ["11"], { description: "Burns heat" });
+  await withModules(BOB, "Quiet sniper", ["12"], { description: "Long range, TURRET heavy" });
+  await withModules(BOB, "Third", ["13"]);
+  assert.deepEqual(titles(await browse("q=SCARAB")), ["Scarab brawler"]);
+  assert.deepEqual(titles(await browse("q=turret")), ["Quiet sniper"]);
+  assert.deepEqual(titles(await browse("q=alice")), ["Scarab brawler"]);
+  assert.deepEqual(titles(await browse("q=bob")), ["Quiet sniper", "Third"]);
+  assert.deepEqual(titles(await browse("q=bob&module=12")), ["Quiet sniper"]);
+  assert.deepEqual(titles(await browse("q=nothing-here")), []);
+});
+
+test("text search treats %, _ and backslash literally and survives odd input", async () => {
+  await withModules(ALICE, "100% armor", ["11"]);
+  await withModules(ALICE, "plain_one", ["11"]);
+  await withModules(ALICE, "plainXone", ["11"]);
+  await withModules(ALICE, "back\\slash", ["11"]);
+  assert.deepEqual(titles(await browse("q=" + encodeURIComponent("100%"))), ["100% armor"]);
+  assert.deepEqual(titles(await browse("q=" + encodeURIComponent("%"))), ["100% armor"]);
+  assert.deepEqual(titles(await browse("q=" + encodeURIComponent("plain_one"))), ["plain_one"]);
+  assert.deepEqual(titles(await browse("q=" + encodeURIComponent("\\"))), ["back\\slash"]);
+  for (const q of ["'; DROP TABLE fits; --", "\u0000x", "\\", "_", "é".repeat(500)]) {
+    await browse("q=" + encodeURIComponent(q));
+  }
+  assert.equal((await browse("")).fits.length, 4);
+});
+
+test("module search needs every module, ignores a fit's other modules, and never errors on bad defs", async () => {
+  await withModules(ALICE, "One", ["11", "12"]);
+  await withModules(ALICE, "Two", ["12", "13"]);
+  await withModules(ALICE, "Dup", ["12", "12"]);
+  assert.deepEqual(titles(await browse("module=12")), ["Dup", "One", "Two"]);
+  assert.deepEqual(titles(await browse("module=11&module=12")), ["One"]);
+  assert.deepEqual(titles(await browse("module=11&module=13")), []);
+  // Invalid defs are dropped before they reach the database, so they cannot narrow or break the search.
+  assert.deepEqual(titles(await browse("module=12&module=abc&module=1%27%29")), ["Dup", "One", "Two"]);
+  assert.deepEqual(titles(await browse("module=99999999999999999999999")), ["Dup", "One", "Two"]);
+  assert.deepEqual(titles(await browse("module=999")), []);
+});
+
+test("a cursor made for other filters is ignored", async () => {
+  for (let i = 0; i < 3; i += 1) await withModules(ALICE, `Fit ${i}`, ["11"]);
+  for (let i = 0; i < 3; i += 1) await withModules(BOB, `Other ${i}`, ["12"]);
+  const first = await browse("sort=new&module=11", { limit: 2 });
+  assert.ok(first.nextCursor);
+  const second = await browse("sort=new&module=11", { limit: 2, cursor: first.nextCursor });
+  assert.equal(second.fits.length, 1);
+  // The same cursor under another search starts from the top.
+  const other = await browse("sort=new&module=12", { limit: 2, cursor: first.nextCursor });
+  assert.equal(other.fits.length, 2);
+  const text = await browse("sort=new&q=fit", { limit: 2, cursor: first.nextCursor });
+  assert.equal(text.fits.length, 2);
+});
+
+test("the module and trigram indexes exist where the server has them", async () => {
+  const { rows } = await db.query("SELECT indexname FROM pg_indexes WHERE tablename IN ('fits', 'pilots')");
+  const names = rows.map((row) => row.indexname);
+  assert.ok(names.includes("fits_fit_modules_idx"));
+  assert.ok(names.includes("fits_title_trgm_idx"));
+  assert.ok(names.includes("fits_description_trgm_idx"));
+  assert.ok(names.includes("pilots_name_trgm_idx"));
 });
