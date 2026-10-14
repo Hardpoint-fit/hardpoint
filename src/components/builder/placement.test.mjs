@@ -116,6 +116,18 @@ test("rotation moves the footprint onto or off a hardpoint", () => {
   assert.equal(at(HARDENER.def, 7, 5, 1).ok, true, "along row 7 it covers both hardpoints there");
 });
 
+test("a Tek Cipher's cell counts: it can reach the hardpoint, run off the grid or overlap; an empty port fills nothing", () => {
+  const down = [{ row: 3, col: 2, direction: "Down", cipher: catalog.ciphers[0].def }];
+  // (4,6) (5,6) (6,6) misses the subsystem hardpoint; the cipher below fills (7,6), which is one.
+  assert.equal(at(HARDENER.def, 4, 6).ok, false);
+  const ported = at(HARDENER.def, 4, 6, 0, empty, { ports: down });
+  assert.equal(ported.ok, true);
+  assert.deepEqual(keys(ported.cells), ["4,6", "5,6", "6,6", "7,6"]);
+  assert.equal(at(HARDENER.def, 4, 6, 0, empty, { ports: [{ ...down[0], cipher: null }] }).ok, false, "an empty port fills no cell");
+  // Lower down, shape and cipher cell fall on cells that aren't part of the fitting.
+  assert.equal(at(HARDENER.def, 11, 6, 0, empty, { ports: down }).reason, "OUTSIDE THE GRID");
+});
+
 test("a battery item needs a battery hardpoint, a core item doesn't need one", () => {
   assert.equal(at(TURRET.def, 5, 8).ok, true, "(5,8) is a battery hardpoint");
   assert.equal(at(TURRET.def, 5, 6).reason, "NEEDS A BATTERY HARDPOINT");
