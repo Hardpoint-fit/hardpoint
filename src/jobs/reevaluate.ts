@@ -1,8 +1,10 @@
 // The re-evaluation job: when the engine's build changes, every published fit needs a fresh verdict.
 // Runs as a Railway cron service from the site's own image (see the README), reads the engine's build from
-// /healthz, and evaluates each published fit that has no verdict for it. Safe to run any time and to run
-// twice: a fit that already has a row for the build is never asked about again, and a fit edited while
-// the engine was thinking keeps its old state (the revision guard in recordEvaluation).
+// /healthz, and evaluates each published fit that has no verdict for it, or whose valid verdict for it was
+// stored without hull specs (`sections`), so those fill in. Safe to run any time and to run twice: a fit
+// whose row for the build is complete is never asked about again, a refilled row stores `sections` (an
+// empty list when the engine has none), so it isn't asked again either, and a fit edited while the engine
+// was thinking keeps its old state (the revision guard in recordEvaluation).
 //
 // Runs under plain `node` (type stripping), so this file and what it imports stay erasable TypeScript
 // with explicit .ts import paths, and import nothing from Next.
