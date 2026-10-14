@@ -111,7 +111,11 @@ export function GridModPanel({
             ? modified > 0
               ? "CLICK A MODIFIED CELL TO PUT IT BACK AS THE HULL HAS IT. THE ENGINE FLAGS ANYTHING THAT RELIED ON IT."
               : "NO CELL IS MODIFIED."
-            : selected
+            : selected && !answer
+              ? state.status === "error"
+                ? "NO CELLS TO LIGHT UNTIL THE ENGINE ANSWERS."
+                : `ASKING THE ENGINE WHICH CELLS ${selected.name} TAKES…`
+              : selected
               ? `${effectNote(selected)}. ${kindOf(selected) === "skuld" ? "CLICK A LIT HARDPOINT, THEN PICK THE OUTCOME." : "CLICK A LIT CELL TO APPLY IT."}`
               : state.status === "loading" && !answer
                 ? "ASKING THE ENGINE WHICH CELLS EACH CONSUMABLE TAKES."
