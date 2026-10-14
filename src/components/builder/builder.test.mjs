@@ -86,7 +86,7 @@ test("the workspace opens on the hull picker, and on a fit draws the grid, palet
   assert.match(picker, /SCARAB/);
   assert.match(picker, /IMPORT A FIT STRING/);
   assert.equal(picker.split('class="hull-card ').length - 1, FIXTURES.catalog.hulls.length);
-  assert.equal(picker.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.webp"/g)?.length, FIXTURES.catalog.hulls.length, "every hull card shows its art");
+  assert.equal(picker.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, FIXTURES.catalog.hulls.length, "every hull card shows its art");
 
   const html = render({ ...NEW, fit: FIXTURES.fit }, { enabled: false, signedIn: false });
   for (const text of ["ITEMS", "SCARAB fitting grid", "AFFINITY", "INSPECTOR", "HULL SPECS", "FIT DETAILS", "EXPORT FIT STRING", "CHECKING"]) assert.ok(html.includes(text), text);

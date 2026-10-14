@@ -63,7 +63,7 @@ test("the grid draws every module, the cipher cell, port notches, conduit and re
 
 test("the fit page shows the hull's art, every module's art, descriptions, fact rows and the stored hull specs", async () => {
   const html = await renderFit(stub.url, ids.showcase, anonymous(false));
-  assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.webp"/, "the hull's art in the header");
+  assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
   assert.equal(count(html, 'class="fg-module__icon"'), 13 + 1, "each module's art, and the cipher's in its cell");
   assert.match(html, /item-icon item-icon--mirrored" src="\/art\//, "the cipher's art faces the other way, as in the game");
   // AUTO VENTING's tooltip: its description and its catalog fact rows.
@@ -151,6 +151,6 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.match(html, /ALICE/);
   assert.match(html, /2 UPVOTES/);
   assert.match(html, /1 UPVOTE</);
-  assert.equal(html.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.webp"/g)?.length, 3, "each card shows its hull's art");
+  assert.equal(html.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
   assert.equal(count(html, "badge--outdated"), 1);
 });

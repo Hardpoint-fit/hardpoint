@@ -44,6 +44,7 @@ const OUTPUTS = {
   progressionLayout: join(appRoot, "src/lib/engine/progression-layout.generated.json"),
   artManifest: join(appRoot, "src/lib/art/art-manifest.generated.json"),
   artDir: join(appRoot, "public/art"),
+  artCache: join(appRoot, ".cache/game-art.json"),
 };
 
 /** USS is a CSS subset: keep the custom properties, drop what only Unity understands. */
@@ -192,7 +193,7 @@ export async function prepare() {
   writeFileSync(OUTPUTS.statText, `${JSON.stringify(buildStatText(), null, 1)}\n`);
   writeFileSync(OUTPUTS.progressionLayout, `${JSON.stringify(buildProgressionLayout(), null, 1)}\n`);
   // Item art: modules, hull items, ciphers, artifacts and ship classes (see game-art.mjs).
-  const art = await buildGameArt({ assetsRoot: assets, outDir: OUTPUTS.artDir, manifestFile: OUTPUTS.artManifest });
+  const art = await buildGameArt({ assetsRoot: assets, outDir: OUTPUTS.artDir, manifestFile: OUTPUTS.artManifest, cacheFile: OUTPUTS.artCache });
   console.log(`game art: ${art.images} images (${art.rebuilt} rebuilt, ${(art.bytes / 1024 / 1024).toFixed(1)} MB), ${art.modules} module keys, ${art.artifacts} artifacts, ${art.shipClasses} ship classes${art.unresolved.length ? `, ${art.unresolved.length} icon guids without an image` : ""}`);
 }
 

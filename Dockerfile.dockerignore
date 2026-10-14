@@ -33,4 +33,5 @@ js/projects/theorycrafting/src/app/fonts
 js/projects/theorycrafting/src/app/game-tokens.generated.css
 js/projects/theorycrafting/src/**/*.generated.json
 js/projects/theorycrafting/public/art
+js/projects/theorycrafting/.cache
 js/projects/theorycrafting/Dockerfile*

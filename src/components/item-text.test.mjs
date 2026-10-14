@@ -48,7 +48,7 @@ test("fact rows show label, value and unit with the engine's tone", () => {
 test("the palette tooltip shows the item's art, description and plainest-roll facts", () => {
   const item = FIXTURES.catalog.items.find((each) => each.name === "ARMOR HARDENER");
   const html = render(h(ItemTip, { item }));
-  assert.match(html, /class="item-icon" src="\/art\/[0-9a-f]{32}\.webp"/);
+  assert.match(html, /class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/);
   assert.match(html, /BOOSTS YOUR ARMOR&#x27;S KINETIC AND EXPLOSIVE RESISTANCE WHILE ACTIVE\./);
   assert.equal(html.split('class="facts__row"').length - 1, item.facts.length);
 });

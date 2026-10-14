@@ -11,4 +11,5 @@ src/lib/fits/stat-text.generated.json
 src/lib/engine/progression-layout.generated.json
 # Item art written by scripts/game-art.mjs.
 public/art/
+.cache/
 src/lib/art/art-manifest.generated.json

@@ -35,7 +35,7 @@ test("every manifest URL has both sizes on disk", () => {
 });
 
 test("the manifest carries ship classes and looks artifacts up by path", () => {
-  for (const shipClass of ["Frigate", "Cruiser", "Dreadnought", "Unknown"]) assert.match(artManifest.shipClasses[shipClass], /^\/art\/[0-9a-f]{32}\.webp$/);
+  for (const shipClass of ["Frigate", "Cruiser", "Dreadnought", "Unknown"]) assert.match(artManifest.shipClasses[shipClass], /^\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp$/);
   const [key, url] = Object.entries(artManifest.artifacts)[0];
   assert.equal(findArtifactArt(key), url);
   assert.equal(findArtifactArt("Not An Artifact"), null);

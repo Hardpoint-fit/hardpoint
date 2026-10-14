@@ -87,12 +87,13 @@ async function startSite(env) {
 }
 
 const results = [];
-async function check(site, path, { status = 200, has = [], lacks = [], type, encoding } = {}) {
+async function check(site, path, { status = 200, has = [], lacks = [], type, encoding, cacheControl } = {}) {
   const response = await fetch(site.url + path, { redirect: "manual", headers: encoding ? { "accept-encoding": encoding } : {} });
   if (encoding) assert.equal(response.headers.get("content-encoding"), encoding.split(",")[0].trim(), `${path}: content encoding`);
   const body = type?.startsWith("image/") ? "" : await response.text();
   assert.equal(response.status, status, `${path}: status ${response.status}`);
   if (type) assert.match(response.headers.get("content-type") ?? "", new RegExp(`^${type}`), `${path}: content type`);
+  if (cacheControl) assert.equal(response.headers.get("cache-control"), cacheControl, `${path}: cache control`);
   for (const text of has) assert.ok(body.includes(text), `${path}: missing ${JSON.stringify(text)}`);
   for (const text of lacks) assert.ok(!body.includes(text), `${path}: has ${JSON.stringify(text)}`);
   results.push(`${response.status} ${path}${has.length ? `  [${has.join(" | ")}]` : ""}`);
@@ -128,8 +129,10 @@ try {
   });
   await check(up, `/fits/${ids.pending}`, { has: ["STATS APPEAR AFTER THE NEXT CHECK", 'class="fg-module__icon"'] });
   await check(up, "/", { has: ['class="item-icon" src="/art/'] });
-  await check(up, ART_URL, { type: "image/webp" });
-  await check(up, ART_URL.replace(".webp", "@2x.webp"), { type: "image/webp" });
+  // Art names carry their content's hash, so they are cached for good.
+  const IMMUTABLE = "public, max-age=31536000, immutable";
+  await check(up, ART_URL, { type: "image/webp", cacheControl: IMMUTABLE });
+  await check(up, ART_URL.replace(".webp", "@2x.webp"), { type: "image/webp", cacheControl: IMMUTABLE });
   await check(up, `/fits/${ids.removed}`, { has: ["UNKNOWN ITEM", "OUTDATED", "doesn&#x27;t exist in the current build", "LAST VALID"] });
   await check(up, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(up, `/fits/${ids.draft}`, { status: 404 });

@@ -60,7 +60,7 @@ test("real catalog paths from the engine find their art in the generated manifes
   // The NPC and player OMNI REPAIRER TURRET share a file name; each finds an image.
   const omni = catalog.items.filter((item) => item.name === "OMNI REPAIRER TURRET");
   assert.equal(omni.length, 2);
-  for (const item of omni) assert.match(itemIcon(item, roll("Augmented")), /^\/art\/[0-9a-f]{32}\.webp$/);
+  for (const item of omni) assert.match(itemIcon(item, roll("Augmented")), /^\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp$/);
   const scarab = catalog.hulls.find((hull) => hull.name === "SCARAB");
   assert.match(itemIcon({ path: scarab.path, category: "Ship" }, roll("Normal")), /^\/art\//);
 });
