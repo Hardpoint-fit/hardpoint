@@ -454,6 +454,26 @@
   color: var(--text-secondary);
 }
 
+.palette-item__needs {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+  color: var(--accent-orange);
+}
+
+/* Fits nowhere on the fit as it stands: dimmed, still pickable; its tooltip says why. */
+.palette-item--nowhere .palette-item__icon,
+.palette-item--nowhere .palette-item__text,
+.palette-item--nowhere .palette-item__shape {
+  opacity: 0.4;
+}
+
+.palette-tip__nowhere {
+  margin: 0 0 var(--spacing-sm);
+  color: var(--state-negative);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+}
+
 .shape-glyph {
   display: block;
   fill: var(--tier-standard-base);

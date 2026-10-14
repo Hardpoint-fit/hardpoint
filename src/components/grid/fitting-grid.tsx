@@ -34,8 +34,11 @@ export type FittingGridProps = {
   selected?: number | null;
   /** Cells drawn with the game's orange highlight. */
   highlight?: readonly Cell[];
-  /** A drag preview: these cells drawn green (valid) or red (invalid). */
-  drop?: { cells: readonly Cell[]; valid: boolean } | null;
+  /**
+   * A drag preview: these cells drawn green (valid) or red (invalid), the `offending` ones (the cells to
+   * blame) darker, and `reason` written beside the footprint.
+   */
+  drop?: { cells: readonly Cell[]; valid: boolean; offending?: readonly Cell[]; reason?: string | null } | null;
   /** A module's tooltip; defaults to ModuleTooltip. Return null for none. */
   tooltip?: (module: GridModule) => ReactNode;
   onModulePointerDown?: (module: GridModule, event: ReactPointerEvent<HTMLElement>) => void;
@@ -236,6 +239,26 @@ function ModuleView({
   );
 }
 
+/**
+ * Why the held item can't go here, under the footprint (above it when the footprint is in the grid's
+ * lower half), clamped to the drawn grid so a footprint hanging off the edge still shows it.
+ */
+function DropReason({ cells, view, reason }: { cells: readonly Cell[]; view: Bounds; reason: string }) {
+  const box = boundsOf(cells);
+  if (!box) return null;
+  const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+  const centre = px(clamp(box.minCol + box.cols / 2 - view.minCol, 0, view.cols));
+  const below = box.minRow + box.rows / 2 - view.minRow < view.rows / 2;
+  const style: CSSProperties = below
+    ? { left: centre, top: px(clamp(box.minRow + box.rows - view.minRow, 0, view.rows)) + 4 }
+    : { left: centre, bottom: px(clamp(view.minRow + view.rows - box.minRow, 0, view.rows)) + 4 };
+  return (
+    <span className="fg-drop-reason" style={style} role="status">
+      {reason}
+    </span>
+  );
+}
+
 /** Bars across the gutter wherever cells of two modules of one regalia group touch. */
 function regaliaWelds(model: GridModel, view: Bounds): { key: string; style: CSSProperties }[] {
   const owner = new Map<string, GridModule>();
@@ -276,6 +299,7 @@ export function FittingGrid({
   const view = gridBounds(model, crop);
   const highlighted = new Set(highlight.map(cellKey));
   const dropCells = new Set((drop?.cells ?? []).map(cellKey));
+  const blamed = new Set((drop?.offending ?? []).map(cellKey));
   const occupied = new Set(model.modules.flatMap(moduleCells).map(cellKey));
   const colors = ART.colors;
   const style = {
@@ -304,6 +328,7 @@ export function FittingGrid({
         hardpoint ? "fg-cell--hardpoint" : "",
         highlighted.has(key) ? "fg-cell--highlight" : "",
         dropped ? (drop!.valid ? "fg-cell--drop-valid" : "fg-cell--drop-invalid") : "",
+        dropped && blamed.has(key) ? "fg-cell--drop-blame" : "",
       ]
         .filter(Boolean)
         .join(" ");
@@ -345,6 +370,7 @@ export function FittingGrid({
       {regaliaWelds(model, view).map((weld) => (
         <span key={weld.key} className="fg-weld" style={weld.style} aria-hidden="true" />
       ))}
+      {drop && !drop.valid && drop.reason && <DropReason cells={drop.cells} view={view} reason={drop.reason} />}
     </div>
   );
 }

@@ -1,9 +1,10 @@
 "use client";
 
 // The builder: the reducer's state drawn as the game's fitting panel. The palette feeds the grid by
-// drag (pointer) or by Enter and the arrow keys; the grid shows where the held item would land, in green
-// where it fits and red where it doesn't (bounds and overlap only). Every change is evaluated live by
-// the engine, and the result draws issues, conduit links, regalia groups, stats and rating. The fit
+// drag (pointer) or by Enter and the arrow keys; while an item is held the grid lights the empty
+// hardpoints it needs and shows where it would land, green where the game would take it and red, with the
+// reason, where it wouldn't (placement.ts); a refused drop changes nothing. Every change is evaluated live
+// by the engine, and the result draws issues, conduit links, regalia groups, stats and rating. The fit
 // autosaves to this browser; saving to the site needs sign-in.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
@@ -24,7 +25,7 @@ import { Inspector } from "./inspector";
 import { enumWords, roleName } from "./labels";
 import { IDLE, createLiveEvaluator, fitKey, type LiveEvaluation, type LiveEvaluator } from "./live-evaluation";
 import { Palette } from "./palette";
-import { dropPreview, heldDef } from "./placement";
+import { dropPreview, hardpointTargets, heldDef, heldModule } from "./placement";
 import type { BuilderCatalog } from "./rules";
 import { initialState, reduce, type BuilderAction, type BuilderState } from "./state";
 
@@ -97,6 +98,9 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
     [fit, hull, cat, result],
   );
   const preview = fit && state.held ? dropPreview(cat, fit, state.held) : null;
+  const held = state.held;
+  const heldItem = fit && held ? heldDef(fit, held) : null;
+  const targets = useMemo(() => (fit && held && heldItem ? hardpointTargets(cat, fit, heldItem, heldModule(held)) : []), [cat, fit, held, heldItem]);
   const moduleName = useCallback((index: number) => (model?.modules[index]?.name ?? null), [model]);
 
   const gridRef = useRef<HTMLDivElement>(null);
@@ -283,6 +287,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
         <div className="builder-layout__palette">
           <Palette
             cat={cat}
+            fit={fit}
             heldDef={state.held ? heldDef(fit, state.held) : null}
             holding={state.held !== null}
             onPointerPick={onPalettePointer}
@@ -340,7 +345,14 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
                 <FittingGrid
                   model={model}
                   selected={typeof state.selected === "number" ? state.selected : null}
-                  drop={preview ? { cells: preview.cells, valid: preview.fits } : null}
+                  highlight={targets}
+                  drop={
+                    preview
+                      ? preview.verdict.ok
+                        ? { cells: preview.verdict.cells, valid: true }
+                        : { cells: preview.verdict.cells, valid: false, offending: preview.verdict.offending, reason: preview.verdict.reason }
+                      : null
+                  }
                   tooltip={state.held ? () => null : undefined}
                   onModulePointerDown={onModulePointerDown}
                   onModuleContextMenu={(module, event) => {
@@ -361,10 +373,12 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
             <p className="builder__keys note" aria-live="polite">
               {state.held
                 ? preview
-                  ? preview.fits
+                  ? preview.verdict.ok
                     ? "RELEASE OR ENTER PLACES IT · R ROTATES · ESC CANCELS"
-                    : "IT DOESN'T FIT THERE · R ROTATES · ESC CANCELS"
-                  : "MOVE ONTO THE GRID, OR USE THE ARROW KEYS · ESC CANCELS"
+                    : `${preview.verdict.reason} · R ROTATES · ESC CANCELS`
+                  : targets.length > 0
+                    ? "MOVE ONTO A LIT HARDPOINT, OR USE THE ARROW KEYS · ESC CANCELS"
+                    : "MOVE ONTO THE GRID, OR USE THE ARROW KEYS · ESC CANCELS"
                 : "DRAG TO PLACE OR MOVE · R ROTATES · DELETE OR RIGHT-CLICK REMOVES · ENTER ON A MODULE PICKS IT UP"}
             </p>
           </Panel>

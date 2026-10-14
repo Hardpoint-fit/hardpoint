@@ -1,15 +1,17 @@
 // Every item in the build that can go on the grid, searchable and filtered by slot, module type and
-// category, each with its game icon. Hovering or focusing one shows its tooltip: description and the
-// stat lines of its plainest roll. Pressing an item takes it in hand: drag it onto the grid, or
+// category, each with its game icon and the hardpoint it needs. An item that fits nowhere on the fit as
+// it stands is dimmed, and its tooltip says why. Hovering or focusing one shows its tooltip: description
+// and the stat lines of its plainest roll. Pressing an item takes it in hand: drag it onto the grid, or
 // (keyboard) press Enter to place it with the arrow keys.
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { createPortal } from "react-dom";
-import type { CatalogItem } from "#/lib/engine/types";
+import type { CatalogItem, OpenFit } from "#/lib/engine/types";
 import { baseIcon } from "#/lib/art/item-icon";
 import { boundsOf } from "#/components/grid/geometry";
 import { FactRows, ItemDescription, ItemIcon } from "#/components/item-text";
 import { Panel } from "#/components/ui";
 import { enumWords } from "./labels";
+import { fitsAnywhere, hardpointName, nowhereReason, placementContext, requiredHardpoint } from "./placement";
 import type { BuilderCatalog } from "./rules";
 
 const ALL = "";
@@ -28,9 +30,10 @@ export function ShapeGlyph({ item, size = 7 }: { item: CatalogItem; size?: numbe
 }
 
 /** An item's tooltip as the palette shows it: the plainest roll, so the catalog's facts are this roll's. */
-export function ItemTip({ item }: { item: CatalogItem }) {
+export function ItemTip({ item, needs = null, nowhere = null }: { item: CatalogItem; needs?: string | null; nowhere?: string | null }) {
   return (
     <div className="plate">
+      {nowhere && <p className="palette-tip__nowhere">CAN&apos;T BE FITTED NOW: {nowhere}</p>}
       <div className="plate__head">
         <ItemIcon src={baseIcon(item.path)} size={32} />
         <div className="plate__head-text">
@@ -41,6 +44,7 @@ export function ItemTip({ item }: { item: CatalogItem }) {
           </div>
         </div>
       </div>
+      {needs && <div className="plate__sub tone-neutral">NEEDS: {needs}</div>}
       <ItemDescription text={item.description} />
       <FactRows facts={item.facts} />
     </div>
@@ -51,7 +55,7 @@ export function ItemTip({ item }: { item: CatalogItem }) {
  * The hovered item's tooltip beside the list, in a portal on the body and fixed to the viewport, so
  * neither the list's scroll nor the sticky column's stacking can clip or cover it.
  */
-function PaletteTip({ item, anchor }: { item: CatalogItem; anchor: DOMRect }) {
+function PaletteTip({ item, anchor, needs, nowhere }: { item: CatalogItem; anchor: DOMRect; needs: string | null; nowhere: string | null }) {
   const ref = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState({ left: anchor.right + 8, top: anchor.top });
   useLayoutEffect(() => {
@@ -67,7 +71,7 @@ function PaletteTip({ item, anchor }: { item: CatalogItem; anchor: DOMRect }) {
   }, [anchor, item]);
   return createPortal(
     <div ref={ref} className="palette-tip" style={at} role="tooltip">
-      <ItemTip item={item} />
+      <ItemTip item={item} needs={needs} nowhere={nowhere} />
     </div>,
     document.body,
   );
@@ -77,14 +81,23 @@ function distinct(items: readonly CatalogItem[], read: (item: CatalogItem) => st
   return [...new Set(items.map(read))].sort();
 }
 
+/** The hardpoint an item needs, worded: NEEDS: SUBSYSTEM HARDPOINT. Null when any fittable cell will do. */
+function needsOf(cat: BuilderCatalog, def: string): string | null {
+  const hardpoint = requiredHardpoint(cat, def);
+  return hardpoint === null ? null : hardpointName(hardpoint);
+}
+
 export function Palette({
   cat,
+  fit,
   heldDef,
   holding,
   onPointerPick,
   onKeyboardPick,
 }: {
   cat: BuilderCatalog;
+  /** The fit being built: items that fit nowhere on it are dimmed. */
+  fit: OpenFit;
   heldDef: string | null;
   /** Something is in hand: Enter then places it (the workspace's keys), rather than taking another. */
   holding: boolean;
@@ -102,6 +115,14 @@ export function Palette({
   const slotTypes = useMemo(() => distinct(items, (item) => item.slotType), [items]);
   const moduleTypes = useMemo(() => distinct(items, (item) => item.moduleType), [items]);
   const categories = useMemo(() => distinct(items, (item) => item.category), [items]);
+
+  // Item def to why it fits nowhere on the fit as it stands; absent when it fits somewhere.
+  const nowhere = useMemo(() => {
+    const context = placementContext(cat, fit);
+    const reasons = new Map<string, string>();
+    for (const item of items) if (!fitsAnywhere(cat, fit, item.def, context)) reasons.set(item.def, nowhereReason(cat, fit, item.def));
+    return reasons;
+  }, [cat, fit, items]);
 
   const shown = useMemo(() => {
     const words = query.trim().toUpperCase().split(/\s+/).filter(Boolean);
@@ -151,11 +172,14 @@ export function Palette({
       </div>
       <p className="note">DRAG ONTO THE GRID, OR PRESS ENTER AND PLACE WITH THE ARROW KEYS.</p>
       <ul className="palette__list" aria-label="Items">
-        {shown.map((item) => (
+        {shown.map((item) => {
+          const needs = needsOf(cat, item.def);
+          const blocked = nowhere.get(item.def) ?? null;
+          return (
           <li key={item.def}>
             <button
               type="button"
-              className={`palette-item ${heldDef === item.def ? "palette-item--held" : ""}`}
+              className={`palette-item ${heldDef === item.def ? "palette-item--held" : ""} ${blocked ? "palette-item--nowhere" : ""}`}
               data-palette-item=""
               onPointerDown={(event) => {
                 hide();
@@ -166,7 +190,7 @@ export function Palette({
               onFocus={show(item.def)}
               onBlur={hide}
               onKeyDown={onKey(item.def)}
-              aria-label={`${item.name}, ${enumWords(item.slotType)} ${enumWords(item.moduleType)}`}
+              aria-label={`${item.name}, ${enumWords(item.slotType)} ${enumWords(item.moduleType)}${needs ? `, needs a ${needs.toLowerCase()}` : ""}${blocked ? `. Can't be fitted now: ${blocked.toLowerCase()}` : ""}`}
             >
               <span className="palette-item__icon">
                 <ItemIcon src={baseIcon(item.path)} size={36} />
@@ -178,16 +202,20 @@ export function Palette({
                   {item.moduleType !== "None" && item.moduleType !== item.slotType ? ` · ${enumWords(item.moduleType)}` : ""}
                   {item.category !== "Module" ? ` · ${enumWords(item.category)}` : ""}
                 </span>
+                {needs && <span className="palette-item__needs">NEEDS: {needs}</span>}
               </span>
               <span className="palette-item__shape">
                 <ShapeGlyph item={item} size={5} />
               </span>
             </button>
           </li>
-        ))}
+          );
+        })}
         {shown.length === 0 && <li className="note">NO ITEMS MATCH.</li>}
       </ul>
-      {tip && !holding && cat.items.get(tip.def) && <PaletteTip item={cat.items.get(tip.def)!} anchor={tip.anchor} />}
+      {tip && !holding && cat.items.get(tip.def) && (
+        <PaletteTip item={cat.items.get(tip.def)!} anchor={tip.anchor} needs={needsOf(cat, tip.def)} nowhere={nowhere.get(tip.def) ?? null} />
+      )}
     </Panel>
   );
 }
