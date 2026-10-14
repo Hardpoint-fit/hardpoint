@@ -154,3 +154,25 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.equal(html.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
   assert.equal(count(html, "badge--outdated"), 1);
 });
+
+test("the author sees delete (and unpublish when published) on their fit; others do not; a tombstone hides its text", async () => {
+  const asAlice = await renderFit(stub.url, ids.showcase, signedIn(ALICE));
+  assert.match(asAlice, />DELETE FIT</);
+  assert.match(asAlice, />UNPUBLISH</);
+  const asBob = await renderFit(stub.url, ids.showcase, signedIn(BOB));
+  assert.doesNotMatch(asBob, /DELETE FIT|UNPUBLISH/);
+  assert.match(asBob, />DELETE</, "BOB's own comment");
+  assert.doesNotMatch(await renderFit(stub.url, ids.showcase, anonymous(true)), />DELETE|UNPUBLISH/);
+  const draftHtml = await renderFit(stub.url, ids.draft, signedIn(ALICE));
+  assert.match(draftHtml, />DELETE FIT</);
+  assert.doesNotMatch(draftHtml, /UNPUBLISH/);
+
+  await db.query("UPDATE fit_comments SET body = '[deleted]', deleted_at = now() WHERE id = $1::bigint", [ids.comment]);
+  try {
+    const html = await renderFit(stub.url, ids.showcase, signedIn(BOB));
+    assert.match(html, /\[DELETED\]/);
+    assert.doesNotMatch(html, /second scanner/);
+  } finally {
+    await db.query("UPDATE fit_comments SET body = 'Does the **cipher** cell still fit with a second scanner?', deleted_at = NULL WHERE id = $1::bigint", [ids.comment]);
+  }
+});

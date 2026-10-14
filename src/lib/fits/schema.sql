@@ -65,6 +65,11 @@ CREATE TABLE IF NOT EXISTS fit_comments (
   hidden boolean NOT NULL DEFAULT false
 );
 
+-- A comment its author deleted while replies still hang under it stays as a tombstone: deleted_at is the
+-- authority, and body holds the fixed placeholder '[deleted]' so the 1-2000 CHECK above keeps holding
+-- without relaxing it. Readers render a deleted comment from deleted_at and never show its body.
+ALTER TABLE fit_comments ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+
 CREATE INDEX IF NOT EXISTS fit_comments_fit_idx ON fit_comments (fit_id, created_at, id);
 CREATE INDEX IF NOT EXISTS fit_comments_parent_idx ON fit_comments (parent_id) WHERE parent_id IS NOT NULL;
 
@@ -97,3 +102,4 @@ CREATE TABLE IF NOT EXISTS write_budget_windows (
 
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;

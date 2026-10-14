@@ -26,6 +26,11 @@ export async function SiteHeader() {
             {label}
           </Link>
         ))}
+        {author && (
+          <Link href={`/u/${encodeURIComponent(author.userId)}`} className="text-secondary hover:text-accent">
+            My fits
+          </Link>
+        )}
       </nav>
       <div className="ml-auto flex items-center gap-3">
         {authEnabled ? (

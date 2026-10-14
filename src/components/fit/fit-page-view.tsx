@@ -7,7 +7,7 @@ import type { FitPageData } from "#/lib/site/loaders";
 import type { PageViewer } from "#/lib/site/server";
 import { FittingGrid } from "#/components/grid/fitting-grid";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
-import { CommentForm, EditComment, ReplyToggle, ReportButton, VoteButton } from "./controls";
+import { CommentForm, DeleteComment, DeleteFitButton, EditComment, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
 import { StatsTable } from "./stats-table";
 import { HullSpecs, SPECS_PENDING } from "./hull-specs";
 import { ItemIcon } from "#/components/item-text";
@@ -28,7 +28,18 @@ function Markdown({ source }: { source: string }) {
   return <div className="prose" dangerouslySetInnerHTML={{ __html: renderMarkdown(source) }} />;
 }
 
-function CommentView({ comment, fitId, viewer, canWrite }: { comment: Comment; fitId: string; viewer: PageViewer; canWrite: boolean }) {
+function CommentView({ comment, fitId, viewer, canWrite, hasReplies = false }: { comment: Comment; fitId: string; viewer: PageViewer; canWrite: boolean; hasReplies?: boolean }) {
+  if (comment.deletedAt) {
+    // A tombstone: rendered from deleted_at; its text and author are not shown.
+    return (
+      <article className="comment" id={`comment-${comment.id}`}>
+        <header className="comment__head">
+          <span className="note">{formatDate(comment.createdAt)}</span>
+        </header>
+        <p className="note">[DELETED]</p>
+      </article>
+    );
+  }
   return (
     <article className="comment" id={`comment-${comment.id}`}>
       <header className="comment__head">
@@ -45,6 +56,7 @@ function CommentView({ comment, fitId, viewer, canWrite }: { comment: Comment; f
       {canWrite && (
         <div className="comment__actions">
           {viewer.userId === comment.authorUserId && <EditComment fitId={fitId} id={comment.id} body={comment.body} />}
+          {viewer.userId === comment.authorUserId && <DeleteComment fitId={fitId} id={comment.id} hasReplies={hasReplies} />}
           {viewer.userId !== comment.authorUserId && <ReportButton targetKind="comment" targetId={comment.id} />}
         </div>
       )}
@@ -60,7 +72,7 @@ function Comments({ threads, fitId, viewer, open }: { threads: CommentThread[]; 
       {threads.length === 0 && <p className="note">NO COMMENTS YET.</p>}
       {threads.map((thread) => (
         <div key={thread.id} className="comment-thread">
-          <CommentView comment={thread} fitId={fitId} viewer={viewer} canWrite={canWrite} />
+          <CommentView comment={thread} fitId={fitId} viewer={viewer} canWrite={canWrite} hasReplies={thread.replies.length > 0} />
           {thread.replies.length > 0 && (
             <div className="comment-replies">
               {thread.replies.map((reply) => (
@@ -85,6 +97,7 @@ function Comments({ threads, fitId, viewer, open }: { threads: CommentThread[]; 
 export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer }) {
   const { fit, shown, engine, grid } = data;
   const published = fit.status === "published";
+  const own = viewer.authEnabled && viewer.userId !== null && viewer.userId === fit.authorUserId;
   const hullName = data.hull?.name ?? "UNKNOWN HULL";
   const rating = shown.reference?.rating ?? null;
   const hullIcon = data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
@@ -174,12 +187,18 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               <Link className="btn btn--quiet" href={`/fits/new?from=${encodeURIComponent(fit.id)}`}>
                 COPY FIT TO BUILDER
               </Link>
-              {viewer.userId === fit.authorUserId && (
+              {viewer.userId === fit.authorUserId && fit.status !== "hidden" && (
                 <Link className="btn" href={`/fits/${encodeURIComponent(fit.id)}/edit`}>
                   EDIT
                 </Link>
               )}
             </span>
+            {own && (
+              <span className="flex flex-wrap items-center gap-2">
+                {published && <UnpublishButton fitId={fit.id} />}
+                <DeleteFitButton fitId={fit.id} then={`/u/${encodeURIComponent(viewer.userId!)}`} />
+              </span>
+            )}
             {published && viewer.authEnabled && viewer.userId && viewer.userId !== fit.authorUserId && (
               <ReportButton targetKind="fit" targetId={fit.id} label="REPORT FIT" />
             )}

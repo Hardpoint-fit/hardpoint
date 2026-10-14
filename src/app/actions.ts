@@ -39,6 +39,14 @@ export async function editCommentAction(fitId: unknown, id: unknown, body: unkno
   return { ok: true };
 }
 
+export async function deleteCommentAction(fitId: unknown, id: unknown): Promise<core.ActionResult> {
+  if (!isId(fitId) || !isId(id)) return BAD_INPUT;
+  const result = await core.deleteComment(actionDeps(), { id });
+  if (!result.ok) return result;
+  revalidatePath(`/fits/${fitId}`);
+  return { ok: true };
+}
+
 export async function reportAction(targetKind: unknown, targetId: unknown, reason: unknown): Promise<core.ActionResult<{ created: boolean }>> {
   if (!isKind(targetKind) || !isId(targetId) || !text(reason, 5_000)) return BAD_INPUT;
   return core.report(actionDeps(), { targetKind, targetId, reason });
@@ -84,6 +92,27 @@ export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown)
 export async function publishFitAction(fitId: unknown): Promise<core.ActionResult<{ fitId: string }>> {
   if (!isId(fitId)) return BAD_INPUT;
   const result = await core.publishFit(actionDeps(), { fitId });
+  if (result.ok) {
+    revalidatePath(`/fits/${fitId}`);
+    revalidatePath("/");
+  }
+  return result;
+}
+
+export async function unpublishFitAction(fitId: unknown): Promise<core.ActionResult<{ fitId: string }>> {
+  if (!isId(fitId)) return BAD_INPUT;
+  const result = await core.unpublishFit(actionDeps(), { fitId });
+  if (result.ok) {
+    revalidatePath(`/fits/${fitId}`);
+    revalidatePath("/");
+  }
+  return result;
+}
+
+/** The control navigates to the author's page on success; this only reports it. */
+export async function deleteFitAction(fitId: unknown): Promise<core.ActionResult<{ fitId: string }>> {
+  if (!isId(fitId)) return BAD_INPUT;
+  const result = await core.deleteFit(actionDeps(), { fitId });
   if (result.ok) {
     revalidatePath(`/fits/${fitId}`);
     revalidatePath("/");

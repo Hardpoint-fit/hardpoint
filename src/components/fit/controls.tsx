@@ -5,6 +5,9 @@
 import { useState, useTransition, type FormEvent } from "react";
 import {
   addCommentAction,
+  deleteCommentAction,
+  deleteFitAction,
+  unpublishFitAction,
   editCommentAction,
   moderateAction,
   reportAction,
@@ -161,6 +164,93 @@ export function EditComment({ fitId, id, body }: { fitId: string; id: string; bo
         <Problem message={problem} />
       </span>
     </form>
+  );
+}
+
+export function DeleteComment({ fitId, id, hasReplies }: { fitId: string; id: string; hasReplies: boolean }) {
+  const [confirming, setConfirming] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  if (!confirming)
+    return (
+      <button type="button" className="btn btn--quiet" onClick={() => setConfirming(true)}>
+        DELETE
+      </button>
+    );
+  const confirm = () =>
+    start(async () => {
+      setProblem(null);
+      const result = await deleteCommentAction(fitId, id);
+      if (!result.ok) setProblem(result.message);
+    });
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <span className="note">{hasReplies ? "THE COMMENT IS REMOVED; ITS REPLIES STAY." : "THE COMMENT IS REMOVED."}</span>
+      <button type="button" className="btn" disabled={pending} onClick={confirm}>
+        CONFIRM DELETE
+      </button>
+      <button type="button" className="btn btn--quiet" disabled={pending} onClick={() => setConfirming(false)}>
+        CANCEL
+      </button>
+      <Problem message={problem} />
+    </span>
+  );
+}
+
+/**
+ * Deletes the pilot's own fit after a second click. On success it goes to `then`, the pilot's own page:
+ * the fit's page no longer exists. The fit page does a full navigation (no cached page of the deleted fit to return to); the builder passes its own `go`.
+ */
+export function DeleteFitButton({ fitId, then, go }: { fitId: string; then: string; go?: (url: string) => void }) {
+  const [confirming, setConfirming] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  if (!confirming)
+    return (
+      <button type="button" className="btn btn--quiet" onClick={() => setConfirming(true)}>
+        DELETE FIT
+      </button>
+    );
+  const confirm = () =>
+    start(async () => {
+      setProblem(null);
+      const result = await deleteFitAction(fitId);
+      if (!result.ok) return setProblem(result.message);
+      (go ?? ((url) => window.location.assign(url)))(then);
+    });
+  return (
+    <span className="flex w-full flex-col gap-2">
+      <span className="note note--error">THIS DELETES THE FIT. ITS VOTES AND COMMENTS GO WITH IT. THIS CAN&apos;T BE UNDONE.</span>
+      <span className="flex flex-wrap items-center gap-2">
+        <button type="button" className="btn" disabled={pending} onClick={confirm}>
+          CONFIRM DELETE
+        </button>
+        <button type="button" className="btn btn--quiet" disabled={pending} onClick={() => setConfirming(false)}>
+          CANCEL
+        </button>
+        <Problem message={problem} />
+      </span>
+    </span>
+  );
+}
+
+/** Takes the pilot's published fit back to a draft; votes and comments are kept. */
+export function UnpublishButton({ fitId }: { fitId: string }) {
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const unpublish = () =>
+    start(async () => {
+      setProblem(null);
+      const result = await unpublishFitAction(fitId);
+      if (!result.ok) setProblem(result.message);
+    });
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <button type="button" className="btn btn--quiet" disabled={pending} onClick={unpublish}>
+        UNPUBLISH
+      </button>
+      <Problem message={problem} />
+    </span>
   );
 }
 

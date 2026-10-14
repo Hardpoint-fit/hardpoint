@@ -8,6 +8,8 @@ import {
   createComment,
   createFit,
   createReport,
+  deleteComment,
+  deleteFit,
   editComment,
   fitsNeedingEvaluation,
   generateFitId,
@@ -86,7 +88,7 @@ test("applying the schema again is a no-op, and schema_version records each vers
   await applySchema(db);
   await applySchema(db);
   const { rows } = await db.query("SELECT version FROM schema_version ORDER BY version");
-  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }]);
+  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }]);
 });
 
 test("concurrent applies on a fresh database all succeed", async () => {
@@ -95,7 +97,7 @@ test("concurrent applies on a fresh database all succeed", async () => {
   const fresh = await PGlite.create();
   await Promise.all([applySchema(fresh), applySchema(fresh), applySchema(fresh)]);
   const { rows } = await fresh.query("SELECT count(*)::int AS n FROM schema_version");
-  assert.equal(rows[0].n, 2);
+  assert.equal(rows[0].n, 3);
   await fresh.close();
 });
 
@@ -159,10 +161,14 @@ test("hidden fits vanish from public reads and browse; admins still see them; re
   assert.equal(await setFitHidden(db, fit.id, true), true);
   assert.equal(await setFitHidden(db, fit.id, true), false);
   assert.equal(await getFit(db, fit.id), null);
-  assert.equal(await getFit(db, fit.id, { viewer: ALICE }), null);
+  assert.equal(await getFit(db, fit.id, { viewer: BOB }), null);
+  // The author, unlike the public, still finds their hidden fit, labelled, on their own page: to delete it.
+  assert.equal((await getFit(db, fit.id, { viewer: ALICE })).status, "hidden");
   assert.equal((await getFit(db, fit.id, { viewer: ADMIN })).status, "hidden");
   assert.equal((await browse()).fits.length, 0);
-  assert.equal((await browse(`author=user_alice`, { viewer: ALICE })).fits.length, 0);
+  assert.equal((await browse(`author=user_alice`)).fits.length, 0);
+  assert.equal((await browse(`author=user_alice`, { viewer: BOB })).fits.length, 0);
+  assert.deepEqual((await browse(`author=user_alice`, { viewer: ALICE })).fits.map((f) => f.status), ["hidden"]);
   await rejects(updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "sneaky" }), "forbidden");
   await rejects(setVote(db, { fitId: fit.id, userId: "user_bob", voted: true }), "not_found");
   assert.equal(await setFitHidden(db, fit.id, false), true);
@@ -690,4 +696,94 @@ test("getFitForEvaluation returns stored content and a revision that changes on 
   assert.equal(await recordEvaluation(db, d.id, good, { revision: after.revision }), true);
   assert.equal(await getFitForEvaluation(db, "nope"), null);
   assert.equal(await getFitForEvaluation(db, "AAAAAAAAAA"), null);
+});
+
+// --- manage your own fits and comments ------------------------------------------------------------
+
+test("unpublish keeps published_at, so a re-publish restores the original publication time", async () => {
+  const fit = await published();
+  const { rows: before } = await db.query("SELECT published_at FROM fits WHERE id = $1", [fit.id]);
+  await setVote(db, { fitId: fit.id, userId: "user_bob", voted: true });
+  assert.equal(await unpublishFit(db, { id: fit.id, authorUserId: "user_alice" }), true);
+  const { rows: mid } = await db.query("SELECT status, published_at FROM fits WHERE id = $1", [fit.id]);
+  assert.equal(mid[0].status, "draft");
+  assert.deepEqual(mid[0].published_at, before[0].published_at);
+  assert.equal(await unpublishFit(db, { id: fit.id, authorUserId: "user_alice" }), false, "a draft can't be unpublished again");
+  await publishFit(db, { id: fit.id, authorUserId: "user_alice", buildSha: SHA });
+  const { rows: after } = await db.query("SELECT published_at FROM fits WHERE id = $1", [fit.id]);
+  assert.deepEqual(after[0].published_at, before[0].published_at);
+  assert.equal((await getFit(db, fit.id, { viewer: ALICE })).votes, 1, "votes were kept");
+});
+
+test("a hidden fit can't be unpublished by its author", async () => {
+  const fit = await published();
+  await setFitHidden(db, fit.id, true);
+  assert.equal(await unpublishFit(db, { id: fit.id, authorUserId: "user_alice" }), false);
+  assert.equal((await getFit(db, fit.id, { viewer: ADMIN })).status, "hidden");
+});
+
+test("deleting a fit takes its votes, comments, evaluations and every report about it or its comments", async () => {
+  const fit = await published();
+  const other = await published(BOB);
+  await setVote(db, { fitId: fit.id, userId: "user_bob", voted: true });
+  const top = await createComment(db, { fitId: fit.id, authorUserId: "user_bob", authorName: "bob", body: "hi" });
+  const reply = await createComment(db, { fitId: fit.id, parentId: top.id, authorUserId: "user_alice", authorName: "alice", body: "yo" });
+  await createReport(db, { targetKind: "fit", targetId: fit.id, reporterUserId: "user_bob", reason: "x" });
+  await createReport(db, { targetKind: "comment", targetId: reply.id, reporterUserId: "user_carol", reason: "x" });
+  await createReport(db, { targetKind: "fit", targetId: other.id, reporterUserId: "user_alice", reason: "keep" });
+  assert.equal(await deleteFit(db, { id: fit.id, authorUserId: "user_alice" }), true);
+  assert.equal(await getFit(db, fit.id, { viewer: ADMIN }), null);
+  for (const table of ["fit_votes", "fit_comments", "fit_evaluations"]) {
+    const { rows } = await db.query(`SELECT count(*)::int AS n FROM ${table} WHERE fit_id = $1`, [fit.id]);
+    assert.equal(rows[0].n, 0, table);
+  }
+  const { reports } = await listOpenReports(db);
+  assert.deepEqual(reports.map((r) => r.targetId), [other.id], "only the other fit's report is left");
+  assert.equal((await getFit(db, other.id)).id, other.id);
+});
+
+test("only the author deletes a fit, and a draft or hidden fit can be deleted", async () => {
+  const fit = await published();
+  assert.equal(await deleteFit(db, { id: fit.id, authorUserId: "user_bob" }), false);
+  assert.equal(await deleteFit(db, { id: fit.id, authorUserId: "" }), false);
+  assert.equal(await deleteFit(db, { id: "../../x", authorUserId: "user_alice" }), false);
+  assert.ok(await getFit(db, fit.id));
+  await setFitHidden(db, fit.id, true);
+  assert.equal(await getFit(db, fit.id, { viewer: BOB }), null);
+  assert.equal(await deleteFit(db, { id: fit.id, authorUserId: "user_alice" }), true);
+  const d = await draft();
+  assert.equal(await deleteFit(db, { id: d.id, authorUserId: "user_alice" }), true);
+  assert.equal(await deleteFit(db, { id: d.id, authorUserId: "user_alice" }), false, "already gone");
+});
+
+test("deleting a comment with replies leaves a tombstone that never shows its text; without replies it is removed", async () => {
+  const fit = await published();
+  const top = await createComment(db, { fitId: fit.id, authorUserId: "user_bob", authorName: "bob", body: "secret words" });
+  const reply = await createComment(db, { fitId: fit.id, parentId: top.id, authorUserId: "user_alice", authorName: "alice", body: "answer" });
+  await createReport(db, { targetKind: "comment", targetId: top.id, reporterUserId: "user_carol", reason: "x" });
+  assert.equal(await deleteComment(db, { id: top.id, authorUserId: "user_alice" }), null, "not theirs");
+  assert.equal(await deleteComment(db, { id: top.id, authorUserId: "user_bob" }), "tombstoned");
+  const [thread] = await listComments(db, fit.id);
+  assert.equal(thread.id, top.id);
+  assert.equal(thread.body, "");
+  assert.ok(thread.deletedAt);
+  assert.equal(thread.replies.length, 1);
+  assert.equal((await listOpenReports(db)).reports.length, 0, "its open report is resolved");
+  assert.equal(await deleteComment(db, { id: top.id, authorUserId: "user_bob" }), null, "a tombstone can't be deleted again");
+  await rejects(editComment(db, { id: top.id, authorUserId: "user_bob", body: "back" }), "forbidden");
+  await rejects(createReport(db, { targetKind: "comment", targetId: top.id, reporterUserId: "user_carol", reason: "x" }), "not_found");
+  // Deleting the last reply takes the tombstone with it.
+  assert.equal(await deleteComment(db, { id: reply.id, authorUserId: "user_alice" }), "removed");
+  assert.deepEqual(await listComments(db, fit.id), []);
+});
+
+test("a comment without replies is removed and its reports are resolved", async () => {
+  const fit = await published();
+  const top = await createComment(db, { fitId: fit.id, authorUserId: "user_bob", authorName: "bob", body: "oops" });
+  await createReport(db, { targetKind: "comment", targetId: top.id, reporterUserId: "user_carol", reason: "x" });
+  assert.equal(await deleteComment(db, { id: top.id, authorUserId: "user_bob" }), "removed");
+  assert.deepEqual(await listComments(db, fit.id), []);
+  const { rows } = await db.query("SELECT resolved_at FROM fit_reports");
+  assert.ok(rows[0].resolved_at);
+  assert.equal(await deleteComment(db, { id: "abc", authorUserId: "user_bob" }), null);
 });

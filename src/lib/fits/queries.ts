@@ -88,6 +88,8 @@ export type Comment = {
   createdAt: string;
   editedAt: string | null;
   hidden: boolean;
+  /** Set when the author deleted it but replies keep it on the page; `body` is then empty and never the stored text. */
+  deletedAt: string | null;
 };
 
 export type CommentThread = Comment & { replies: Comment[] };
@@ -306,7 +308,7 @@ export async function getFit(db: Queryable, id: string, options: GetFitOptions =
     `SELECT ${summaryColumns("$2", "$3")}, f.description, f.fit, f.created_build_sha
      FROM fits f
      WHERE f.id = $1
-       AND (f.status = 'published' OR $4::boolean OR (f.status = 'draft' AND f.author_user_id = $3::text))`,
+       AND (f.status = 'published' OR $4::boolean OR (f.status IN ('draft', 'hidden') AND f.author_user_id = $3::text))`,
     [id, options.buildSha ?? null, viewer.userId, viewer.isAdmin],
   );
   const row = rows[0];
@@ -343,7 +345,8 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
 
   const where: string[] = [];
   const own = viewer.userId !== null && query.author === viewer.userId;
-  where.push(own ? `(f.status = 'published' OR f.status = 'draft')` : `f.status = 'published'`);
+  // Your own page lists everything of yours, labelled by status; anyone else's lists only what is published.
+  if (!own) where.push(`f.status = 'published'`);
 
   if (query.author) where.push(`f.author_user_id = ${p.add(query.author)}`);
   if (query.hull) where.push(`f.hull_item = ${p.add(query.hull)}`);
@@ -554,11 +557,38 @@ export async function publishFit(db: Db, input: { id: string; authorUserId: stri
   });
 }
 
-/** Takes the author's own published fit back to a draft. Votes and comments stay. */
+/**
+ * Takes the author's own published fit back to a draft. Votes and comments stay. `published_at` is kept
+ * (the CHECK allows a draft to carry it): publishFit's COALESCE then restores the original publication
+ * time on a re-publish, so the fit returns to where it ranked rather than jumping to the top as new.
+ * A hidden fit is the moderators' to restore, so only status 'published' matches. Ownership is the WHERE.
+ */
 export async function unpublishFit(db: Queryable, input: { id: string; authorUserId: string }): Promise<boolean> {
   const { rows } = await db.query(
     `UPDATE fits SET status = 'draft', updated_at = now()
      WHERE id = $1 AND author_user_id = $2 AND status = 'published' RETURNING id`,
+    [input.id, input.authorUserId],
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Deletes the author's own fit in whatever status, with its votes, comments, evaluations (all cascade) and
+ * every report about the fit or its comments (target_id is text, not a foreign key, so they are deleted
+ * here). One statement: ownership is the WHERE and the reports go in the same snapshot as the fit.
+ * False when there is no such fit of theirs.
+ */
+export async function deleteFit(db: Queryable, input: { id: string; authorUserId: string }): Promise<boolean> {
+  if (!ID.test(input.id)) return false;
+  const { rows } = await db.query(
+    `WITH gone AS (DELETE FROM fits WHERE id = $1 AND author_user_id = $2 RETURNING id),
+     reports AS (
+       DELETE FROM fit_reports r
+       WHERE (r.target_kind = 'fit' AND r.target_id IN (SELECT id FROM gone))
+          OR (r.target_kind = 'comment' AND r.target_id IN
+              (SELECT c.id::text FROM fit_comments c WHERE c.fit_id IN (SELECT id FROM gone)))
+     )
+     SELECT id FROM gone`,
     [input.id, input.authorUserId],
   );
   return rows.length > 0;
@@ -630,15 +660,17 @@ function mapComment(row: Row): Comment {
     parentId: row.parent_id ?? null,
     authorUserId: row.author_user_id,
     authorName: row.author_name,
-    body: row.body,
+    // A tombstone's stored body is only the placeholder that satisfies the CHECK; it is never read out.
+    body: row.deleted_at ? "" : row.body,
     createdAt: iso(row.created_at),
     editedAt: isoOrNull(row.edited_at),
     hidden: row.hidden,
+    deletedAt: isoOrNull(row.deleted_at),
   };
 }
 
 const COMMENT_COLUMNS = `id::text AS id, fit_id, parent_id::text AS parent_id, author_user_id, author_name, body,
-  created_at, edited_at, hidden`;
+  created_at, edited_at, hidden, deleted_at`;
 
 export type CreateCommentInput = {
   fitId: string;
@@ -680,7 +712,7 @@ export async function editComment(db: Queryable, input: { id: string; authorUser
   if (!NUMERIC_ID.test(input.id)) throw new FitDataError("not_found", "No such comment.");
   const { rows } = await db.query<Row>(
     `UPDATE fit_comments SET body = $3, edited_at = now()
-     WHERE id = $1::bigint AND author_user_id = $2 AND NOT hidden RETURNING ${COMMENT_COLUMNS}`,
+     WHERE id = $1::bigint AND author_user_id = $2 AND NOT hidden AND deleted_at IS NULL RETURNING ${COMMENT_COLUMNS}`,
     [input.id, input.authorUserId, body],
   );
   if (rows[0]) return mapComment(rows[0]);
@@ -688,6 +720,52 @@ export async function editComment(db: Queryable, input: { id: string; authorUser
   throw existing.length === 0
     ? new FitDataError("not_found", "No such comment.")
     : new FitDataError("forbidden", "You can't edit this comment.");
+}
+
+export type CommentDeletion = "removed" | "tombstoned";
+
+/**
+ * The author deletes their own comment. With replies it becomes a tombstone (deleted_at set, body the
+ * placeholder '[deleted]') so the replies keep their place; without, the row is removed. Either way its
+ * open reports are resolved, since the reported text is gone. Deleting the last reply under a tombstone
+ * removes the tombstone too. Null when there is no such live comment of theirs. The row lock is taken
+ * with ownership in the WHERE and also stops a reply from landing between the replies check and a DELETE.
+ */
+export async function deleteComment(db: Db, input: { id: string; authorUserId: string }): Promise<CommentDeletion | null> {
+  if (!NUMERIC_ID.test(input.id)) return null;
+  return db.transaction(async (tx) => {
+    const { rows: mine } = await tx.query<Row>(
+      `SELECT parent_id::text AS parent_id FROM fit_comments
+       WHERE id = $1::bigint AND author_user_id = $2 AND deleted_at IS NULL FOR UPDATE`,
+      [input.id, input.authorUserId],
+    );
+    if (mine.length === 0) return null;
+    const closeReports = (id: string) =>
+      tx.query(`UPDATE fit_reports SET resolved_at = now() WHERE target_kind = 'comment' AND target_id = $1 AND resolved_at IS NULL`, [id]);
+    const { rows: tombstoned } = await tx.query(
+      `UPDATE fit_comments SET body = '[deleted]', deleted_at = now()
+       WHERE id = $1::bigint AND author_user_id = $2 AND deleted_at IS NULL
+         AND EXISTS (SELECT 1 FROM fit_comments r WHERE r.parent_id = fit_comments.id)
+       RETURNING id`,
+      [input.id, input.authorUserId],
+    );
+    if (tombstoned.length > 0) {
+      await closeReports(input.id);
+      return "tombstoned" as const;
+    }
+    await tx.query(`DELETE FROM fit_comments WHERE id = $1::bigint AND author_user_id = $2`, [input.id, input.authorUserId]);
+    await closeReports(input.id);
+    const parentId = mine[0]!.parent_id;
+    if (parentId) {
+      // A tombstone with no replies left has nothing to hold up.
+      await tx.query(
+        `DELETE FROM fit_comments p WHERE p.id = $1::bigint AND p.deleted_at IS NOT NULL
+           AND NOT EXISTS (SELECT 1 FROM fit_comments r WHERE r.parent_id = p.id)`,
+        [parentId],
+      );
+    }
+    return "removed" as const;
+  });
 }
 
 /** Moderation: hides a comment (and so its replies) from public reads, or restores it. The caller checks admin. */
@@ -756,7 +834,7 @@ export async function createReport(
       : NUMERIC_ID.test(input.targetId)
         ? await db.query(
             `SELECT 1 FROM fit_comments c JOIN fits f ON f.id = c.fit_id
-             WHERE c.id = $1::bigint AND NOT c.hidden AND f.status = 'published'`,
+             WHERE c.id = $1::bigint AND NOT c.hidden AND c.deleted_at IS NULL AND f.status = 'published'`,
             [input.targetId],
           )
         : { rows: [] };

@@ -35,5 +35,5 @@ export default async function EditFitPage({ params }: { params: Promise<{ id: st
         <UnavailableState what="THIS FIT" />
       </main>
     );
-  return <Builder start={data.start} auth={{ enabled: viewer.authEnabled, signedIn: viewer.userId !== null }} />;
+  return <Builder start={data.start} auth={{ enabled: viewer.authEnabled, signedIn: viewer.userId !== null, userId: viewer.userId }} />;
 }

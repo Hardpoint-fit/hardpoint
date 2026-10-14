@@ -136,6 +136,16 @@ test("an author page lists that author's fits, and their drafts only to them", a
   assert.deepEqual(publicView.cards.map((card) => card.id), [ids.showcase]);
   const own = await loadAuthor(deps, ALICE.userId, {}, { userId: ALICE.userId, isAdmin: false });
   assert.deepEqual(own.cards.map((card) => card.id).sort(), [ids.showcase, ids.draft].sort());
+  await db.query("UPDATE fits SET status = 'hidden' WHERE id = $1", [ids.showcase]);
+  try {
+    const ownHidden = await loadAuthor(deps, ALICE.userId, {}, { userId: ALICE.userId, isAdmin: false });
+    assert.deepEqual(ownHidden.cards.map((card) => [card.id, card.status]).sort(), [[ids.draft, "draft"], [ids.showcase, "hidden"]].sort());
+    assert.equal((await loadFitPage(deps, ids.showcase, { userId: ALICE.userId, isAdmin: false })).status, "ok", "the author opens their hidden fit");
+    assert.equal((await loadFitPage(deps, ids.showcase, ANONYMOUS)).status, "not_found");
+    assert.deepEqual((await loadAuthor(deps, ALICE.userId, {}, ANONYMOUS)).cards, []);
+  } finally {
+    await db.query("UPDATE fits SET status = 'published' WHERE id = $1", [ids.showcase]);
+  }
 });
 
 test("no database, or one that fails, is an unavailable state, not an error", async () => {

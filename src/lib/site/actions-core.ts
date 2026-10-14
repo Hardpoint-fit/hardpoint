@@ -14,6 +14,9 @@ import {
   FitDataError,
   createComment,
   createReport,
+  deleteComment as deleteCommentRow,
+  deleteFit as deleteFitRow,
+  unpublishFit as unpublishFitRow,
   editComment as editCommentRow,
   resolveReport as resolveReportRow,
   resolveReportsForTarget,
@@ -21,6 +24,7 @@ import {
   setFitHidden,
   setVote,
   type Comment,
+  type CommentDeletion,
   type FitStatus,
   type ReportTargetKind,
 } from "../fits/queries";
@@ -116,6 +120,14 @@ export function editComment(deps: ActionDeps, input: { id: string; body: string 
   }));
 }
 
+export function deleteComment(deps: ActionDeps, input: { id: string }): Promise<ActionResult<{ deletion: CommentDeletion }>> {
+  return withAuthor(deps, "comment delete", { budget: "comment" }, async (db, author) => {
+    const deletion = await deleteCommentRow(db, { id: input.id, authorUserId: author.userId });
+    // The same answer for a comment that doesn't exist and one that isn't theirs.
+    return deletion ? { ok: true, deletion } : refuse("not_found", 404, "No such comment of yours.");
+  });
+}
+
 export function report(
   deps: ActionDeps,
   input: { targetKind: ReportTargetKind; targetId: string; reason: string },
@@ -197,4 +209,22 @@ export function publishFit(deps: ActionDeps, input: { fitId: string }): Promise<
     const result = await publishService({ db, engine: deps.engine }, { fitId: input.fitId, authorUserId: author.userId });
     return result.ok ? { ok: true, fitId: result.fit.id } : serviceRefusal(result);
   });
+}
+
+/** Takes the author's own published fit back to a draft; votes and comments stay. */
+export function unpublishFit(deps: ActionDeps, input: { fitId: string }): Promise<ActionResult<{ fitId: string }>> {
+  return withAuthor(deps, "fit unpublish", { budget: "fit" }, async (db, author) =>
+    (await unpublishFitRow(db, { id: input.fitId, authorUserId: author.userId }))
+      ? { ok: true, fitId: input.fitId }
+      : refuse("not_found", 404, "No published fit of yours with that id."),
+  );
+}
+
+/** Deletes the author's own fit, whatever its status, with its votes, comments and reports. */
+export function deleteFit(deps: ActionDeps, input: { fitId: string }): Promise<ActionResult<{ fitId: string }>> {
+  return withAuthor(deps, "fit delete", { budget: "fit" }, async (db, author) =>
+    (await deleteFitRow(db, { id: input.fitId, authorUserId: author.userId }))
+      ? { ok: true, fitId: input.fitId }
+      : refuse("not_found", 404, "No such fit of yours."),
+  );
 }

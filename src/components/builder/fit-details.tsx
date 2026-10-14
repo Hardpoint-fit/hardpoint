@@ -4,6 +4,7 @@
 // through the server actions, and the fit string in and out through the engine.
 import { useState, useTransition, type Dispatch } from "react";
 import { publishFitAction, saveFitAction } from "#/app/actions";
+import { DeleteFitButton } from "#/components/fit/controls";
 import type { EngineClient } from "#/lib/engine/client";
 import { isEditableFit } from "#/lib/engine/open-fit";
 import type { OpenFit } from "#/lib/engine/types";
@@ -15,7 +16,7 @@ import { normalizeFitString } from "./fit-string";
 import { publishFlow, saveFlow, type FlowResult, type Navigate, type Problem, type SavedState } from "./save-flow";
 import type { BuilderAction, FitMeta } from "./state";
 
-export type BuilderAuth = { enabled: boolean; signedIn: boolean };
+export type BuilderAuth = { enabled: boolean; signedIn: boolean; /** The signed-in pilot, for the page a deleted fit returns to. */ userId?: string | null };
 export type { Navigate, SavedState };
 
 export function ProblemNote({ problem, moduleName }: { problem: Problem; moduleName: (index: number) => string | null }) {
@@ -192,6 +193,9 @@ export function FitDetails({
             {pending && <span className="note">WORKING</span>}
             {!pending && dirty && saved.fitId !== null && <span className="note">UNSAVED CHANGES</span>}
           </span>
+        )}
+        {auth.enabled && auth.signedIn && auth.userId && saved.fitId !== null && (
+          <DeleteFitButton fitId={saved.fitId} then={`/u/${encodeURIComponent(auth.userId)}`} go={(url) => navigate.push(url)} />
         )}
         {published && <p className="note">CHANGES TO A PUBLISHED FIT MUST PASS THE ENGINE TO BE SAVED.</p>}
         {notice && (

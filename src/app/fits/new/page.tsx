@@ -20,5 +20,5 @@ export default async function NewFitPage({ searchParams }: { searchParams: Searc
         <UnavailableState what="FITS" />
       </main>
     );
-  return <Builder start={data.start} auth={{ enabled: viewer.authEnabled, signedIn: viewer.userId !== null }} />;
+  return <Builder start={data.start} auth={{ enabled: viewer.authEnabled, signedIn: viewer.userId !== null, userId: viewer.userId }} />;
 }

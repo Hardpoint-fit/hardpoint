@@ -6,7 +6,7 @@ import { createEngineClient } from "../engine/client.ts";
 import { startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, editComment, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { addComment, deleteComment, deleteFit, editComment, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
 import { WRITE_BUDGETS } from "../fits/write-limits.ts";
 import { ADMIN, ALICE, BOB, seedSite } from "./seed.mjs";
 
@@ -140,3 +140,48 @@ test("comments and reports have their own budgets", async () => {
   assert.equal((await report(bob, { targetKind: "fit", targetId: ids.showcase, reason: "spam" })).ok, true);
 });
 
+
+test("delete and unpublish refuse without sign-in or a database, and spend the fit and comment budgets", async () => {
+  const off = deps(authAs(ALICE.userId, { enabled: false }));
+  for (const result of [await deleteFit(off, { fitId: ids.showcase }), await unpublishFit(off, { fitId: ids.showcase }), await deleteComment(off, { id: ids.comment })]) {
+    assert.equal(result.status, 503);
+  }
+  assert.equal((await deleteFit(deps(authAs(null)), { fitId: ids.showcase })).status, 401);
+  assert.equal((await deleteFit(deps(authAs(ALICE.userId), { database: { status: "unavailable" } }), { fitId: ids.showcase })).status, 503);
+  assert.ok(await getFit(db, ids.showcase));
+
+  const now = new Date("2026-10-14T12:00:00Z");
+  const alice = { ...deps(authAs(ALICE.userId)), now: () => now };
+  for (let i = 0; i < WRITE_BUDGETS.fit[0].limit; i++) await unpublishFit(alice, { fitId: ids.draft });
+  const limited = await deleteFit(alice, { fitId: ids.draft });
+  assert.equal(limited.status, 429);
+  assert.ok(await getFit(db, ids.draft, { viewer: { userId: ALICE.userId, isAdmin: false } }), "the refused delete wrote nothing");
+});
+
+test("a pilot can delete and unpublish only their own fit; a forged id changes nothing", async () => {
+  const bob = deps(authAs(BOB.userId));
+  assert.equal((await deleteFit(bob, { fitId: ids.showcase })).status, 404);
+  assert.equal((await unpublishFit(bob, { fitId: ids.showcase })).status, 404);
+  assert.equal((await getFit(db, ids.showcase)).status, "published");
+  const alice = deps(authAs(ALICE.userId));
+  assert.deepEqual(await unpublishFit(alice, { fitId: ids.showcase }), { ok: true, fitId: ids.showcase });
+  assert.equal(await getFit(db, ids.showcase), null, "now a draft, so private");
+  assert.equal((await unpublishFit(alice, { fitId: ids.showcase })).status, 404);
+  assert.deepEqual(await deleteFit(alice, { fitId: ids.showcase }), { ok: true, fitId: ids.showcase });
+  assert.equal((await deleteFit(alice, { fitId: ids.showcase })).status, 404);
+  assert.deepEqual((await listOpenReports(db)).reports.filter((r) => r.target?.fitId === ids.showcase), []);
+});
+
+test("deleting a comment is the author's alone and spends the comment budget", async () => {
+  const alice = deps(authAs(ALICE.userId));
+  const bob = deps(authAs(BOB.userId));
+  assert.equal((await deleteComment(alice, { id: ids.comment })).status, 404, "BOB's comment is not ALICE's");
+  assert.deepEqual(await deleteComment(bob, { id: ids.comment }), { ok: true, deletion: "tombstoned" });
+  assert.equal((await editComment(bob, { id: ids.comment, body: "revive" })).status, 403);
+  assert.deepEqual(await deleteComment(alice, { id: ids.reply }), { ok: true, deletion: "removed" });
+  assert.equal((await deleteComment(bob, { id: "9999999" })).status, 404);
+  const now = new Date("2026-10-14T12:00:00Z");
+  const clocked = { ...deps(authAs(BOB.userId)), now: () => now };
+  for (let i = 0; i < 10; i++) await deleteComment(clocked, { id: "9999999" });
+  assert.equal((await deleteComment(clocked, { id: "9999999" })).status, 429);
+});
