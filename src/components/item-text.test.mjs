@@ -72,3 +72,18 @@ test("a module with no art at all keeps its footprint and name, and the grid sti
   assert.match(own, /<span class="fg-module__label "[^>]*>NO ART HERE<\/span>/, "the name stands in for the art");
   assert.match(own, /item-icon item-icon--none/, "the tooltip's placeholder");
 });
+
+test("a grid module shows its artifact's icon, and a cipher cell its cipher's, joined by catalog path", async () => {
+  const { artManifest } = await import("../lib/art/art-manifest.ts");
+  const catalog = FIXTURES.catalog;
+  const bane = catalog.artifacts.find((artifact) => artifact.name === "DREADNOUGHTS BANE");
+  const fit = structuredClone(FIXTURES.fitShowcase);
+  const module = fit.modules.find((each) => catalog.items.some((item) => item.def === each.item.def && item.category === "Module"));
+  Object.assign(module.item.roll, { rarity: "Artifact", artifact: bane.def, isIdentified: true });
+  const hull = catalog.hulls.find((each) => each.def === fit.hull.def);
+  const model = buildGridModel({ hull, ...catalogLookups(catalog) }, fit);
+  assert.equal(model.modules[fit.modules.indexOf(module)].icon, artManifest.artifacts.dreadbane, "Dreadnought's Bane shows its own icon");
+  const ciphers = model.modules.flatMap((each) => each.ciphers);
+  assert.ok(ciphers.length > 0, "the showcase fit holds a cipher");
+  for (const cipher of ciphers) assert.match(cipher.icon ?? "", /^\/art\//, cipher.name);
+});

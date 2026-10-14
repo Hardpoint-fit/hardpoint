@@ -342,11 +342,11 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
   const maxPatina = patinaMax(cat, roll);
   const ports = portOptions(subject, roll);
   const hull = target === "hull" ? cat.hulls.get(fit.hull.def) : undefined;
-  const artifactName = roll.artifact ? (cat.artifacts.get(roll.artifact)?.name ?? null) : null;
+  const artifactPath = roll.artifact ? (cat.artifacts.get(roll.artifact)?.path ?? null) : null;
   const icon = catalogItem
-    ? itemIcon({ path: catalogItem.path, category: catalogItem.category }, roll, artifactName)
+    ? itemIcon({ path: catalogItem.path, category: catalogItem.category }, roll, artifactPath)
     : hull
-      ? itemIcon({ path: hull.path, category: "Ship" }, roll, artifactName)
+      ? itemIcon({ path: hull.path, category: "Ship" }, roll, artifactPath)
       : null;
 
   return (

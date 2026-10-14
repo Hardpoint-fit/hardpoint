@@ -20,8 +20,8 @@ test("every module and hull in the catalog fixture has art or is listed as havin
   for (const name of NO_ART) assert.ok(without.includes(name), `${name} now has art; drop it from NO_ART`);
 });
 
-test("ciphers in the catalog have art by name", () => {
-  for (const cipher of catalog.ciphers) assert.ok(findModuleArt(cipher.name)?.base, cipher.name);
+test("ciphers in the catalog have art by path", () => {
+  for (const cipher of catalog.ciphers) assert.ok(findModuleArt(cipher.path)?.base, cipher.name);
 });
 
 test("every manifest URL has both sizes on disk", () => {

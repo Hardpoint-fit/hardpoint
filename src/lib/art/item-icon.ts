@@ -32,7 +32,7 @@ export function moduleIcon(art: ModuleArt, rarity: string): string {
 }
 
 export type IconSubject = {
-  /** The item prototype's catalog path, or a display name when there is no path (a cipher). */
+  /** The item prototype's catalog path (a module, hull or cipher). */
   path: string | null;
   /** ItemCategory; null when unknown, which nothing can identify. */
   category: string | null;
@@ -41,12 +41,12 @@ export type IconSubject = {
 export type IconRoll = { rarity: string; isIdentified: boolean };
 
 /**
- * The image URL (128px; see art2x for 256px) an item shows, or null when it has none. `artifactName` is
- * the catalog artifact the roll names, if any: its asset is found by name.
+ * The image URL (128px; see art2x for 256px) an item shows, or null when it has none. `artifactPath` is
+ * the catalog `path` of the artifact the roll names, if any: its asset is found by that path.
  */
-export function itemIcon(subject: IconSubject, roll: IconRoll, artifactName: string | null = null, manifest: ArtManifest = artManifest): string | null {
-  if (artifactName && isEffectivelyIdentified(subject.category, roll)) {
-    const own = findArtifactArt(artifactName, manifest);
+export function itemIcon(subject: IconSubject, roll: IconRoll, artifactPath: string | null = null, manifest: ArtManifest = artManifest): string | null {
+  if (artifactPath && isEffectivelyIdentified(subject.category, roll)) {
+    const own = findArtifactArt(artifactPath, manifest);
     if (own) return own;
   }
   const art = findModuleArt(subject.path, manifest);

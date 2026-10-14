@@ -262,6 +262,8 @@ export type CatalogQuality = { quality: string; multiplier: string };
 export type CatalogArtifact = {
   def: string;
   name: string;
+  /** The artifact definition's asset path (Identifier.Path), which keys its art; its name is a display name. */
+  path: string;
   item: string;
   modifiers: CatalogTemplateLine[];
   scaledStat: CatalogScaledStatRange | null;
@@ -302,6 +304,8 @@ export type CatalogHarmonicSet = {
 export type CatalogCipher = {
   def: string;
   name: string;
+  /** The cipher item prototype's asset path (Identifier.Path), which keys its art. */
+  path: string;
   stat: string;
   operation: string;
   value: string;
