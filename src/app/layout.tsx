@@ -8,7 +8,7 @@ import "./game-tokens.generated.css";
 import "./globals.css";
 import "./game-ui.css";
 
-// Copied from the Unity tree by scripts/prepare-game-assets.mjs.
+// Copied from the Unity tree by scripts/prepare-design-tokens.mjs.
 const vcr = localFont({
   src: "./fonts/VCROSDNEUE.ttf",
   weight: "400",

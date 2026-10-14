@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import art from "#/components/grid/fitting-art.generated.json";
+import card from "#/app/card-tokens.generated.json";
+import type { FittingGridStyle } from "#/lib/engine/types";
 import { boundsOf, footprintOutline, iconBox, insetLoop, type Cell, type Point } from "#/components/grid/geometry";
-import { cellSizeFor, SITE_GRID } from "#/components/grid/scale";
+import { cellSizeFor, SITE_GRID_MAX } from "#/components/grid/scale";
 import { moduleCells, type GridModel } from "#/components/grid/model";
 import { logoDataUri } from "#/lib/brand/logo";
 import { art2x, itemIcon } from "#/lib/art/item-icon";
@@ -18,10 +19,11 @@ export const alt = "A Citadel ship fit";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Copied from the Unity tree by scripts/prepare-game-assets.mjs; next.config.ts traces it into this route.
+// Copied from the Unity tree by scripts/prepare-design-tokens.mjs; next.config.ts traces it into this route.
 const FONT = join(process.cwd(), "src/app/fonts/VCROSDNEUE.ttf");
-const T = art.tokens;
-const TIERS = art.tiers as Record<string, { bg: string; border: string; base: string }>;
+// The design tokens' values (the card's renderer can't read CSS variables), from the same script.
+const T = card.tokens;
+const TIERS = card.tiers as Record<string, { bg: string; border: string; base: string }>;
 
 /** The card's grid panel: 440px each way inside the 470px column. */
 const GRID_SPACE = { width: 440, height: 440 };
@@ -35,12 +37,12 @@ const pathOf = (loops: readonly Point[][]) => loops.map((loop) => `M${loop.map((
  * (footprintOutline, from the same outer edges as the site's tiles), each Tek Cipher cell filled as the
  * site fills it, and the module's art on top where the game puts it (iconBox). One inline SVG draws the shapes.
  */
-function MiniGrid({ model, icons }: { model: GridModel; icons: ReadonlyMap<string, string> }) {
+function MiniGrid({ model, art, icons }: { model: GridModel; art: FittingGridStyle; icons: ReadonlyMap<string, string> }) {
   const cells = model.modules.flatMap(moduleCells);
   const enabled = model.slots.flatMap((slot, index) => (slot === "None" ? [] : [{ row: Math.floor(index / model.cols), col: index % model.cols }]));
   const box = boundsOf([...enabled, ...cells]);
   if (!box) return null;
-  const cell = cellSizeFor(GRID_SPACE, box, { min: 0, max: SITE_GRID.max });
+  const cell = cellSizeFor(GRID_SPACE, box, { min: 0, max: SITE_GRID_MAX });
   // The game's art space (48px cells, 3px slot inset) scaled to this card's cell.
   const scale = cell / art.cellSize;
   const inset = art.slotInset * scale;
@@ -161,7 +163,7 @@ export default async function FitCard({ params }: { params: Params }) {
         </div>
       </div>
       <div style={{ display: "flex", width: 470, alignItems: "center", justifyContent: "center", background: T["panel-bg"], border: `1px solid ${T["accent-muted"]}` }}>
-        {grid.status === "ready" ? <MiniGrid model={grid.model} icons={icons} /> : <div style={{ display: "flex", fontSize: 24, color: T["text-secondary"] }}>{hull}</div>}
+        {grid.status === "ready" ? <MiniGrid model={grid.model} art={grid.style} icons={icons} /> : <div style={{ display: "flex", fontSize: 24, color: T["text-secondary"] }}>{hull}</div>}
       </div>
     </div>,
     { ...size, fonts },

@@ -505,3 +505,28 @@ test("a stored fit's odd affinity values read as nothing on a card rather than f
   assert.equal(page.progression, null, "a progression of the wrong shape is unreadable, not drawn");
   assert.match(await renderFit(stub.url, created.id, anonymous(false)), /AFFINITY CAN&#x27;T BE READ|AFFINITY CAN&apos;T BE READ/);
 });
+
+test("an older engine without the grid style or the affinity layout: the page says so where the grid and points go, and the stats still read", async (t) => {
+  t.mock.method(console, "warn", () => {});
+  const { layout, ...tree } = FIXTURES.parts.affinity.affinity;
+  const older = await startStubEngine({
+    "GET /v1/fitting-grid-style": (req, res) => {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: { code: "not_found", message: "No such route." } }));
+    },
+    "GET /v1/affinity": (req, res) => {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ build: FIXTURES.parts.affinity.build, affinity: tree }));
+    },
+  });
+  t.after(() => older.close());
+  assert.ok(layout);
+  const id = await publishWith(TURRET_PROGRESSION, "Older engine fit");
+  const html = await renderFit(older.url, id, anonymous(false));
+  assert.match(html, /THE GRID CAN&#x27;T BE DRAWN RIGHT NOW/);
+  assert.doesNotMatch(html, /class="fg"/, "no grid drawn");
+  const panel = affinityPanel(html);
+  assert.match(panel, /AFFINITY POINTS AREN&#x27;T AVAILABLE FROM THE ENGINE RIGHT NOW/);
+  assert.match(panel, /TURRET AFFINITY · SHIP LEVEL 5/, "the type and level still read");
+  assert.match(html, /MAX VELOCITY|HULL HP|MASS/, "the stats keep the game's wording");
+});

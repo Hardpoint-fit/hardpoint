@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { FIXTURES } from "../lib/engine/stub-engine.mjs";
 import { FittingGrid } from "./grid/fitting-grid.tsx";
 import { buildGridModel, catalogLookups } from "./grid/model.ts";
+import { statWords } from "../lib/fits/stat-format.ts";
 import { ItemTip } from "./builder/palette.tsx";
 import { FactRows, ItemDescription, ItemIcon } from "./item-text.tsx";
 import { PublicConfigProvider } from "../lib/public-config.tsx";
@@ -63,7 +64,7 @@ test("a module with no art at all keeps its footprint and name, and the grid sti
   const bare = model.modules.find((module) => module.name === "NO ART HERE");
   assert.equal(bare.icon, null);
   const config = { apiUrl: null, authEnabled: false };
-  const html = render(h(PublicConfigProvider, { config }, h(FittingGrid, { model })));
+  const html = render(h(PublicConfigProvider, { config }, h(FittingGrid, { model, gridStyle: catalog.gridStyle, words: statWords(catalog.stats) })));
   assert.equal(html.split('data-module="').length - 1, FIXTURES.fit.modules.length);
   const start = html.indexOf(`data-module="${bare.index}"`);
   const own = html.slice(html.lastIndexOf("<div", start), html.indexOf(`data-module="${bare.index + 1}"`));

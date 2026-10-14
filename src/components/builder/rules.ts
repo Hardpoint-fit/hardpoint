@@ -23,7 +23,7 @@ import type {
   OpenModifier,
   OpenRoll,
 } from "#/lib/engine/types";
-import { isIntegerValued } from "#/lib/fits/stat-format";
+import { isIntegerValued, statWords, type StatWords } from "#/lib/fits/stat-format";
 
 /** FP's 1.0 as a raw value (16 fractional bits). */
 export const FP_ONE = 65536;
@@ -47,6 +47,8 @@ export type BuilderCatalog = {
    * and overlap, and the engine judges the rest after the drop.
    */
   placement: Map<string, CatalogSlotPlacement> | null;
+  /** How the game words each stat (stat-format.ts). */
+  words: StatWords;
 };
 
 const byDef = <T extends { def: string }>(list: readonly T[]) => new Map(list.map((entry) => [entry.def, entry]));
@@ -70,6 +72,7 @@ export function indexCatalog(catalog: Catalog): BuilderCatalog {
     pools: new Map(catalog.modifierPools.map((pool) => [pool.moduleType, pool.modifiers])),
     regaliaSets: new Map(catalog.regaliaSets.map((set) => [set.def, { name: set.name, pieces: set.pieces.length }])),
     placement: placementRules(catalog),
+    words: statWords(catalog.stats),
   };
 }
 
@@ -343,12 +346,12 @@ export type ValueRange = {
   step: number;
 };
 
-function rangeOf(stat: string, operation: string, min: string, max: string): ValueRange | null {
+function rangeOf(words: StatWords, stat: string, operation: string, min: string, max: string): ValueRange | null {
   let low = Number(min);
   let high = Number(max);
   if (!Number.isFinite(low) || !Number.isFinite(high)) return null;
   if (low > high) [low, high] = [high, low];
-  if (operation === "Add" && isIntegerValued(stat)) {
+  if (operation === "Add" && isIntegerValued(words, stat)) {
     low = Math.ceil(low / FP_ONE) * FP_ONE;
     high = Math.floor(high / FP_ONE) * FP_ONE;
     if (low > high) return null;
@@ -360,7 +363,7 @@ function rangeOf(stat: string, operation: string, min: string, max: string): Val
 /** The range of a template's line (ModifierRoller.TryGetRollRange), which KISHAR rerolls within. */
 export function templateRange(cat: BuilderCatalog, roll: Pick<OpenRoll, "rarity" | "artifact" | "regalia">, index: number): ValueRange | null {
   const line = templateOf(cat, roll)?.lines[index];
-  return line ? rangeOf(line.stat, line.operation, line.min, line.max) : null;
+  return line ? rangeOf(cat.words, line.stat, line.operation, line.min, line.max) : null;
 }
 
 /** The value range of a line at a tier: the template's line, or the first candidate entry allowing the tier. */
@@ -371,7 +374,7 @@ export function valueRange(cat: BuilderCatalog, subject: RollSubject, roll: Open
   for (const option of entriesFor(cat, subject, roll, modifier)) {
     const data = option.entry.tiers.find((each) => each.tier === tier && each.allowed);
     if (data) {
-      const range = rangeOf(modifier.stat, modifier.operation, data.min, data.max);
+      const range = rangeOf(cat.words, modifier.stat, modifier.operation, data.min, data.max);
       if (range) return range;
     }
   }

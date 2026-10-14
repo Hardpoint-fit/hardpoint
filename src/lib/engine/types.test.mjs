@@ -42,6 +42,14 @@ function check(value, node, path, errors, seen) {
     }
     case ts.SyntaxKind.TypeReference: {
       const name = node.typeName.text;
+      // A map: Record<string, V>, every value a V.
+      if (name === "Record" && node.typeArguments?.[0]?.kind === ts.SyntaxKind.StringKeyword) {
+        if (typeof value !== "object" || value === null || Array.isArray(value)) {
+          return errors.push(`${path}: expected object, got ${JSON.stringify(value)?.slice(0, 40)}`);
+        }
+        for (const [key, each] of Object.entries(value)) check(each, node.typeArguments[1], `${path}.${key}`, errors, seen);
+        return;
+      }
       const target = aliases.get(name);
       if (!target) return errors.push(`${path}: types.ts has no type ${name}`);
       seen?.add(name);
@@ -93,6 +101,8 @@ const cases = [
   ["placement-rules.json", "PlacementRulesBody", FIXTURES.parts.placementRules],
   ["grid-consumables.json", "GridConsumablesBody", FIXTURES.parts.gridConsumables],
   ["breach-tiers.json", "BreachTiersBody", FIXTURES.parts.breachTiers],
+  ["stats.json", "StatsBody", FIXTURES.parts.stats],
+  ["fitting-grid-style.json", "FittingGridStyleBody", FIXTURES.parts.fittingGridStyle],
   ["the assembled catalog", "Catalog", FIXTURES.catalog],
   ["fit.json", "OpenFit", FIXTURES.fit],
   ["evaluate-valid.json", "EvaluationResponse", FIXTURES.evaluateValid],

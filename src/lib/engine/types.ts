@@ -164,6 +164,8 @@ export type QualitiesBody = { build: string; qualities: CatalogQuality[] };
 export type PlacementRulesBody = { build: string; placementRules: CatalogSlotPlacement[] };
 export type GridConsumablesBody = { build: string; gridConsumables: CatalogGridConsumable[] };
 export type BreachTiersBody = { build: string; breachTiers: CatalogBreachTier[] };
+export type StatsBody = { build: string; stats: CatalogStat[] };
+export type FittingGridStyleBody = { build: string; fittingGridStyle: FittingGridStyle | null };
 
 /**
  * An entity's art: API-relative URLs (`/v1/art/<file>.webp`, 128px; the 256px twin has @2x before .webp).
@@ -200,6 +202,38 @@ export type Catalog = {
   gridConsumables: CatalogGridConsumable[];
   /** The breach tiers a modifier roll can be made at, by index (ModifierRolls.cs). Absent from an older engine. */
   breachTiers: CatalogBreachTier[];
+  /** Every stat type as the game words it (GET /v1/stats). */
+  stats: CatalogStat[];
+  /** How the game draws its fitting grid (GET /v1/fitting-grid-style); null from an older engine, which then has no grid to draw. */
+  gridStyle: FittingGridStyle | null;
+};
+
+/**
+ * A stat type as the game words it (StatTypeText, StatTypeRules): its label, whether lower is better,
+ * whether its values are whole numbers, and whether a multiplier of it shows its sign inverted.
+ */
+export type CatalogStat = { id: string; label: string; lowerIsBetter: boolean; integer: boolean; invertedSign: boolean };
+
+/** A rectangle in the grid's art space: pixels of a `cellSize` cell, from the slot box's top left. */
+export type GridArtRect = { x: number; y: number; width: number; height: number };
+/** A hardpoint icon as SVG: its viewBox and each path's `d`. */
+export type GridHardpointIcon = { viewBox: string; paths: string[] };
+/** A port notch: its fill, the bridge toward the next cell (zero size when none) and its edge lines. */
+export type GridPortNotch = { body: GridArtRect; bridge: GridArtRect; borders: GridArtRect[] };
+
+/**
+ * How the game draws its fitting grid (the API reads it from the files Unity exports for its UI prototype):
+ * every length in pixels of a `cellSize` cell, slot boxes inset `slotInset` from their cell, port notches per
+ * form with one per direction (Up, Down, Left, Right), each hardpoint slot type's icon, and the grid's state
+ * colours as CSS rgba().
+ */
+export type FittingGridStyle = {
+  cellSize: number;
+  slotInset: number;
+  ports: { FemaleOpen: GridPortNotch[]; MaleAttached: GridPortNotch[]; Expansion: GridPortNotch[] };
+  /** By the slot type a hull's grid names a cell with. */
+  hardpoints: Record<string, GridHardpointIcon>;
+  colors: Record<string, string>;
 };
 
 /** A breach tier as the game names it; `index` is what POST /v1/roll takes as `breachTier`. */
@@ -385,6 +419,22 @@ export type CatalogAffinity = {
   levelXp: number[];
   ratingByPoints: number[];
   types: CatalogAffinityType[];
+  /** Where a progression keeps each point and choice. An older engine sends none; the assembled catalog then holds null. */
+  layout?: ProgressionLayout | null;
+};
+
+/**
+ * Where an open fit's progression keeps each value (AffinitySystem's indices): the points on a bonus at
+ * `allocatedPoints[moduleTypes[type] * optionsPerType + option]`, a threshold choice at
+ * `thresholdSelections[moduleTypes[type] * tiersPerType + tier]`, `selectionUnset` for no choice.
+ */
+export type ProgressionLayout = {
+  moduleTypes: Record<string, number>;
+  optionsPerType: number;
+  tiersPerType: number;
+  allocationSlots: number;
+  thresholdSlots: number;
+  selectionUnset: number;
 };
 
 export type CatalogAffinityType = {

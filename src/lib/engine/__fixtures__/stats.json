@@ -1,0 +1,390 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "stats": [
+  {
+   "id": "Mass",
+   "label": "MASS",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "Thrust",
+   "label": "THRUST",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "Torque",
+   "label": "TURN RATE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxSpeed",
+   "label": "MAX VELOCITY",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MinTurningSpeedFactor",
+   "label": "MIN TURN SPEED",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "SignatureRadius",
+   "label": "SIGNATURE RADIUS",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "SensorRange",
+   "label": "SENSOR RANGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TurretRotationRate",
+   "label": "TRACKING SPEED",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TurretDamage",
+   "label": "TURRET DAMAGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TurretCycleDuration",
+   "label": "FIRE RATE",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": true
+  },
+  {
+   "id": "TurretRange",
+   "label": "TURRET RANGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxHull",
+   "label": "HULL HP",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxArmor",
+   "label": "ARMOR HP",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "HeatDissipationRate",
+   "label": "HEAT DISSIPATION",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxHeat",
+   "label": "MAX HEAT CAPACITY",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "ArmorResistAcid",
+   "label": "ARMOR ACID RESIST",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "ArmorResistExplosive",
+   "label": "ARMOR EXPLOSIVE RESIST",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "ArmorResistKinetic",
+   "label": "ARMOR KINETIC RESIST",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "DroneBandwidth",
+   "label": "DRONE BANDWIDTH",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "MiningSpeed",
+   "label": "MINING SPEED",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "DroneSpeed",
+   "label": "DRONE SPEED",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "DroneOutput",
+   "label": "DRONE OUTPUT",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "DroneResist",
+   "label": "DRONE RESIST",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "DroneEndurance",
+   "label": "DRONE ENDURANCE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MissileDamage",
+   "label": "MISSILE DAMAGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MissileSpeed",
+   "label": "MISSILE SPEED",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MissileHomingStrength",
+   "label": "MISSILE HOMING",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MineTriggerRadius",
+   "label": "MINE TRIGGER RADIUS",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MineDamage",
+   "label": "MINE DAMAGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "BarrierMaxHP",
+   "label": "BARRIER HP",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "BuildRating",
+   "label": "BUILD RATING",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "SalvageLuck",
+   "label": "SALVAGE LUCK",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TurretCritChance",
+   "label": "TURRET CRIT CHANCE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MiningYield",
+   "label": "MINING YIELD",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "CargoCapacity",
+   "label": "CARGO CAPACITY",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "PortCount",
+   "label": "PORTS",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MissileRange",
+   "label": "MISSILE RANGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxMissiles",
+   "label": "MAX MISSILES",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "MineRechargeTime",
+   "label": "MINE RECHARGE TIME",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxAmmoCount",
+   "label": "MAX AMMO COUNT",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxRepairCharges",
+   "label": "MAX REPAIR CHARGES",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxRepairAmount",
+   "label": "MAX REPAIR AMOUNT",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "BarrierRegenRate",
+   "label": "BARRIER REGEN RATE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "ECMMaxRange",
+   "label": "ECM MAX RANGE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MaxMines",
+   "label": "MINE MAGAZINE",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "WinchSpeed",
+   "label": "WINCH SPEED",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MissileRechargeTime",
+   "label": "MISSILE RECHARGE TIME",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MineArmingTime",
+   "label": "MINE ARMING TIME",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "ConduitThroughput",
+   "label": "CONDUIT THROUGHPUT",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TekResonance",
+   "label": "TEK RESONANCE",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "ShieldResistExplosive",
+   "label": "SHIELD EXPLOSIVE RESIST",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "MerchantSystem",
+   "label": "VENDOR LICENSE",
+   "lowerIsBetter": false,
+   "integer": true,
+   "invertedSign": false
+  },
+  {
+   "id": "ECMDuration",
+   "label": "ECM DURATION",
+   "lowerIsBetter": false,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TurretCritCooldown",
+   "label": "PENETRATION COOLDOWN",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  },
+  {
+   "id": "TurretReloadTime",
+   "label": "TURRET RELOAD TIME",
+   "lowerIsBetter": true,
+   "integer": false,
+   "invertedSign": false
+  }
+ ]
+}

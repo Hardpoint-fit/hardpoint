@@ -17,6 +17,16 @@ export type AffinityEditor = {
 };
 
 export function AffinityPanel({ affinity, progression, editor }: { affinity: CatalogAffinity; progression: OpenProgression; editor?: AffinityEditor }) {
+  const layout = affinity.layout;
+  if (!layout) {
+    // An older engine: it sends the affinity tree without saying where a fit keeps its points.
+    return (
+      <Panel title="AFFINITY" className="affinity">
+        <p className="note">AFFINITY POINTS AREN&apos;T AVAILABLE FROM THE ENGINE RIGHT NOW.</p>
+        {progression.affinityType !== "None" && <p className="note">{affinityTypeLabel(affinity, progression.affinityType)} AFFINITY · SHIP LEVEL {levelOf(affinity, progression.affinityXp)}</p>}
+      </Panel>
+    );
+  }
   const level = levelOf(affinity, progression.affinityXp);
   const earned = earnedPoints(affinity, progression.affinityXp);
   const spent = totalPoints(progression);
@@ -63,7 +73,7 @@ export function AffinityPanel({ affinity, progression, editor }: { affinity: Cat
       </div>
       <ul className="affinity__types">
         {affinity.types.map((type) => {
-          const points = typePoints(progression, type.moduleType);
+          const points = typePoints(layout, progression, type.moduleType);
           const expanded = editor ? editor.open === type.moduleType : points > 0;
           const tiers = choiceTiers(type);
           const head = (
@@ -86,9 +96,9 @@ export function AffinityPanel({ affinity, progression, editor }: { affinity: Cat
               {expanded && (
                 <div className="affinity-type__body">
                   {type.bonuses
-                    .filter((bonus) => editor || pointsAt(progression, type.moduleType, bonus.option) > 0)
+                    .filter((bonus) => editor || pointsAt(layout, progression, type.moduleType, bonus.option) > 0)
                     .map((bonus) => {
-                      const at = pointsAt(progression, type.moduleType, bonus.option);
+                      const at = pointsAt(layout, progression, type.moduleType, bonus.option);
                       return (
                         <div key={bonus.option} className="affinity-bonus">
                           <div className="affinity-bonus__text">
@@ -125,7 +135,7 @@ export function AffinityPanel({ affinity, progression, editor }: { affinity: Cat
                     })}
                   {tiers.map((tier) => {
                     const reached = points >= tier.requiredPoints;
-                    const chosen = selectionAt(progression, type.moduleType, tier.tier);
+                    const chosen = selectionAt(layout, progression, type.moduleType, tier.tier);
                     if (!editor) {
                       if (!reached) return null;
                       const picked = tier.choices.find((choice) => choice.option === chosen);

@@ -19,11 +19,13 @@ import { ComparePicker } from "./compare-picker";
 import { isOpenFit } from "#/lib/engine/open-fit";
 import { AffinityPanel } from "#/components/affinity/affinity-panel";
 import { affinityTypeLabel } from "#/components/affinity/affinity";
+import { statWords } from "#/lib/fits/stat-format";
 
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
 const GRID_NOTES: Record<Exclude<Ready["grid"]["status"], "ready">, string> = {
   no_catalog: "THE GRID NEEDS THE ENGINE, WHICH ISN'T ANSWERING. THE STATS BELOW WERE SAVED AT THE LAST CHECK.",
+  no_style: "THE GRID CAN'T BE DRAWN RIGHT NOW: THE ENGINE ISN'T SERVING HOW TO DRAW IT. THE STATS BELOW STILL APPLY.",
   unknown_hull: "THIS HULL ISN'T IN THE CURRENT BUILD.",
   unreadable: "THIS FIT CAN'T BE DRAWN.",
 };
@@ -293,7 +295,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
             {grid.status === "ready" ? (
               <>
                 <div className="fg-scroll">
-                  <FittingGrid model={grid.model} />
+                  <FittingGrid model={grid.model} gridStyle={grid.style} words={statWords(engine.catalog?.stats ?? [])} />
                 </div>
                 <ModifiedCellsLegend cells={grid.model.modified.length} />
               </>

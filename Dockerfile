@@ -1,5 +1,5 @@
-# Build from the REPO ROOT, so the few Unity files the site derives its tokens, font and wording from are in the
-# context (Dockerfile.dockerignore lists them). Item art is not among them: the game data API serves it.
+# Build from the REPO ROOT, so the Unity files the site derives its design tokens and font from are in the
+# context (Dockerfile.dockerignore lists them). Game data is not among them: the game data API serves it.
 #   docker build -f js/projects/theorycrafting/Dockerfile -t citadel-theorycrafting .
 # Run: docker run --rm -p 3000:3000 -e PORT=3000 citadel-theorycrafting
 # Environment (all optional) is read at run time: see the README.
@@ -16,17 +16,10 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS build
 WORKDIR /repo
-# The Unity files the prepare script derives the tokens, font, grid art and stat wording from
-# (scripts/prepare-game-assets.mjs SOURCES), kept at their repo paths: it finds them by walking up.
+# The Unity files the prepare script derives the design tokens and font from
+# (scripts/prepare-design-tokens.mjs SOURCES), kept at their repo paths: it finds them by walking up.
 COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/ src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/
 COPY src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf
-COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Panels/Fitting/UI/FittingPanel.fixture.json src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Panels/Fitting/UI/
-COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/InventoryGrid/InventoryGrid.fixture.json src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/InventoryGrid/
-COPY src/Citadel.Unity/Assets/UI/Elements/Resources/Icon/hardpoint-*.svg src/Citadel.Unity/Assets/UI/Elements/Resources/Icon/
-COPY src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/StatTypeText.cs src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/
-COPY src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/StatTypeRules.cs src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/
-COPY src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Modules/
-COPY src/Citadel.Unity/Assets/Scripts/Simulation/Effects.qtn src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs src/Citadel.Unity/Assets/Scripts/Simulation/
 WORKDIR /repo/js/projects/theorycrafting
 COPY --from=deps /repo/js/projects/theorycrafting/node_modules ./node_modules
 COPY js/projects/theorycrafting/ ./

@@ -13,7 +13,7 @@ before(async () => {
 after(() => stub.close());
 beforeEach(() => {
   stub.fail(null);
-  for (const key of ["POST /v1/fits/evaluate", "GET /v1/qualities", "GET /v1/items", "GET /v1/grid-consumables", "GET /v1/breach-tiers"]) {
+  for (const key of ["POST /v1/fits/evaluate", "GET /v1/qualities", "GET /v1/items", "GET /v1/grid-consumables", "GET /v1/breach-tiers", "GET /v1/fitting-grid-style", "GET /v1/affinity"]) {
     stub.route(key, undefined);
   }
   stub.requests.length = 0;
@@ -155,6 +155,22 @@ test("an older API without grid consumables or breach tiers still gives a catalo
   assert.equal(upgraded.catalog.breachTiers.length, FIXTURES.parts.breachTiers.breachTiers.length);
   assert.equal(upgraded.catalog.gridConsumables.length, FIXTURES.parts.gridConsumables.gridConsumables.length);
   assert.notEqual(upgraded.etag, first.etag);
+});
+
+test("an older API without the grid style or the affinity layout gives a catalog that holds neither", async (t) => {
+  t.mock.method(console, "warn", () => {});
+  stub.route("GET /v1/fitting-grid-style", notFound);
+  const { layout, ...tree } = FIXTURES.parts.affinity.affinity;
+  assert.ok(layout, "the fixture has a layout to leave out");
+  stub.route("GET /v1/affinity", (req, res) => {
+    res.writeHead(200, { "content-type": "application/json", etag: '"old-affinity"' });
+    res.end(JSON.stringify({ build: FIXTURES.parts.affinity.build, affinity: tree }));
+  });
+  const { catalog } = ok(await client.catalog());
+  assert.equal(catalog.gridStyle, null, "no grid style: the fit page and builder say the grid can't be drawn");
+  assert.equal(catalog.affinity.layout, null, "no layout: the affinity panels say points aren't available");
+  assert.equal(catalog.affinity.types.length, tree.types.length, "the rest of the tree loads");
+  assert.equal(catalog.stats.length, FIXTURES.parts.stats.stats.length);
 });
 
 test("a 404 from any other catalog route still fails the catalog", async () => {

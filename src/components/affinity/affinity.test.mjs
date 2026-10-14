@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { FIXTURES } from "../../lib/engine/stub-engine.mjs";
 import { readProgression } from "./affinity.ts";
 
+const layout = FIXTURES.catalog.affinity.layout;
 const base = { affinityType: "Weapon", affinityXp: 10, allocatedPoints: [1, 2, 3], thresholdSelections: [0] };
-const read = (patch) => readProgression({ progression: { ...base, ...patch } });
+const read = (patch) => readProgression({ progression: { ...base, ...patch } }, layout);
 
 test("a well-formed progression reads as stored", () => {
   assert.deepEqual(read({}), base);
@@ -17,7 +19,11 @@ test("malformed stored values read as no progression", () => {
   assert.equal(read({ affinityXp: "500" }), null, "string XP");
   assert.equal(read({ affinityXp: Number.NaN }), null);
   assert.equal(read({ affinityType: 3 }), null);
-  assert.equal(readProgression(null), null);
+  assert.equal(readProgression(null, layout), null);
+});
+
+test("without a layout (an older engine) only the type and XP are read", () => {
+  assert.deepEqual(readProgression({ progression: base }, null), { ...base, allocatedPoints: [], thresholdSelections: [] });
 });
 
 test("arrays longer than the layout are cut to its size before anything sums them", () => {

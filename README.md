@@ -13,7 +13,7 @@ pnpm typecheck
 SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates that database
 ```
 
-`pnpm build`, `pnpm dev` and `pnpm test` first run `scripts/prepare-game-assets.mjs`, which reads files from the Unity tree and so needs the whole repo checkout, not only this folder.
+`pnpm build`, `pnpm dev` and `pnpm test` first run `scripts/prepare-design-tokens.mjs`, which reads the design tokens and font from the Unity tree and so needs the whole repo checkout, not only this folder.
 
 `pnpm smoke` seeds the fixture fits (`src/lib/site/seed.mjs`) into a throwaway Postgres, serves the game data API fixtures from `src/lib/engine/stub-engine.mjs`, and starts the standalone server with the API up, with it down, and with no database, fetching every route. The "up" run names a public API address nothing listens on and reaches the stub on the internal one, so it also proves art URLs use the first and the share card's art fetch the second. Add `--serve` (`node --import ./scripts/node-hooks.mjs scripts/smoke.mjs --serve`) to leave the seeded site running for a look. For a database: `docker run --rm -e POSTGRES_PASSWORD=smoke -p 127.0.0.1:55437:5432 postgres:17-alpine`.
 
@@ -29,16 +29,13 @@ SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates tha
 
 Pages read through `src/lib/site/loaders.ts` and write through the server actions in `src/app/actions.ts` (work in `src/lib/site/actions-core.ts`). With the API down they render the stored verdicts under a banner; without a database they show an unavailable state. The grid is `src/components/grid/` (see its `geometry.ts` and `model.ts`); `scale.ts` owns its cell size, from the game's 48px up to 88px as its panel allows.
 
-## Game tokens, font, grid art and stat wording
+## Design tokens and font
 
-The Unity files own all of these; the site holds no copy of their values.
+The Unity files own these; the site holds no copy of their values. They are visual style, so the site build reads them; everything that is game data comes from the game data API (next section).
 
-- `src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/tokens.{color,typography,spacing,sizing,components}.uss`: the sheets `ui-prototype/src/main.tsx` imports. The prepare script strips the Unity-only declarations (`-unity-*`, `resource()`) and writes `src/app/game-tokens.generated.css`.
+- `src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/tokens.{color,typography,spacing,sizing,components}.uss`: the sheets `ui-prototype/src/main.tsx` imports. The prepare script strips the Unity-only declarations (`-unity-*`, `resource()`) and writes `src/app/game-tokens.generated.css`, and the colour values the share card draws with (next/og can't read CSS variables, so the card, tier and text colours are resolved) to `src/app/card-tokens.generated.json`.
 - `src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf`: copied to `src/app/fonts/` and loaded with `next/font/local`.
-- `FittingPanel.fixture.json`, `InventoryGrid.fixture.json` (exported by Unity for the UI prototype), the `hardpoint-*.svg` icons and the tier tokens: written to `src/components/grid/fitting-art.generated.json` (port notch rectangles at the game's 48px cell, hardpoint glyphs, grid state colours, tier values for the share card).
-- `StatTypeText.cs`, `StatTypeRules.cs`, `Modules.qtn`: written to `src/lib/fits/stat-text.generated.json` (each stat's label, whole-number, lower-is-better and inverted-sign rules). A stat without copy fails the build.
-- `Modules.qtn` (`ModuleType`), `Effects.qtn` (the affinity bounds) and `AffinityThresholdResolver.cs` (`SelectionUnset`): written to `src/lib/engine/progression-layout.generated.json`, where an open fit's affinity progression keeps each point and threshold choice. The builder edits progressions through it.
-- Item art is not derived here: the game data API serves it (`/v1/art/...`), and the catalog it sends carries each entity's `art` URLs. See "Item art" below.
+- Not derived here, but read with the catalog from the API: item art (`/v1/art/...`, each entity's `art` URLs), stat wording (`/v1/stats`: labels, whole-number, lower-is-better and inverted-sign rules), where an open fit's progression keeps each affinity point and threshold choice (`/v1/affinity`'s `layout`), and how the game draws its fitting grid (`/v1/fitting-grid-style`: the 48px cell, slot inset, port notches, hardpoint icons and state colours). An older API without the grid style or the affinity layout leaves those parts of the site showing a note instead of the grid or the affinity points.
 
 All outputs are git-ignored. Change the Unity files, never the outputs. `globals.css` binds `--font-family` to the loaded font; `game-ui.css` holds the game-UI primitives (chamfered panel, tooltip plate, buttons, tier accents).
 

@@ -4,36 +4,28 @@
 // state and uses no hooks, so it renders on the server for the fit page; the builder passes the
 // optional handlers and drag state from a client component.
 //
-// Scale: every length here is worked out in the game's art space (48px cells, fitting-art.generated.json)
-// and drawn through `u`, which multiplies it by `--fg-u`, the size of one art pixel. `--fg-u` follows from
-// `--fg-cell`, the drawn cell size, which scale.ts derives from the space the grid has. Nothing else sizes
-// the grid.
+// Scale: every length here is worked out in the game's art space (its 48px cells: the catalog's grid style,
+// GET /v1/fitting-grid-style) and drawn through `u`, which multiplies it by `--fg-u`, the size of one art
+// pixel. `--fg-u` follows from `--fg-cell`, the drawn cell size, which scale.ts derives from the space the
+// grid has. Nothing else sizes the grid.
 import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
-import art from "./fitting-art.generated.json";
+import type { FittingGridStyle, GridPortNotch } from "#/lib/engine/types";
+import type { StatWords } from "#/lib/fits/stat-format";
 import { boundsOf, cellKey, ICON_INSET, iconBox, directionOffset, oppositeDirection, outerEdges, visibleBounds, type Bounds, type Cell, type Direction } from "./geometry";
 import { moduleCells, type GridModel, type GridModule } from "./model";
 import { ModuleTooltip } from "./module-tooltip";
-import { cellSizeCss, SITE_GRID } from "./scale";
+import { cellSizeCss, siteGrid, SITE_GRID_MAX } from "./scale";
 import { ItemIcon } from "#/components/item-text";
 import "./fitting-grid.css";
 
-type Rect = { x: number; y: number; width: number; height: number };
-type PortArt = { body: Rect; bridge: Rect; borders: Rect[] };
-const ART = art as {
-  cellSize: number;
-  slotInset: number;
-  ports: Record<"FemaleOpen" | "MaleAttached" | "Expansion", PortArt[]>;
-  hardpoints: Record<string, { viewBox: string; paths: string[] }>;
-  colors: Record<string, string>;
-};
-
-const CELL = ART.cellSize;
-const INSET = ART.slotInset;
-const SLOT = CELL - 2 * INSET;
 const DIRECTION_INDEX: Record<Direction, number> = { Up: 0, Down: 1, Left: 2, Right: 3 };
 
 export type FittingGridProps = {
   model: GridModel;
+  /** How the game draws the grid: the catalog's `gridStyle`. */
+  gridStyle: FittingGridStyle;
+  /** How the game words each stat, for the default tooltip. */
+  words: StatWords;
   /** Draw only the hull's enabled cells with a one-cell margin (default), or the whole grid. */
   crop?: boolean;
   /** A module drawn as selected (its hover look, held). */
@@ -56,8 +48,16 @@ export type FittingGridProps = {
   label?: string;
 };
 
-/** A whole number of cells, in art pixels. */
-const px = (cells: number) => cells * CELL;
+/** The art-space lengths every part of the grid is placed with, from the grid style. */
+type Art = { style: FittingGridStyle; cell: number; inset: number; slot: number; px: (cells: number) => number };
+
+function artOf(style: FittingGridStyle): Art {
+  const cell = style.cellSize;
+  /** A whole number of cells, in art pixels. */
+  const px = (cells: number) => cells * cell;
+  return { style, cell, inset: style.slotInset, slot: cell - 2 * style.slotInset, px };
+}
+
 /** An art-space length (art pixels) as drawn: scaled by the grid's `--fg-u`. */
 const u = (art: number) => `calc(var(--fg-u) * ${art})`;
 /** An absolutely placed box, its art-space rectangle drawn at the grid's scale. */
@@ -68,7 +68,7 @@ const place = (left: number, top: number, width?: number, height?: number): CSSP
   ...(height === undefined ? {} : { height: u(height) }),
 });
 /** The largest an art-space length is drawn (the grid's largest cell), in CSS pixels. */
-const drawnAtMost = (art: number) => (art * SITE_GRID.max) / CELL;
+const drawnAtMost = (length: number, art: Art) => (length * SITE_GRID_MAX) / art.cell;
 /**
  * Whether a module with art also shows its name over the icon, as the game's overlay does: only on a
  * footprint at least two cells each way, where the name has room at a legible size. A smaller one shows
@@ -81,7 +81,7 @@ export function showsName(module: Pick<GridModule, "cells" | "known" | "icon">):
 }
 
 /** Where a module's icon sits, in art pixels from its shape's bounds (geometry.ts iconBox at the game's cell). */
-const iconBoxOf = (cells: readonly Cell[]) => iconBox(cells, CELL, INSET);
+const iconBoxOf = (cells: readonly Cell[], art: Art) => iconBox(cells, art.cell, art.inset);
 
 /** The part of the grid drawn: cropped bounds that also take in every module cell. */
 export function gridBounds(model: GridModel, crop = true): Bounds {
@@ -105,8 +105,8 @@ export function ModifiedCellsLegend({ cells }: { cells: number }) {
   );
 }
 
-function HardpointIcon({ slot }: { slot: string }) {
-  const icon = ART.hardpoints[slot];
+function HardpointIcon({ slot, style }: { slot: string; style: FittingGridStyle }) {
+  const icon = style.hardpoints[slot];
   if (!icon) return null;
   return (
     <svg className="fg-cell__icon" viewBox={icon.viewBox} aria-hidden="true">
@@ -117,7 +117,7 @@ function HardpointIcon({ slot }: { slot: string }) {
   );
 }
 
-function PortPaint({ geometry, at, body }: { geometry: PortArt; at: { x: number; y: number }; body: "fill" | "cut" }) {
+function PortPaint({ geometry, at, body }: { geometry: GridPortNotch; at: { x: number; y: number }; body: "fill" | "cut" }) {
   const fill = [geometry.body, geometry.bridge].filter((rect) => rect.width > 0 && rect.height > 0);
   return (
     <g transform={`translate(${at.x} ${at.y})`}>
@@ -132,6 +132,7 @@ function PortPaint({ geometry, at, body }: { geometry: PortArt; at: { x: number;
 }
 
 function ModuleView({
+  art,
   module,
   view,
   selected,
@@ -140,6 +141,7 @@ function ModuleView({
   onPointerDown,
   onContextMenu,
 }: {
+  art: Art;
   module: GridModule;
   view: Bounds;
   selected: boolean;
@@ -148,6 +150,7 @@ function ModuleView({
   onPointerDown?: FittingGridProps["onModulePointerDown"];
   onContextMenu?: FittingGridProps["onModuleContextMenu"];
 }) {
+  const { cell: CELL, inset: INSET, slot: SLOT, px } = art;
   const all = moduleCells(module);
   const box = boundsOf(all)!;
   const local = (cell: Cell) => ({ x: px(cell.col - box.minCol), y: px(cell.row - box.minRow) });
@@ -168,7 +171,7 @@ function ModuleView({
   const labelBox = boundsOf(module.cells)!;
   const first = module.cells[0]!;
   const firstAt = local(first);
-  const icon = module.icon ? iconBoxOf(module.cells) : null;
+  const icon = module.icon ? iconBoxOf(module.cells, art) : null;
   const baseAt = { x: px(labelBox.minCol - box.minCol), y: px(labelBox.minRow - box.minRow) };
   return (
     <div
@@ -205,18 +208,18 @@ function ModuleView({
           {module.ports.map((port) => {
             if (port.expansion) {
               const at = local(port.expansion);
-              const geometry = ART.ports.Expansion[DIRECTION_INDEX[oppositeDirection(port.direction)]]!;
+              const geometry = art.style.ports.Expansion[DIRECTION_INDEX[oppositeDirection(port.direction)]]!;
               return <PortPaint key={port.index} geometry={geometry} at={{ x: at.x + INSET, y: at.y + INSET }} body="fill" />;
             }
             const at = local(port.cell);
-            const geometry = ART.ports.FemaleOpen[DIRECTION_INDEX[port.direction]]!;
+            const geometry = art.style.ports.FemaleOpen[DIRECTION_INDEX[port.direction]]!;
             return <PortPaint key={port.index} geometry={geometry} at={{ x: at.x + INSET, y: at.y + INSET }} body="cut" />;
           })}
         </svg>
       )}
       {icon && (
         <span className="fg-module__icon" style={place(baseAt.x + icon.left, baseAt.y + icon.top, icon.size, icon.size)}>
-          <ItemIcon src={module.icon} size={drawnAtMost(icon.size)} fill />
+          <ItemIcon src={module.icon} size={drawnAtMost(icon.size, art)} fill />
         </span>
       )}
       {module.ciphers.map((cipher) => {
@@ -224,7 +227,7 @@ function ModuleView({
         const size = SLOT - 2 * ICON_INSET;
         return (
           <span key={`c${cellKey(cipher.cell)}`} className="fg-module__icon" style={place(at.x + INSET + ICON_INSET, at.y + INSET + ICON_INSET, size, size)}>
-            <ItemIcon src={cipher.icon} size={drawnAtMost(size)} mirrored fill />
+            <ItemIcon src={cipher.icon} size={drawnAtMost(size, art)} mirrored fill />
           </span>
         );
       })}
@@ -255,7 +258,8 @@ function ModuleView({
  * Why the held item can't go here, under the footprint (above it when the footprint is in the grid's
  * lower half), clamped to the drawn grid so a footprint hanging off the edge still shows it.
  */
-function DropReason({ cells, view, reason }: { cells: readonly Cell[]; view: Bounds; reason: string }) {
+function DropReason({ art, cells, view, reason }: { art: Art; cells: readonly Cell[]; view: Bounds; reason: string }) {
+  const { px } = art;
   const box = boundsOf(cells);
   if (!box) return null;
   const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -272,7 +276,8 @@ function DropReason({ cells, view, reason }: { cells: readonly Cell[]; view: Bou
 }
 
 /** Bars across the gutter wherever cells of two modules of one regalia group touch. */
-function regaliaWelds(model: GridModel, view: Bounds): { key: string; style: CSSProperties }[] {
+function regaliaWelds(model: GridModel, view: Bounds, art: Art): { key: string; style: CSSProperties }[] {
+  const { cell: CELL, inset: INSET, px } = art;
   const owner = new Map<string, GridModule>();
   for (const module of model.modules) if (module.regalia) for (const cell of module.cells) owner.set(cellKey(cell), module);
   const welds: { key: string; style: CSSProperties }[] = [];
@@ -296,6 +301,8 @@ function regaliaWelds(model: GridModel, view: Bounds): { key: string; style: CSS
 
 export function FittingGrid({
   model,
+  gridStyle,
+  words,
   crop = true,
   selected = null,
   highlight = [],
@@ -308,16 +315,18 @@ export function FittingGrid({
   className,
   label,
 }: FittingGridProps) {
+  const art = artOf(gridStyle);
+  const { cell: CELL, inset: INSET, px } = art;
   const view = gridBounds(model, crop);
   const highlighted = new Set(highlight.map(cellKey));
   const dropCells = new Set((drop?.cells ?? []).map(cellKey));
   const blamed = new Set((drop?.offending ?? []).map(cellKey));
   const occupied = new Set(model.modules.flatMap(moduleCells).map(cellKey));
   const modified = new Set(model.modified.map((cell) => `${Math.floor(cell / model.cols)},${cell % model.cols}`));
-  const colors = ART.colors;
+  const colors = gridStyle.colors;
   const style = {
     // The one scale: scale.ts's cell size for this grid's span, evaluated by the browser (fitting-grid.css).
-    "--fg-cell": cellSizeCss(view),
+    "--fg-cell": cellSizeCss(view, siteGrid(CELL)),
     "--fg-u": `calc(var(--fg-cell) / ${CELL})`,
     "--fg-inset": u(INSET),
     width: u(px(view.cols)),
@@ -339,7 +348,7 @@ export function FittingGrid({
       const dropped = dropCells.has(key);
       const changed = modified.has(key);
       if (slot === "None" && !dropped && !highlighted.has(key) && !changed) continue;
-      const hardpoint = slot in ART.hardpoints;
+      const hardpoint = slot in gridStyle.hardpoints;
       const cell = { row, col };
       const classes = [
         "fg-cell",
@@ -361,14 +370,14 @@ export function FittingGrid({
           onPointerEnter={onCellPointerEnter ? (event) => onCellPointerEnter(cell, event) : undefined}
         >
           <div className="fg-cell__slot" />
-          {hardpoint && !occupied.has(key) && <HardpointIcon slot={slot} />}
+          {hardpoint && !occupied.has(key) && <HardpointIcon slot={slot} style={gridStyle} />}
           {changed && <span className="fg-cell__mark" aria-hidden="true" />}
         </div>,
       );
     }
   }
 
-  const renderTooltip = tooltip ?? ((module: GridModule) => <ModuleTooltip module={module} />);
+  const renderTooltip = tooltip ?? ((module: GridModule) => <ModuleTooltip module={module} words={words} />);
   return (
     <div className={["fg", className].filter(Boolean).join(" ")} style={style} role="group" aria-label={label ?? `${model.hullName} fitting grid`}>
       {cells}
@@ -377,6 +386,7 @@ export function FittingGrid({
         return (
           <ModuleView
             key={module.index}
+            art={art}
             module={module}
             view={view}
             selected={selected === module.index}
@@ -387,10 +397,10 @@ export function FittingGrid({
           />
         );
       })}
-      {regaliaWelds(model, view).map((weld) => (
+      {regaliaWelds(model, view, art).map((weld) => (
         <span key={weld.key} className="fg-weld" style={weld.style} aria-hidden="true" />
       ))}
-      {drop && !drop.valid && drop.reason && <DropReason cells={drop.cells} view={view} reason={drop.reason} />}
+      {drop && !drop.valid && drop.reason && <DropReason art={art} cells={drop.cells} view={view} reason={drop.reason} />}
     </div>
   );
 }

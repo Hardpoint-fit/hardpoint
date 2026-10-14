@@ -8,6 +8,7 @@ import type {
   BreachTiersBody,
   Catalog,
   CiphersBody,
+  FittingGridStyleBody,
   GridConsumablesBody,
   HarmonicSetsBody,
   HereticalSpecialsBody,
@@ -18,6 +19,7 @@ import type {
   QualitiesBody,
   RegaliaBody,
   RegaliaSetsBody,
+  StatsBody,
 } from "./types.ts";
 
 /** Every body carries the build it was served from. */
@@ -39,24 +41,30 @@ export const CATALOG_ROUTES = {
   placementRules: { path: "/v1/placement-rules", key: "placementRules" },
   gridConsumables: { path: "/v1/grid-consumables", key: "gridConsumables" },
   breachTiers: { path: "/v1/breach-tiers", key: "breachTiers" },
+  stats: { path: "/v1/stats", key: "stats" },
+  fittingGridStyle: { path: "/v1/fitting-grid-style", key: "fittingGridStyle" },
 } as const;
 
 export type CatalogPart = keyof typeof CATALOG_ROUTES;
 export const CATALOG_PARTS = Object.keys(CATALOG_ROUTES) as CatalogPart[];
 
 /**
- * Parts an older API doesn't serve yet. A 404 from one of these routes reads as an empty list, which hides
- * the builder feature built on it (grid modification, rolling), instead of failing the whole catalog.
+ * Parts an older API doesn't serve yet. A 404 from one of these routes reads as empty (an empty list, or null
+ * for the grid style), which hides what is built on it (grid modification, rolling, drawing the grid) behind
+ * a note instead of failing the whole catalog.
  */
-export const OPTIONAL_CATALOG_PARTS = ["gridConsumables", "breachTiers"] as const satisfies readonly CatalogPart[];
+export const OPTIONAL_CATALOG_PARTS = ["gridConsumables", "breachTiers", "fittingGridStyle"] as const satisfies readonly CatalogPart[];
 export type OptionalCatalogPart = (typeof OPTIONAL_CATALOG_PARTS)[number];
 
 export const isOptionalPart = (part: CatalogPart): part is OptionalCatalogPart =>
   (OPTIONAL_CATALOG_PARTS as readonly CatalogPart[]).includes(part);
 
-/** The body an optional part reads as when its route is missing: no entries, of the catalog's build. */
+/** Parts whose content is one object rather than a list. */
+const OBJECT_PARTS: readonly CatalogPart[] = ["affinity", "fittingGridStyle"];
+
+/** The body an optional part reads as when its route is missing: nothing (no entries, or null), of the catalog's build. */
 export function absentPartBody<P extends OptionalCatalogPart>(part: P, build: string): CatalogBodies[P] {
-  return { build, [CATALOG_ROUTES[part].key]: [] } as unknown as CatalogBodies[P];
+  return { build, [CATALOG_ROUTES[part].key]: OBJECT_PARTS.includes(part) ? null : [] } as unknown as CatalogBodies[P];
 }
 
 /** What each route answered, by part. */
@@ -75,6 +83,8 @@ export type CatalogBodies = {
   placementRules: PlacementRulesBody;
   gridConsumables: GridConsumablesBody;
   breachTiers: BreachTiersBody;
+  stats: StatsBody;
+  fittingGridStyle: FittingGridStyleBody;
 };
 
 /** Just enough of a check to tell the API from a proxy's error page or a wrong URL. */
@@ -82,7 +92,7 @@ export function isPartBody<P extends CatalogPart>(part: P, value: unknown): valu
   if (typeof value !== "object" || value === null) return false;
   const body = value as Record<string, unknown>;
   const content = body[CATALOG_ROUTES[part].key];
-  return typeof body.build === "string" && (part === "affinity" ? typeof content === "object" && content !== null && !Array.isArray(content) : Array.isArray(content));
+  return typeof body.build === "string" && (OBJECT_PARTS.includes(part) ? typeof content === "object" && content !== null && !Array.isArray(content) : Array.isArray(content));
 }
 
 /** The build every part was served from, or null when they disagree (a deploy landed between two requests). */
@@ -122,10 +132,12 @@ export function assembleCatalog(bodies: CatalogBodies, artBase: string | null): 
     hereticalSpecials: bodies.hereticalSpecials.hereticalSpecials,
     harmonicSets: bodies.harmonicSets.harmonicSets,
     ciphers: withArt(bodies.ciphers.ciphers, artBase),
-    affinity: bodies.affinity.affinity,
+    affinity: { ...bodies.affinity.affinity, layout: bodies.affinity.affinity.layout ?? null },
     qualities: bodies.qualities.qualities,
     placement: bodies.placementRules.placementRules,
     gridConsumables: withArt(bodies.gridConsumables.gridConsumables, artBase),
     breachTiers: bodies.breachTiers.breachTiers,
+    stats: bodies.stats.stats,
+    gridStyle: bodies.fittingGridStyle.fittingGridStyle,
   };
 }

@@ -4,7 +4,7 @@
 // the verdicts already stored, with `engine.state.status === "down"` for the banner.
 import type { EngineResult } from "../engine/client";
 import type { EngineMonitor, EngineState } from "../engine/engine-state";
-import type { ArtKeys, Catalog, CatalogHull, OpenFit } from "../engine/types";
+import type { ArtKeys, Catalog, CatalogHull, FittingGridStyle, OpenFit } from "../engine/types";
 import type { DatabaseState, Queryable } from "../fits/db";
 import { parseBrowseParams, type BrowseQuery, type SearchParamsInput } from "../fits/filters";
 import {
@@ -290,9 +290,11 @@ export async function loadAuthor(
 // Fit page
 
 export type GridState =
-  | { status: "ready"; model: GridModel }
+  | { status: "ready"; model: GridModel; style: FittingGridStyle }
   /** No catalog: the engine has been down since this server started. */
   | { status: "no_catalog" }
+  /** The engine doesn't say how to draw a grid (an older one, without /v1/fitting-grid-style). */
+  | { status: "no_style" }
   /** The hull isn't in the current build. */
   | { status: "unknown_hull" }
   /** The stored JSON isn't an open fit this site can draw. */
@@ -363,13 +365,14 @@ export function gridFor(fit: FitDetail, catalog: Catalog | null, shown: Shown): 
   if (!catalog) return { status: "no_catalog" };
   const hull = catalog.hulls.find((each) => each.def === open.hull.def);
   if (!hull) return { status: "unknown_hull" };
+  if (!catalog.gridStyle) return { status: "no_style" };
   const lookups = catalogLookups(catalog);
   const model = buildGridModel({ hull, ...lookups }, open, {
     issues: shown.issues,
     conduits: shown.result.conduits,
     regaliaSets: shown.result.regaliaSets,
   });
-  return { status: "ready", model };
+  return { status: "ready", model, style: catalog.gridStyle };
 }
 
 /**
@@ -420,7 +423,7 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     revisions,
     revision,
     broken: brokenOnBuild(shownFit, shown, engine.catalog),
-    progression: readProgression(shownFit.fit),
+    progression: readProgression(shownFit.fit, engine.catalog?.affinity.layout ?? null),
   };
 }
 
@@ -494,7 +497,7 @@ export async function loadCompare(deps: SiteDeps, ids: { a?: string; b?: string 
       rating: shown.reference?.rating ?? null,
       statsNote,
       modules: countModules(isOpenFit(fit.fit) ? fit.fit.modules.map((module) => module.item.def) : [], nameOf),
-      progression: readProgression(fit.fit),
+      progression: readProgression(fit.fit, engine.catalog?.affinity.layout ?? null),
     };
     return { side, sections: shown.result.sections, failed: false };
   };

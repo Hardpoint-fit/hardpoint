@@ -78,6 +78,8 @@ const routes = {
   "placement-rules": ["/v1/placement-rules", "placementRules"],
   "grid-consumables": ["/v1/grid-consumables", "gridConsumables"],
   "breach-tiers": ["/v1/breach-tiers", "breachTiers"],
+  stats: ["/v1/stats", "stats"],
+  "fitting-grid-style": ["/v1/fitting-grid-style", "fittingGridStyle"],
 };
 const live = {};
 for (const [name, [path]] of Object.entries(routes)) live[name] = await get(path);
@@ -113,6 +115,8 @@ const cut = {
   "placement-rules": live["placement-rules"],
   "grid-consumables": live["grid-consumables"],
   "breach-tiers": live["breach-tiers"],
+  stats: live.stats,
+  "fitting-grid-style": live["fitting-grid-style"],
 };
 write("status.json", status);
 for (const [name, body] of Object.entries(cut)) write(`${name}.json`, body);

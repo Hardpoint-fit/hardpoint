@@ -3,9 +3,7 @@ node_modules/
 *.tsbuildinfo
 next-env.d.ts
 .env*.local
-# Written by scripts/prepare-game-assets.mjs from the Unity tree.
+# Written by scripts/prepare-design-tokens.mjs from the Unity tree.
 src/app/game-tokens.generated.css
+src/app/card-tokens.generated.json
 src/app/fonts/
-src/components/grid/fitting-art.generated.json
-src/lib/fits/stat-text.generated.json
-src/lib/engine/progression-layout.generated.json

@@ -447,9 +447,16 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
                 if (index !== undefined && !state.held) dispatch({ type: "select", target: Number(index) });
               }}
             >
-              {model && (
+              {model && !cat.catalog.gridStyle && (
+                <div className="empty-state">
+                  <span>THE GRID CAN&apos;T BE DRAWN RIGHT NOW: THE ENGINE ISN&apos;T SERVING HOW TO DRAW IT.</span>
+                </div>
+              )}
+              {model && cat.catalog.gridStyle && (
                 <FittingGrid
                   model={model}
+                  gridStyle={cat.catalog.gridStyle}
+                  words={cat.words}
                   selected={typeof state.selected === "number" ? state.selected : null}
                   highlight={lit}
                   drop={

@@ -4,15 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare:game-assets": "node scripts/prepare-game-assets.mjs",
-    "predev": "pnpm run prepare:game-assets",
+    "prepare:design-tokens": "node scripts/prepare-design-tokens.mjs",
+    "predev": "pnpm run prepare:design-tokens",
     "dev": "next dev",
-    "prebuild": "pnpm run prepare:game-assets",
+    "prebuild": "pnpm run prepare:design-tokens",
     "build": "next build",
     "start": "next start",
     "test": "node --import ./scripts/node-hooks.mjs --test",
     "typecheck": "tsc --noEmit",
-    "pretest": "pnpm run prepare:game-assets",
+    "pretest": "pnpm run prepare:design-tokens",
     "smoke": "node --import ./scripts/node-hooks.mjs scripts/smoke.mjs"
   },
   "dependencies": {

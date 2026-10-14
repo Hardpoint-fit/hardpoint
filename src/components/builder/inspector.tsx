@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "react";
 import type { EngineClient } from "#/lib/engine/client";
 import type { CatalogItem, OpenFit, OpenItem, OpenModifier, OpenRoll } from "#/lib/engine/types";
-import { formatStatValue, statLabel, statTone } from "#/lib/fits/stat-format";
+import { formatStatValue, statLabel, statTone, type StatWords } from "#/lib/fits/stat-format";
 import { Panel } from "#/components/ui";
 import { enumWords, rarityName } from "./labels";
 import { ItemDescription, ItemIcon } from "#/components/item-text";
@@ -45,10 +45,10 @@ import { breachTiers, canRandomize, defaultBreachTier, randomize } from "./rando
 import type { BuilderAction, RollEdit, Target } from "./state";
 
 /** A modifier's raw FP as the game shows it: a Multiply as the change from 1. */
-export function modifierText(stat: string, operation: string, raw: number): { text: string; tone: string } {
+export function modifierText(words: StatWords, stat: string, operation: string, raw: number): { text: string; tone: string } {
   const value = raw / FP_ONE;
   const change = operation === "Multiply" ? value - 1 : value;
-  return { text: formatStatValue(stat, operation, change), tone: statTone(stat, change).toLowerCase() };
+  return { text: formatStatValue(words, stat, operation, change), tone: statTone(words, stat, change).toLowerCase() };
 }
 
 const TIER_OF_RARITY: Record<string, string> = {
@@ -130,9 +130,9 @@ function ModifierRow({
   const modifier: OpenModifier = roll.modifiers[index]!;
   const range = valueRange(cat, subject, roll, index, modifier.tier);
   const tiers = tierOptions(cat, subject, roll, modifier);
-  const shown = modifierText(modifier.stat, modifier.operation, Number(modifier.value));
+  const shown = modifierText(cat.words, modifier.stat, modifier.operation, Number(modifier.value));
   const templated = isTemplated(roll.rarity);
-  const label = statLabel(modifier.stat);
+  const label = statLabel(cat.words, modifier.stat);
   return (
     <li className={`modifier ${modifier.isInverted ? "modifier--inverted" : ""}`}>
       <div className="modifier__head">
@@ -362,7 +362,7 @@ function AddModifier({ cat, subject, roll, edit }: { cat: BuilderCatalog; subjec
               .filter((option) => option.slot === slot)
               .map((option) => (
                 <option key={key(option)} value={key(option)}>
-                  {statLabel(option.entry.stat)}
+                  {statLabel(cat.words, option.entry.stat)}
                   {option.entry.operation === "Multiply" ? "" : ` (${enumWords(option.entry.operation)})`}
                   {option.entry.pool.startsWith("Role:") ? " · ROLE" : option.entry.pool !== subject.moduleType ? ` · ${enumWords(option.entry.pool)}` : ""}
                 </option>
@@ -441,7 +441,7 @@ function PortEditor({ cat, item, roll, edit }: { cat: BuilderCatalog; item: Cata
                 {port.cipher && !cat.ciphers.has(port.cipher) && <option value={port.cipher}>UNKNOWN CIPHER</option>}
                 {cat.catalog.ciphers.map((cipher) => (
                   <option key={cipher.def} value={cipher.def}>
-                    {cipher.name} · {statLabel(cipher.stat)} {modifierText(cipher.stat, cipher.operation, Number(cipher.value)).text}
+                    {cipher.name} · {statLabel(cat.words, cipher.stat)} {modifierText(cat.words, cipher.stat, cipher.operation, Number(cipher.value)).text}
                   </option>
                 ))}
               </select>

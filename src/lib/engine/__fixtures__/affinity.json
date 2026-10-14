@@ -886,6 +886,26 @@
      }
     ]
    }
-  ]
+  ],
+  "layout": {
+   "moduleTypes": {
+    "None": 0,
+    "Turret": 1,
+    "Shield": 2,
+    "Propulsion": 3,
+    "Drone": 4,
+    "Hull": 5,
+    "ECM": 6,
+    "Missile": 7,
+    "Mining": 8,
+    "Armor": 9,
+    "Utility": 10
+   },
+   "optionsPerType": 4,
+   "tiersPerType": 8,
+   "allocationSlots": 44,
+   "thresholdSlots": 88,
+   "selectionUnset": 255
+  }
  }
 }
