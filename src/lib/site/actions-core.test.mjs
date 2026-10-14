@@ -140,7 +140,6 @@ test("comments and reports have their own budgets", async () => {
   assert.equal((await report(bob, { targetKind: "fit", targetId: ids.showcase, reason: "spam" })).ok, true);
 });
 
-
 test("delete and unpublish refuse without sign-in or a database, and spend the fit and comment budgets", async () => {
   const off = deps(authAs(ALICE.userId, { enabled: false }));
   for (const result of [await deleteFit(off, { fitId: ids.showcase }), await unpublishFit(off, { fitId: ids.showcase }), await deleteComment(off, { id: ids.comment })]) {

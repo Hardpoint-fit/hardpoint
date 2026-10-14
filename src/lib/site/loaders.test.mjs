@@ -8,7 +8,7 @@ import { createEngineMonitor } from "../engine/engine-state.ts";
 import { deadEngineUrl, startStubEngine } from "../engine/stub-engine.mjs";
 import { ANONYMOUS } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { loadAuthor, loadBrowse, loadFitPage, loadReports } from "./loaders.ts";
+import { loadAuthor, loadBrowse, loadBuilder, loadFitPage, loadReports } from "./loaders.ts";
 import { ALICE, CURRENT_SHA, seedSite } from "./seed.mjs";
 
 let db;
@@ -173,4 +173,16 @@ test("the admin queue lists open reports with what they point at", async () => {
   assert.equal(data.status, "ok");
   assert.deepEqual(data.reports.map((report) => report.targetKind).sort(), ["comment", "fit"]);
   assert.equal(data.reports.find((report) => report.targetKind === "fit").target.fitId, ids.removed);
+});
+
+test("the builder refuses to open a hidden fit", async () => {
+  const deps = depsFor(stub.url);
+  const alice = { userId: ALICE.userId, isAdmin: false };
+  assert.equal((await loadBuilder(deps, { fitId: ids.showcase }, alice)).status, "ok");
+  await db.query("UPDATE fits SET status = 'hidden' WHERE id = $1", [ids.showcase]);
+  try {
+    assert.equal((await loadBuilder(deps, { fitId: ids.showcase }, alice)).status, "forbidden");
+  } finally {
+    await db.query("UPDATE fits SET status = 'published' WHERE id = $1", [ids.showcase]);
+  }
 });

@@ -266,7 +266,7 @@ export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { f
       const reachable = await guarded("probe", () => db.query("SELECT 1"));
       return reachable ? { status: "not_found" } : { status: "unavailable" };
     }
-    if (fit.authorUserId !== viewer.userId) return { status: "forbidden" };
+    if (fit.authorUserId !== viewer.userId || fit.status === "hidden") return { status: "forbidden" };
     if (!isEditableFit(fit.fit)) return { status: "unreadable" };
     return {
       status: "ok",

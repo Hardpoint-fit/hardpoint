@@ -172,6 +172,12 @@ test("the author sees delete (and unpublish when published) on their fit; others
     const html = await renderFit(stub.url, ids.showcase, signedIn(BOB));
     assert.match(html, /\[DELETED\]/);
     assert.doesNotMatch(html, /second scanner/);
+    const tomb = html.slice(html.indexOf(`id="comment-${ids.comment}"`), html.indexOf(`id="comment-${ids.reply}"`));
+    assert.match(tomb, /\[DELETED\]/);
+    assert.doesNotMatch(tomb, />(DELETE|EDIT|REPORT)</, "a tombstone has no controls");
+    const afterTomb = html.slice(html.indexOf(`id="comment-${ids.reply}"`));
+    assert.equal(count(html, ">REPLY<"), 0, "no reply control under the tombstone");
+    assert.match(afterTomb, /Only if the slip coating turns/);
   } finally {
     await db.query("UPDATE fit_comments SET body = 'Does the **cipher** cell still fit with a second scanner?', deleted_at = NULL WHERE id = $1::bigint", [ids.comment]);
   }

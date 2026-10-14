@@ -787,3 +787,15 @@ test("a comment without replies is removed and its reports are resolved", async 
   assert.ok(rows[0].resolved_at);
   assert.equal(await deleteComment(db, { id: "abc", authorUserId: "user_bob" }), null);
 });
+
+test("a deleted comment can't be replied to and isn't counted", async () => {
+  const fit = await published();
+  const keep = await createComment(db, { fitId: fit.id, authorUserId: "user_bob", authorName: "bob", body: "stays" });
+  const top = await createComment(db, { fitId: fit.id, authorUserId: "user_bob", authorName: "bob", body: "goes" });
+  await createComment(db, { fitId: fit.id, parentId: top.id, authorUserId: "user_alice", authorName: "alice", body: "reply" });
+  assert.equal((await getFit(db, fit.id)).comments, 3);
+  assert.equal(await deleteComment(db, { id: top.id, authorUserId: "user_bob" }), "tombstoned");
+  await rejects(createComment(db, { fitId: fit.id, parentId: top.id, authorUserId: "user_carol", authorName: "carol", body: "late" }), "invalid");
+  assert.equal((await getFit(db, fit.id)).comments, 2, "the tombstone isn't counted, its reply is");
+  await createComment(db, { fitId: fit.id, parentId: keep.id, authorUserId: "user_carol", authorName: "carol", body: "fine" });
+});

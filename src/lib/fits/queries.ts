@@ -247,8 +247,8 @@ const EVALUATION_JSON = `jsonb_build_object('buildSha', e.build_sha, 'valid', e.
   'stats', e.stats, 'issues', e.issues, 'evaluatedAt', e.evaluated_at)`;
 
 const VOTES_SQL = `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id)`;
-// What listComments shows the public: visible comments, less replies under a hidden comment.
-const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden
+// What listComments shows the public: visible comments, less replies under a hidden comment. Tombstones aren't counted.
+const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden AND c.deleted_at IS NULL
   AND NOT EXISTS (SELECT 1 FROM fit_comments p WHERE p.id = c.parent_id AND p.hidden))`;
 
 function summaryColumns(shaRef: string, viewerRef: string): string {
@@ -691,9 +691,9 @@ export async function createComment(db: Db, input: CreateCommentInput): Promise<
     const { rows: fits } = await tx.query(`SELECT 1 FROM fits WHERE id = $1 AND status = 'published'`, [input.fitId]);
     if (fits.length === 0) throw new FitDataError("not_found", "No such fit.");
     if (parentId !== null) {
-      const { rows } = await tx.query<Row>(`SELECT fit_id, parent_id, hidden FROM fit_comments WHERE id = $1::bigint`, [parentId]);
+      const { rows } = await tx.query<Row>(`SELECT fit_id, parent_id, hidden, deleted_at FROM fit_comments WHERE id = $1::bigint`, [parentId]);
       const parent = rows[0];
-      if (!parent || parent.fit_id !== input.fitId || parent.parent_id !== null || parent.hidden) {
+      if (!parent || parent.fit_id !== input.fitId || parent.parent_id !== null || parent.hidden || parent.deleted_at) {
         invalid("That comment can't be replied to.");
       }
     }

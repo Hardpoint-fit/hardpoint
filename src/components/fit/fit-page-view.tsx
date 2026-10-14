@@ -65,7 +65,7 @@ function CommentView({ comment, fitId, viewer, canWrite, hasReplies = false }: {
 }
 
 function Comments({ threads, fitId, viewer, open }: { threads: CommentThread[]; fitId: string; viewer: PageViewer; open: boolean }) {
-  const count = threads.reduce((sum, thread) => sum + 1 + thread.replies.length, 0);
+  const count = threads.reduce((sum, thread) => sum + (thread.deletedAt ? 0 : 1) + thread.replies.filter((reply) => !reply.deletedAt).length, 0);
   const canWrite = viewer.authEnabled && viewer.userId !== null;
   return (
     <Panel title="COMMENTS" aside={String(count)}>
@@ -80,7 +80,7 @@ function Comments({ threads, fitId, viewer, open }: { threads: CommentThread[]; 
               ))}
             </div>
           )}
-          {open && canWrite && <ReplyToggle fitId={fitId} parentId={thread.id} />}
+          {open && canWrite && !thread.deletedAt && <ReplyToggle fitId={fitId} parentId={thread.id} />}
         </div>
       ))}
       {!open ? null : !viewer.authEnabled ? (
