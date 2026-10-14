@@ -207,9 +207,41 @@ EXCEPTION WHEN OTHERS THEN
 END
 $trgm$;
 
+-- Bookmarks: one row per (pilot, fit). A bookmark is the pilot's own; the list on /bookmarks shows only
+-- fits that are published now, so a fit that goes back to draft or is hidden drops out of it without losing
+-- the row (it returns if the fit is published again).
+CREATE TABLE IF NOT EXISTS fit_bookmarks (
+  user_id text NOT NULL,
+  fit_id text NOT NULL REFERENCES fits (id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, fit_id)
+);
+
+CREATE INDEX IF NOT EXISTS fit_bookmarks_fit_idx ON fit_bookmarks (fit_id);
+CREATE INDEX IF NOT EXISTS fit_bookmarks_recent_idx ON fit_bookmarks (user_id, created_at DESC, fit_id DESC);
+
+-- Fork credit. `forked_from` is the fit a new fit was copied from, recorded once, on the new fit's first save
+-- (createFit), and only when the source was visible to the saver then. It is credit, not a link to keep
+-- alive: deleting the source sets it to null (ON DELETE SET NULL) and deleteFit marks the forks
+-- `forked_from_deleted` in the same statement, so the page can say "based on a fit that no longer exists".
+-- A fit with neither set was not copied (or its source was not visible when it was saved).
+ALTER TABLE fits ADD COLUMN IF NOT EXISTS forked_from text REFERENCES fits (id) ON DELETE SET NULL;
+ALTER TABLE fits ADD COLUMN IF NOT EXISTS forked_from_deleted boolean NOT NULL DEFAULT false;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fits_fork_credit_check') THEN
+    ALTER TABLE fits ADD CONSTRAINT fits_fork_credit_check CHECK (NOT (forked_from_deleted AND forked_from IS NOT NULL));
+  END IF;
+END $$;
+
+-- "N COPIES" counts published forks of a fit.
+CREATE INDEX IF NOT EXISTS fits_forked_from_idx ON fits (forked_from) WHERE forked_from IS NOT NULL;
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (4) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (5) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (6) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (7) ON CONFLICT DO NOTHING;

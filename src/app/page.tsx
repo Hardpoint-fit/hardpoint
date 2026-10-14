@@ -20,7 +20,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       ) : (
         <>
           <BrowseFilters query={data.query} hulls={data.hulls} selectedModules={data.selectedModules} signedIn={viewer.authEnabled && viewer.userId !== null} />
-          <FitCards cards={data.cards} empty="NO FITS MATCH. TRY FEWER FILTERS." />
+          <FitCards cards={data.cards} empty="NO FITS MATCH. TRY FEWER FILTERS." canBookmark={viewer.authEnabled && viewer.userId !== null} />
           <MoreLink query={data.query} cursor={data.nextCursor} />
         </>
       )}

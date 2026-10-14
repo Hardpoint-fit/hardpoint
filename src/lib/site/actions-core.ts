@@ -10,6 +10,7 @@ import type { DatabaseState, Db } from "../fits/db";
 import { spendWriteBudget, type WriteAction } from "../fits/write-limits";
 import { slowDownMessage } from "../slow-down";
 import { publish as publishService, saveDraft, type Refusal } from "../fits/service";
+import { setBookmark } from "../fits/bookmarks";
 import { setBio, setFollow } from "../fits/pilots";
 import {
   FitDataError,
@@ -107,6 +108,14 @@ export function vote(deps: ActionDeps, input: { fitId: string; voted: boolean })
   return withAuthor(deps, "vote", { budget: "vote" }, async (db, author) => ({ ok: true, ...(await setVote(db, { fitId: input.fitId, userId: author.userId, voted: input.voted })) }));
 }
 
+/** Bookmarks or un-bookmarks a published fit for the signed-in pilot. Idempotent, like vote. */
+export function bookmark(deps: ActionDeps, input: { fitId: string; bookmarked: boolean }): Promise<ActionResult<{ bookmarked: boolean }>> {
+  return withAuthor(deps, "bookmark", { budget: "bookmark" }, async (db, author) => ({
+    ok: true,
+    ...(await setBookmark(db, { fitId: input.fitId, userId: author.userId, bookmarked: input.bookmarked })),
+  }));
+}
+
 export function addComment(deps: ActionDeps, input: { fitId: string; parentId: string | null; body: string }): Promise<ActionResult<{ comment: Comment }>> {
   return withAuthor(deps, "comment", { budget: "comment" }, async (db, author) => ({
     ok: true,
@@ -180,11 +189,13 @@ export type SavedFit = {
 /**
  * Saves the builder's fit as the author's draft (a new one, or an edit of theirs), with the engine's
  * verdict when it answers. Editing a published fit keeps it published, so the new content must pass, and
- * each such save appends a revision carrying the optional `note` ("what changed?").
+ * each such save appends a revision carrying the optional `note` ("what changed?"). `forkedFrom` is the fit a
+ * new fit was copied from; it is credit recorded on the first save only, and dropped when the source isn't
+ * one the author may see.
  */
 export function saveFit(
   deps: ActionDeps,
-  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit; note?: string | null },
+  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit; note?: string | null; forkedFrom?: string | null },
 ): Promise<ActionResult<{ fit: SavedFit }>> {
   return withAuthor(deps, "fit save", { budget: "fit" }, async (db, author) => {
     const result = await saveDraft(
@@ -199,6 +210,7 @@ export function saveFit(
         fit: input.fit,
         buildSha: deps.currentBuild?.() ?? null,
         note: input.note,
+        forkedFrom: input.fitId === null ? input.forkedFrom : null,
       },
     );
     if (!result.ok) return serviceRefusal(result);

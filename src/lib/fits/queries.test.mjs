@@ -89,7 +89,7 @@ test("applying the schema again is a no-op, and schema_version records each vers
   await applySchema(db);
   await applySchema(db);
   const { rows } = await db.query("SELECT version FROM schema_version ORDER BY version");
-  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }, { version: 6 }]);
+  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }, { version: 6 }, { version: 7 }]);
 });
 
 test("concurrent applies on a fresh database all succeed", async () => {
@@ -98,7 +98,7 @@ test("concurrent applies on a fresh database all succeed", async () => {
   const fresh = await PGlite.create();
   await Promise.all([applySchema(fresh), applySchema(fresh), applySchema(fresh)]);
   const { rows } = await fresh.query("SELECT count(*)::int AS n FROM schema_version");
-  assert.equal(rows[0].n, 6);
+  assert.equal(rows[0].n, 7);
   await fresh.close();
 });
 

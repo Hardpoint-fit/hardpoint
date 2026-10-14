@@ -6,11 +6,12 @@ import { createCatalogCache } from "../engine/catalog-cache.ts";
 import { createEngineClient } from "../engine/client.ts";
 import { createEngineMonitor } from "../engine/engine-state.ts";
 import { deadEngineUrl, startStubEngine } from "../engine/stub-engine.mjs";
-import { ANONYMOUS, createFit, publishFit, setFitHidden, unpublishFit, updateFit } from "../fits/queries.ts";
+import { ANONYMOUS, createFit, deleteFit, publishFit, setFitHidden, unpublishFit, updateFit } from "../fits/queries.ts";
+import { setBookmark } from "../fits/bookmarks.ts";
 import { toEvaluationInput } from "../fits/service.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { createTestDb } from "../fits/test-db.mjs";
-import { loadAuthor, loadBrowse, loadBuilder, loadFitPage, loadReports } from "./loaders.ts";
+import { loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadFitPage, loadReports } from "./loaders.ts";
 import { ALICE, BOB, CURRENT_SHA, seedSite } from "./seed.mjs";
 import { setFollow } from "../fits/pilots.ts";
 
@@ -361,4 +362,60 @@ test("browse searches by text and module, names the chosen modules, and the auth
   const author = await loadAuthor(depsFor(stub.url), ALICE.userId, { q: "zzz", module: "1" }, ANONYMOUS);
   assert.equal(author.status, "ok");
   assert.ok(author.cards.length > 0);
+});
+
+async function forkOf(source, owner, { publish = true } = {}) {
+  const verdict = { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: CURRENT_SHA };
+  const made = await createFit(db, {
+    authorUserId: owner.userId,
+    authorName: owner.name,
+    title: "A copy",
+    content: { hullItem: FIXTURES.fit.hull.def, fit: FIXTURES.fit },
+    buildSha: CURRENT_SHA,
+    evaluation: verdict,
+    forkedFrom: source,
+  });
+  if (publish) await publishFit(db, { id: made.id, authorUserId: owner.userId, buildSha: CURRENT_SHA });
+  return made.id;
+}
+
+test("the fit page carries the fork credit and the published copy count, and never names a source the viewer can't see", async () => {
+  const deps = depsFor(stub.url);
+  const { id: source } = await fitWithHistory();
+  const copy = await forkOf(source, BOB);
+  const draftCopy = await forkOf(source, BOB, { publish: false });
+  const credited = await loadFitPage(deps, copy, ANONYMOUS);
+  assert.equal(credited.fork.credit.state, "source");
+  assert.deepEqual([credited.fork.credit.id, credited.fork.credit.title, credited.fork.credit.authorName], [source, "Version three", "ALICE"]);
+  assert.equal((await loadFitPage(deps, source, ANONYMOUS)).fork.copies, 1, "the draft copy isn't counted");
+  assert.equal((await loadFitPage(deps, draftCopy, ANONYMOUS)).status, "not_found");
+
+  await unpublishFit(db, { id: source, authorUserId: ALICE.userId });
+  assert.deepEqual((await loadFitPage(deps, copy, ANONYMOUS)).fork.credit, { state: "unseen" });
+  assert.equal((await loadFitPage(deps, copy, { userId: ALICE.userId, isAdmin: false })).fork.credit.state, "source");
+  await publishFit(db, { id: source, authorUserId: ALICE.userId, buildSha: CURRENT_SHA });
+
+  await deleteFit(db, { id: source, authorUserId: ALICE.userId });
+  const orphan = await loadFitPage(deps, copy, ANONYMOUS);
+  assert.equal(orphan.status, "ok");
+  assert.deepEqual(orphan.fork, { credit: { state: "deleted" }, copies: 0 });
+});
+
+test("the bookmarks page data is the signed-in pilot's published bookmarks as cards that read as bookmarked", async () => {
+  const deps = depsFor(stub.url);
+  await setBookmark(db, { fitId: ids.showcase, userId: BOB.userId, bookmarked: true });
+  await setBookmark(db, { fitId: ids.removed, userId: BOB.userId, bookmarked: true });
+  const data = await loadBookmarks(deps, {}, BOB.userId);
+  assert.equal(data.status, "ok");
+  assert.deepEqual(data.cards.map((card) => card.id), [ids.removed, ids.showcase]);
+  assert.ok(data.cards.every((card) => card.bookmarked));
+  assert.deepEqual((await loadBookmarks(deps, {}, ALICE.userId)).cards, []);
+  const paged = await loadBookmarks(deps, new URLSearchParams("cursor=garbage"), BOB.userId);
+  assert.equal(paged.cards.length, 2, "an unreadable cursor is the first page");
+  assert.equal((await loadBookmarks(depsFor(stub.url, () => ({ status: "unavailable" })), {}, BOB.userId)).status, "unavailable");
+  const browse = await loadBrowse(deps, {}, { userId: BOB.userId, isAdmin: false });
+  assert.equal(browse.cards.find((card) => card.id === ids.showcase).bookmarked, true);
+  assert.equal(browse.cards.find((card) => card.id === ids.pending).bookmarked, false);
+  await setBookmark(db, { fitId: ids.showcase, userId: BOB.userId, bookmarked: false });
+  await setBookmark(db, { fitId: ids.removed, userId: BOB.userId, bookmarked: false });
 });

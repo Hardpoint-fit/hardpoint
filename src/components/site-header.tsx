@@ -14,22 +14,28 @@ export async function SiteHeader() {
   const { authEnabled } = getConfig();
   const author = authEnabled ? await currentAuthor() : null;
   return (
-    <header className="flex h-12 items-center gap-6 border-b border-[color:var(--panel-border)] bg-header px-4">
+    // Below sm the links drop to their own row under the logo and sign-in, so the header never scrolls sideways.
+    <header className="flex min-h-12 flex-wrap items-center gap-x-6 gap-y-1 border-b border-[color:var(--panel-border)] bg-header px-4 py-1">
       <Link href="/" className="flex items-center gap-2 text-[length:var(--font-size-header)] tracking-widest text-primary">
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed-size SVG gains nothing from next/image */}
         <img src="/logo.svg" width={24} height={24} alt="" />
         hardpoint.fit
       </Link>
-      <nav className="flex gap-4 text-[length:var(--font-size-small)] tracking-widest">
+      <nav className="order-last flex w-full flex-wrap gap-x-4 gap-y-1 text-[length:var(--font-size-small)] tracking-widest sm:order-none sm:w-auto">
         {NAV.map(({ href, label }) => (
           <Link key={href} href={href} className="text-secondary hover:text-accent">
             {label}
           </Link>
         ))}
         {author && (
-          <Link href={`/u/${encodeURIComponent(author.userId)}`} className="text-secondary hover:text-accent">
-            My fits
-          </Link>
+          <>
+            <Link href={`/u/${encodeURIComponent(author.userId)}`} className="text-secondary hover:text-accent">
+              My fits
+            </Link>
+            <Link href="/bookmarks" className="text-secondary hover:text-accent">
+              Bookmarks
+            </Link>
+          </>
         )}
       </nav>
       <div className="ml-auto flex items-center gap-3">

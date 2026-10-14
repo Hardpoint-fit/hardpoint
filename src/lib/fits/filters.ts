@@ -215,3 +215,29 @@ export function decodeCursor(text: string, sort: SortKey, filters: string): Curs
     return undefined;
   }
 }
+
+/**
+ * Where a page of bookmarks ended. Bookmarks list newest first by (bookmarked at, fit id), a total order.
+ * `at` is the database's own timestamp text, as in Cursor. The `bm` marker keeps a browse cursor from being
+ * taken for one of these, and the reverse.
+ */
+export type BookmarkCursor = { at: string; id: string };
+
+export function encodeBookmarkCursor(cursor: BookmarkCursor): string {
+  return toBase64Url(JSON.stringify({ kind: "bm", ...cursor }));
+}
+
+/** The cursor, or undefined for anything that isn't a bookmark cursor this site made. */
+export function decodeBookmarkCursor(text: string): BookmarkCursor | undefined {
+  if (!text || text.length > 300) return undefined;
+  try {
+    const value: unknown = JSON.parse(fromBase64Url(text));
+    if (typeof value !== "object" || value === null) return undefined;
+    const { kind, at, id } = value as Record<string, unknown>;
+    if (kind !== "bm" || typeof at !== "string" || !isPgTimestamp(at)) return undefined;
+    if (typeof id !== "string" || !FIT_ID.test(id)) return undefined;
+    return { at, id };
+  } catch {
+    return undefined;
+  }
+}

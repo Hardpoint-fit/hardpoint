@@ -19,6 +19,8 @@ import {
   type Report,
   type Viewer,
 } from "../fits/queries";
+import { listBookmarks } from "../fits/bookmarks";
+import { getForkInfo, type ForkInfo } from "../fits/forks";
 import { getPilotProfile, type PilotProfile } from "../fits/pilots";
 import { getRevision, listRevisions, parseRevisionParam, type Revision, type RevisionSummary } from "../fits/revisions";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
@@ -91,6 +93,8 @@ export type FitCard = {
   tags: string[];
   votes: number;
   comments: number;
+  /** Whether the viewer has bookmarked it. */
+  bookmarked: boolean;
   status: FitSummary["status"];
   standing: Standing;
   /** The engine's rating on the current build, or the last valid one for an outdated fit. */
@@ -111,6 +115,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
     tags: fit.tags,
     votes: fit.votes,
     comments: fit.comments,
+    bookmarked: fit.viewerBookmarked,
     status: fit.status,
     standing,
     rating,
@@ -153,6 +158,21 @@ export async function loadBrowse(
     hulls: hullInfos(engine.catalog),
     selectedModules: moduleInfos(engine.catalog, query.modules),
   };
+}
+
+export type BookmarksData = Unavailable | { status: "ok"; engine: PageEngine; cards: FitCard[]; nextCursor: string | null };
+
+/** The signed-in pilot's bookmarked fits that are published now, newest bookmark first. */
+export async function loadBookmarks(deps: SiteDeps, params: SearchParamsInput, userId: string): Promise<BookmarksData> {
+  const engine = await pageEngine(deps);
+  const db = databaseOf(deps);
+  if (!db) return { status: "unavailable", engine };
+  const cursor = params instanceof URLSearchParams ? params.get("cursor") : params.cursor;
+  const page = await guarded("bookmarks", () =>
+    listBookmarks(db, { userId, cursor: typeof cursor === "string" ? cursor : undefined, buildSha: engine.currentSha }),
+  );
+  if (!page) return { status: "unavailable", engine };
+  return { status: "ok", engine, cards: page.fits.map((fit) => toCard(fit, engine.catalog, engine.currentSha)), nextCursor: page.nextCursor };
 }
 
 export type AuthorData =
@@ -209,6 +229,8 @@ export type FitPageData =
       shown: Shown;
       grid: GridState;
       comments: CommentThread[];
+      /** Where the fit was copied from (as far as this viewer may be told) and how many published fits were copied from it. */
+      fork: ForkInfo;
       /** Newest first; empty for a fit with no history (published before history existed, or still a draft). */
       revisions: RevisionSummary[];
       /**
@@ -252,6 +274,7 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     return reachable ? { status: "not_found", engine } : { status: "unavailable", engine };
   }
   const comments = fit.status === "published" || viewer.isAdmin ? ((await guarded("comments", () => listComments(db, id, { viewer }))) ?? []) : [];
+  const fork = (await guarded("fork credit", () => getForkInfo(db, id, viewer))) ?? { credit: null, copies: 0 };
   const listed = await guarded("revisions", () => listRevisions(db, id));
   const revisions = listed ?? [];
   const current = shownEvaluation(fit, engine.currentSha);
@@ -279,6 +302,7 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     shown,
     grid: gridFor(shownFit, engine.catalog, shown),
     comments,
+    fork,
     revisions,
     revision,
   };

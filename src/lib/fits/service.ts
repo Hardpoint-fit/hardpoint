@@ -87,6 +87,8 @@ export type SaveDraftInput = {
   buildSha?: string | null;
   /** "What changed?", recorded with the revision when this saves a published fit. Ignored for a draft. */
   note?: string | null;
+  /** A new fit only: the fit it was copied from (createFit checks the author may see it). Ignored on an edit. */
+  forkedFrom?: string | null;
 };
 
 const UNKNOWN_BUILD = "unknown";
@@ -132,6 +134,7 @@ export async function saveDraft({ db, engine }: FitServiceDeps, input: SaveDraft
           content: content ?? invalid("A new fit needs its loadout."),
           buildSha: evaluation?.buildSha ?? input.buildSha ?? UNKNOWN_BUILD,
           evaluation,
+          forkedFrom: input.forkedFrom,
         });
     return { ok: true, fit, evaluation: evaluation ? "stored" : "skipped", engineError };
   } catch (error) {

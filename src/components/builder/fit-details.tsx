@@ -94,6 +94,7 @@ export function FitDetails({
   meta,
   dispatch,
   auth,
+  forkedFrom,
   saved,
   dirty,
   moduleName,
@@ -104,6 +105,8 @@ export function FitDetails({
   meta: FitMeta;
   dispatch: Dispatch<BuilderAction>;
   auth: BuilderAuth;
+  /** The fit this one was copied from; credited by the first save only (saveFitAction ignores it for an edit). */
+  forkedFrom: string | null;
   saved: SavedState;
   dirty: boolean;
   moduleName: (index: number) => string | null;
@@ -123,7 +126,7 @@ export function FitDetails({
   const steps = {
     saved,
     dirty,
-    save: (fitId: string | null) => saveFitAction(fitId, published ? { ...meta, note } : meta, fit),
+    save: (fitId: string | null) => saveFitAction(fitId, published ? { ...meta, note } : meta, fit, fitId === null ? forkedFrom : null),
     publish: (fitId: string) => publishFitAction(fitId),
     onSaved,
     navigate,

@@ -8,7 +8,7 @@ import type { PageViewer } from "#/lib/site/server";
 import { FittingGrid } from "#/components/grid/fitting-grid";
 import type { GridModule } from "#/components/grid/model";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
-import { CommentForm, DeleteComment, DeleteFitButton, EditComment, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
+import { BookmarkButton, CommentForm, DeleteComment, DeleteFitButton, EditComment, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
 import { StatsTable } from "./stats-table";
 import { HullSpecs, SPECS_PENDING } from "./hull-specs";
 import { ItemIcon } from "#/components/item-text";
@@ -92,6 +92,34 @@ function Comments({ threads, fitId, viewer, open }: { threads: CommentThread[]; 
         <CommentForm fitId={fitId} />
       )}
     </Panel>
+  );
+}
+
+/**
+ * Where the fit was copied from and how many published fits were copied from it. A source the viewer can't
+ * see (another pilot's draft or a hidden fit) is "another fit": no title, no pilot.
+ */
+function ForkNotes({ fork }: { fork: Ready["fork"] }) {
+  const { credit, copies } = fork;
+  if (!credit && copies === 0) return null;
+  return (
+    <div className="note fork-notes">
+      {credit?.state === "source" && (
+        <div>
+          BASED ON{" "}
+          <Link className="link" href={`/fits/${encodeURIComponent(credit.id)}`}>
+            {credit.title}
+          </Link>{" "}
+          BY{" "}
+          <Link className="link" href={`/u/${encodeURIComponent(credit.authorUserId)}`}>
+            {credit.authorName}
+          </Link>
+        </div>
+      )}
+      {credit?.state === "deleted" && <div>BASED ON A FIT THAT NO LONGER EXISTS</div>}
+      {credit?.state === "unseen" && <div>BASED ON ANOTHER FIT</div>}
+      {copies > 0 && <div>{copies} {copies === 1 ? "COPY" : "COPIES"}</div>}
+    </div>
   );
 }
 
@@ -239,10 +267,14 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               </Link>{" "}
               · {formatDate(fit.publishedAt ?? fit.updatedAt)}
             </div>
+            <ForkNotes fork={data.fork} />
             <div className="flex flex-wrap items-center gap-2">
               {!published ? null : viewer.authEnabled ? (
                 viewer.userId ? (
-                  <VoteButton fitId={fit.id} votes={fit.votes} voted={fit.viewerVoted} />
+                  <>
+                    <VoteButton fitId={fit.id} votes={fit.votes} voted={fit.viewerVoted} />
+                    <BookmarkButton fitId={fit.id} bookmarked={fit.viewerBookmarked} />
+                  </>
                 ) : (
                   <span className="note">
                     <span className="rating">{count(fit.votes, "UPVOTE")}</span> · SIGN IN TO VOTE

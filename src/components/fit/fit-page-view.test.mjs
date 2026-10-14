@@ -10,7 +10,8 @@ import { createEngineClient } from "../../lib/engine/client.ts";
 import { createEngineMonitor } from "../../lib/engine/engine-state.ts";
 import { deadEngineUrl, startStubEngine } from "../../lib/engine/stub-engine.mjs";
 import { createTestDb } from "../../lib/fits/test-db.mjs";
-import { updateFit } from "../../lib/fits/queries.ts";
+import { createFit, deleteFit, publishFit, unpublishFit, updateFit } from "../../lib/fits/queries.ts";
+import { setBookmark } from "../../lib/fits/bookmarks.ts";
 import { toEvaluationInput } from "../../lib/fits/service.ts";
 import { loadBrowse, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
@@ -229,4 +230,60 @@ test("each distinct module on a fit page links to the fits that use it", async (
   assert.match(html, /Fits using this module/);
   const defs = new Set(FIXTURES.fitShowcase.modules.map((module) => module.item.def));
   assert.equal(html.split("Fits using this module").length - 1, defs.size, "one link per distinct module");
+});
+
+async function copyOf(source, owner) {
+  const made = await createFit(db, {
+    authorUserId: owner.userId,
+    authorName: owner.name,
+    title: "Showcase copy",
+    content: { hullItem: FIXTURES.fit.hull.def, fit: FIXTURES.fit },
+    buildSha: FIXTURES.health.buildSha,
+    evaluation: { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: FIXTURES.health.buildSha },
+    forkedFrom: source,
+  });
+  await publishFit(db, { id: made.id, authorUserId: owner.userId, buildSha: FIXTURES.health.buildSha });
+  return made.id;
+}
+
+test("a copy says what it is based on and the source counts its copies; a deleted or unseen source is worded without names", async () => {
+  const copy = await copyOf(ids.showcase, BOB);
+  const plain = await renderFit(stub.url, ids.showcase, anonymous(false));
+  assert.doesNotMatch(plain, /BASED ON/);
+  assert.match(plain, />1 COPY</);
+  assert.doesNotMatch(plain, /COPIES</);
+  const forked = await renderFit(stub.url, copy, anonymous(false));
+  assert.match(forked, /BASED ON <a class="link" href="\/fits\/[A-Za-z0-9]+">Scarab cipher brawler<\/a> BY <a class="link" href="\/u\/user_alice">ALICE<\/a>/);
+  assert.doesNotMatch(forked, /COPY</);
+
+  await copyOf(ids.showcase, ALICE);
+  assert.match(await renderFit(stub.url, ids.showcase, anonymous(false)), />2 COPIES</);
+
+  await unpublishFit(db, { id: ids.showcase, authorUserId: ALICE.userId });
+  const unseen = await renderFit(stub.url, copy, anonymous(false));
+  assert.match(unseen, /BASED ON ANOTHER FIT/);
+  assert.doesNotMatch(unseen, /Scarab cipher brawler/);
+  await publishFit(db, { id: ids.showcase, authorUserId: ALICE.userId, buildSha: FIXTURES.health.buildSha });
+
+  const gone = await copyOf(ids.pending, BOB);
+  await deleteFit(db, { id: ids.pending, authorUserId: BOB.userId });
+  assert.match(await renderFit(stub.url, gone, anonymous(false)), /BASED ON A FIT THAT NO LONGER EXISTS/);
+});
+
+test("signed in, a published fit has a bookmark toggle that reads the pilot's own bookmark; signed out and sign-in off have none", async () => {
+  assert.match(await renderFit(stub.url, ids.showcase, signedIn(BOB)), /aria-pressed="false">BOOKMARK</);
+  await setBookmark(db, { fitId: ids.showcase, userId: BOB.userId, bookmarked: true });
+  assert.match(await renderFit(stub.url, ids.showcase, signedIn(BOB)), /aria-pressed="true">BOOKMARKED</);
+  assert.match(await renderFit(stub.url, ids.showcase, signedIn(ALICE)), /aria-pressed="false">BOOKMARK</, "someone else's bookmark isn't yours");
+  assert.doesNotMatch(await renderFit(stub.url, ids.showcase, anonymous(true)), /BOOKMARK/);
+  assert.doesNotMatch(await renderFit(stub.url, ids.showcase, anonymous(false)), /BOOKMARK/);
+  assert.doesNotMatch(await renderFit(stub.url, ids.draft, signedIn(ALICE)), /BOOKMARK/, "a draft can't be bookmarked");
+});
+
+test("browse cards carry the bookmark toggle only for a signed-in viewer, and only on published fits", async () => {
+  const data = await loadBrowse(deps(stub.url), {}, signedIn(BOB));
+  const cards = (canBookmark) => renderToStaticMarkup(h(PublicConfigProvider, { config: { engineUrl: stub.url, authEnabled: true } }, h(FitCards, { cards: data.cards, empty: "", canBookmark })));
+  assert.equal(count(cards(true), ">BOOKMARKED<"), 1, "the one BOB bookmarked");
+  assert.ok(count(cards(true), ">BOOKMARK<") >= 2);
+  assert.doesNotMatch(cards(false), /BOOKMARK/);
 });

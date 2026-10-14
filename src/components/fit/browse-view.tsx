@@ -5,6 +5,7 @@ import { MAX_SEARCH_LENGTH, toBrowseSearch, type BrowseQuery, type SortKey } fro
 import type { FitCard, HullInfo } from "#/lib/site/loaders";
 import { StandingBadge, count } from "#/components/ui";
 import { ItemIcon } from "#/components/item-text";
+import { BookmarkButton } from "#/components/fit/controls";
 import { ModuleFilter } from "#/components/fit/module-filter";
 import type { ModuleInfo } from "#/lib/site/module-search";
 
@@ -15,7 +16,8 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "discussed", label: "MOST DISCUSSED" },
 ];
 
-export function FitCardView({ card }: { card: FitCard }) {
+/** `canBookmark`: the viewer is signed in, so a published card carries the bookmark toggle. */
+export function FitCardView({ card, canBookmark = false }: { card: FitCard; canBookmark?: boolean }) {
   return (
     <li className="fit-card">
       <Link className="fit-card__link" href={`/fits/${card.id}`}>
@@ -41,6 +43,7 @@ export function FitCardView({ card }: { card: FitCard }) {
         <span className="flex flex-wrap gap-1">
           {card.status !== "published" && <span className={`badge badge--${card.status}`}>{card.status.toUpperCase()}</span>}
           <StandingBadge standing={card.standing} quiet />
+          {canBookmark && card.status === "published" && <BookmarkButton fitId={card.id} bookmarked={card.bookmarked} />}
         </span>
       </span>
       {card.tags.length > 0 && (
@@ -56,12 +59,12 @@ export function FitCardView({ card }: { card: FitCard }) {
   );
 }
 
-export function FitCards({ cards, empty }: { cards: FitCard[]; empty: string }) {
+export function FitCards({ cards, empty, canBookmark = false }: { cards: FitCard[]; empty: string; canBookmark?: boolean }) {
   if (cards.length === 0) return <div className="empty-state">{empty}</div>;
   return (
     <ul className="fit-cards">
       {cards.map((card) => (
-        <FitCardView key={card.id} card={card} />
+        <FitCardView key={card.id} card={card} canBookmark={canBookmark} />
       ))}
     </ul>
   );
@@ -174,6 +177,18 @@ export function MoreLink({ query, cursor, path = "/" }: { query: BrowseQuery; cu
   return (
     <div className="flex justify-center">
       <Link className="btn btn--quiet" href={`${path}?${search.toString()}`}>
+        MORE FITS
+      </Link>
+    </div>
+  );
+}
+
+/** The link to the next page of the bookmarks list (its cursor is its own, not a browse state). */
+export function MoreBookmarks({ cursor }: { cursor: string | null }) {
+  if (!cursor) return null;
+  return (
+    <div className="flex justify-center">
+      <Link className="btn btn--quiet" href={`/bookmarks?${new URLSearchParams({ cursor })}`}>
         MORE FITS
       </Link>
     </div>

@@ -59,6 +59,9 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   const [picking, setPicking] = useState(false);
   const [importing, setImporting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  // The fit this one was copied from, credited on its first save. Importing a fit string or starting over
+  // replaces what was copied, so either one drops the credit.
+  const [copiedFrom, setCopiedFrom] = useState(start.copiedFrom);
   const [ghost, setGhost] = useState<{ x: number; y: number; name: string } | null>(null);
 
   const fit = state.fit;
@@ -205,11 +208,13 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
     if (!confirmReset) return setConfirmReset(true);
     setConfirmReset(false);
     clearDraft(browserStorage(), slot);
+    setCopiedFrom(null);
     dispatch({ type: "reset" });
   };
   const onImported = (imported: typeof fit) => {
     if (!imported) return;
     dispatch({ type: "load", fit: imported });
+    setCopiedFrom(null);
     setImporting(false);
     setNotice("FIT STRING IMPORTED.");
   };
@@ -267,11 +272,11 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
           {notice}
         </p>
       )}
-      {start.copiedFrom && (
+      {copiedFrom && (
         <p className="note">
           COPIED FROM{" "}
-          <Link className="link" href={`/fits/${start.copiedFrom.id}`}>
-            {start.copiedFrom.title}
+          <Link className="link" href={`/fits/${copiedFrom.id}`}>
+            {copiedFrom.title}
           </Link>
           . SAVING MAKES A NEW FIT OF YOUR OWN.
         </p>
@@ -393,6 +398,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
             meta={state.meta}
             dispatch={dispatch}
             auth={auth}
+            forkedFrom={copiedFrom?.id ?? null}
             saved={saved}
             dirty={dirty}
             moduleName={moduleName}

@@ -6,9 +6,11 @@ import { createEngineClient } from "../engine/client.ts";
 import { startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { addComment, bookmark, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { listRevisions } from "../fits/revisions.ts";
+import { listBookmarks } from "../fits/bookmarks.ts";
+import { getForkInfo } from "../fits/forks.ts";
 import { getPilotProfile } from "../fits/pilots.ts";
 import { WRITE_BUDGETS } from "../fits/write-limits.ts";
 import { ADMIN, ALICE, BOB, seedSite } from "./seed.mjs";
@@ -265,4 +267,54 @@ test("a too-long note is refused as a value and saves nothing; another pilot's f
   assert.equal(forged.status, 403);
   assert.equal((await listRevisions(db, ids.showcase)).length, before);
   assert.equal((await getFit(db, ids.showcase)).title, "Scarab cipher brawler");
+});
+
+test("bookmarks need sign-in and a database, are idempotent, refuse unpublished fits, and spend their own budget", async () => {
+  assert.equal((await bookmark(deps(authAs(BOB.userId, { enabled: false })), { fitId: ids.showcase, bookmarked: true })).status, 503);
+  assert.equal((await bookmark(deps(authAs(null)), { fitId: ids.showcase, bookmarked: true })).status, 401);
+  assert.equal((await bookmark(deps(authAs(BOB.userId), { database: { status: "unavailable" } }), { fitId: ids.showcase, bookmarked: true })).status, 503);
+  const bob = deps(authAs(BOB.userId));
+  assert.deepEqual(await bookmark(bob, { fitId: ids.showcase, bookmarked: true }), { ok: true, bookmarked: true });
+  assert.deepEqual(await bookmark(bob, { fitId: ids.showcase, bookmarked: true }), { ok: true, bookmarked: true });
+  assert.deepEqual((await listBookmarks(db, { userId: BOB.userId })).fits.map((fit) => fit.id), [ids.showcase]);
+  assert.equal((await bookmark(bob, { fitId: ids.draft, bookmarked: true })).status, 404, "another pilot's draft");
+  assert.equal((await bookmark(bob, { fitId: "nope", bookmarked: true })).status, 404);
+  assert.deepEqual(await bookmark(bob, { fitId: ids.showcase, bookmarked: false }), { ok: true, bookmarked: false });
+  assert.deepEqual(await bookmark(bob, { fitId: ids.showcase, bookmarked: false }), { ok: true, bookmarked: false });
+  assert.deepEqual((await listBookmarks(db, { userId: BOB.userId })).fits, []);
+
+  const now = new Date("2026-10-14T12:00:00Z");
+  const limited = { ...deps(authAs(BOB.userId)), now: () => now };
+  const spent = WRITE_BUDGETS.bookmark[0].limit;
+  assert.equal(spent, 60);
+  for (let i = 0; i < spent; i++) assert.equal((await bookmark(limited, { fitId: ids.showcase, bookmarked: i % 2 === 0 })).ok, true);
+  const refused = await bookmark(limited, { fitId: ids.showcase, bookmarked: true });
+  assert.equal(refused.status, 429);
+  assert.equal(refused.reason, "rate_limited");
+  assert.equal((await vote(limited, { fitId: ids.pending, voted: true })).ok, true, "votes have their own budget");
+});
+
+test("a new fit saved with a source is credited once; an edit, a hidden source and a forged id add or change nothing", async () => {
+  const bob = deps(authAs(BOB.userId));
+  const created = await saveFit(bob, { fitId: null, title: "My take", description: "", tags: [], fit: FIXTURES.fit, forkedFrom: ids.showcase });
+  assert.equal(created.ok, true);
+  const id = created.fit.fitId;
+  const credit = async () => (await getForkInfo(db, id, { userId: BOB.userId, isAdmin: false })).credit;
+  assert.equal((await credit()).id, ids.showcase);
+
+  // Saving again with another source (or none) changes nothing: the credit is for the first save.
+  assert.equal((await saveFit(bob, { fitId: id, title: "My take 2", description: "", tags: [], fit: FIXTURES.fit, forkedFrom: ids.removed })).ok, true);
+  assert.equal((await credit()).id, ids.showcase);
+  assert.equal((await saveFit(bob, { fitId: id, title: "My take 3", description: "", tags: [], fit: FIXTURES.fit })).ok, true);
+  assert.equal((await credit()).id, ids.showcase);
+
+  // A source Bob may not see, or that doesn't exist, is not an error: the fit is just not credited.
+  for (const forkedFrom of [ids.draft, "0000000000", "x".repeat(500), undefined, null]) {
+    const result = await saveFit(bob, { fitId: null, title: "Uncredited", description: "", tags: [], fit: FIXTURES.fit, forkedFrom });
+    assert.equal(result.ok, true, String(forkedFrom).slice(0, 12));
+    assert.equal((await getForkInfo(db, result.fit.fitId, { userId: BOB.userId, isAdmin: false })).credit, null);
+  }
+  // The same source is fine for its own author.
+  const own = await saveFit(deps(authAs(ALICE.userId)), { fitId: null, title: "From my draft", description: "", tags: [], fit: FIXTURES.fit, forkedFrom: ids.draft });
+  assert.equal((await getForkInfo(db, own.fit.fitId, { userId: ALICE.userId, isAdmin: false })).credit.state, "source");
 });

@@ -5,6 +5,7 @@
 import { useState, useTransition, type FormEvent } from "react";
 import {
   addCommentAction,
+  bookmarkAction,
   deleteCommentAction,
   deleteFitAction,
   unpublishFitAction,
@@ -40,6 +41,28 @@ export function VoteButton({ fitId, votes, voted }: { fitId: string; votes: numb
     <span className="flex flex-wrap items-center gap-2">
       <button type="button" className={`btn ${state.voted ? "btn--on" : ""}`} onClick={toggle} disabled={pending} aria-pressed={state.voted}>
         {state.voted ? "UPVOTED" : "UPVOTE"} <span className="rating">{state.votes}</span>
+      </button>
+      <Problem message={problem} />
+    </span>
+  );
+}
+
+/** Toggles the signed-in pilot's bookmark on a published fit; the state shown is the server's last answer. */
+export function BookmarkButton({ fitId, bookmarked }: { fitId: string; bookmarked: boolean }) {
+  const [state, setState] = useState(bookmarked);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const toggle = () =>
+    start(async () => {
+      setProblem(null);
+      const result = await bookmarkAction(fitId, !state);
+      if (result.ok) setState(result.bookmarked);
+      else setProblem(result.message);
+    });
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <button type="button" className={`btn btn--quiet ${state ? "btn--on" : ""}`} onClick={toggle} disabled={pending} aria-pressed={state}>
+        {state ? "BOOKMARKED" : "BOOKMARK"}
       </button>
       <Problem message={problem} />
     </span>

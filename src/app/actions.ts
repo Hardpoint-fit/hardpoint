@@ -24,6 +24,13 @@ export async function voteAction(fitId: unknown, voted: unknown): Promise<core.A
   return result;
 }
 
+export async function bookmarkAction(fitId: unknown, bookmarked: unknown): Promise<core.ActionResult<{ bookmarked: boolean }>> {
+  if (!isId(fitId) || typeof bookmarked !== "boolean") return BAD_INPUT;
+  const result = await core.bookmark(actionDeps(), { fitId, bookmarked });
+  if (result.ok) revalidatePath("/bookmarks");
+  return result;
+}
+
 export async function addCommentAction(fitId: unknown, parentId: unknown, body: unknown): Promise<core.ActionResult<{ comment: { id: string } }>> {
   if (!isId(fitId) || (parentId !== null && !isId(parentId)) || !text(body, 20_000)) return BAD_INPUT;
   const result = await core.addComment(actionDeps(), { fitId, parentId, body });
@@ -82,11 +89,14 @@ function isMeta(value: unknown): value is { title: string; description: string; 
   );
 }
 
-/** The build a draft is recorded against when the engine can't check it comes from the server's catalog, not the browser. */
-export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown): Promise<core.ActionResult<{ fit: core.SavedFit }>> {
-  if ((fitId !== null && !isId(fitId)) || !isMeta(meta)) return BAD_INPUT;
+/**
+ * The build a draft is recorded against when the engine can't check it comes from the server's catalog, not the browser.
+ * `forkedFrom` is the fit a new fit was copied from (null when it wasn't); the data layer decides whether to credit it.
+ */
+export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown, forkedFrom: unknown = null): Promise<core.ActionResult<{ fit: core.SavedFit }>> {
+  if ((fitId !== null && !isId(fitId)) || (forkedFrom !== null && !isId(forkedFrom)) || !isMeta(meta)) return BAD_INPUT;
   if (!isEditableFit(fit) || JSON.stringify(fit).length > FIT_JSON_MAX_BYTES) return BAD_INPUT;
-  const result = await core.saveFit(actionDeps(), { fitId, title: meta.title, description: meta.description, tags: meta.tags, note: meta.note, fit });
+  const result = await core.saveFit(actionDeps(), { fitId, title: meta.title, description: meta.description, tags: meta.tags, note: meta.note, forkedFrom, fit });
   if (result.ok) revalidatePath(`/fits/${result.fit.fitId}`);
   return result;
 }

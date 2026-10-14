@@ -32,7 +32,7 @@ export default async function AuthorPage({ params, searchParams }: { params: Par
           <div className="page-title">
             <span className="eyebrow">{own ? "YOUR FITS AND DRAFTS" : "PUBLISHED FITS"}</span>
           </div>
-          <FitCards cards={data.cards} empty={own ? "YOU HAVEN'T SAVED A FIT YET." : "THIS PILOT HASN'T PUBLISHED A FIT."} />
+          <FitCards cards={data.cards} empty={own ? "YOU HAVEN'T SAVED A FIT YET." : "THIS PILOT HASN'T PUBLISHED A FIT."} canBookmark={viewer.authEnabled && viewer.userId !== null} />
           <MoreLink query={data.query} cursor={data.nextCursor} path={`/u/${encodeURIComponent(userId)}`} />
         </>
       )}

@@ -65,6 +65,8 @@ export type FitSummary = {
   votes: number;
   comments: number;
   viewerVoted: boolean;
+  /** Whether the viewer has bookmarked it (always false signed out). */
+  viewerBookmarked: boolean;
   /** The verdict for the build asked about (`buildSha`), or null when that build hasn't evaluated it. */
   evaluation: Evaluation | null;
   /** The newest valid verdict on any build: what an outdated fit still shows for reference. */
@@ -281,12 +283,13 @@ const VOTES_SQL = `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id)
 const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden AND c.deleted_at IS NULL
   AND NOT EXISTS (SELECT 1 FROM fit_comments p WHERE p.id = c.parent_id AND p.hidden))`;
 
-function summaryColumns(shaRef: string, viewerRef: string): string {
+export function summaryColumns(shaRef: string, viewerRef: string): string {
   return `f.id, f.author_user_id, p.name AS author_name, f.title, f.hull_item, f.tags, f.status,
     f.created_at, f.updated_at, f.published_at,
     ${VOTES_SQL} AS votes,
     ${COMMENTS_SQL} AS comments,
     EXISTS (SELECT 1 FROM fit_votes v WHERE v.fit_id = f.id AND v.user_id = ${viewerRef}::text) AS viewer_voted,
+    EXISTS (SELECT 1 FROM fit_bookmarks bm WHERE bm.fit_id = f.id AND bm.user_id = ${viewerRef}::text) AS viewer_bookmarked,
     (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = ${shaRef}::text) AS evaluation,
     (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.valid
        ORDER BY e.evaluated_at DESC, e.build_sha DESC LIMIT 1) AS last_valid_evaluation`;
@@ -305,7 +308,7 @@ function mapEvaluation(value: unknown): Evaluation | null {
   };
 }
 
-function mapSummary(row: Row): FitSummary {
+export function mapSummary(row: Row): FitSummary {
   return {
     id: row.id,
     authorUserId: row.author_user_id,
@@ -320,6 +323,7 @@ function mapSummary(row: Row): FitSummary {
     votes: row.votes,
     comments: row.comments,
     viewerVoted: row.viewer_voted,
+    viewerBookmarked: row.viewer_bookmarked,
     evaluation: mapEvaluation(row.evaluation),
     lastValidEvaluation: mapEvaluation(row.last_valid_evaluation),
   };
@@ -480,6 +484,11 @@ export type CreateFitInput = {
   buildSha: string;
   /** The engine's verdict on `content` for `buildSha`, stored with the fit. */
   evaluation?: EvaluationInput;
+  /**
+   * The fit this one was copied from. Recorded only when that fit exists and the author may see it (published,
+   * or their own); anything else stores no credit and is not an error.
+   */
+  forkedFrom?: string | null;
 };
 
 /**
@@ -529,9 +538,10 @@ export async function createFit(db: Db, input: CreateFitInput): Promise<FitDetai
       return await db.transaction(async (tx) => {
         await ensurePilot(tx, { userId: input.authorUserId, name: input.authorName });
         await tx.query(
-          `INSERT INTO fits (id, author_user_id, title, description, hull_item, tags, fit, created_build_sha)
-           VALUES ($1, $2, $3, $4, $5, $6::text[], $7::jsonb, $8)`,
-          [id, input.authorUserId, title, description, hullItem, tags, json, input.buildSha],
+          `INSERT INTO fits (id, author_user_id, title, description, hull_item, tags, fit, created_build_sha, forked_from)
+           VALUES ($1, $2, $3, $4, $5, $6::text[], $7::jsonb, $8,
+             (SELECT s.id FROM fits s WHERE s.id = $9::text AND (s.status = 'published' OR s.author_user_id = $2)))`,
+          [id, input.authorUserId, title, description, hullItem, tags, json, input.buildSha, input.forkedFrom && ID.test(input.forkedFrom) ? input.forkedFrom : null],
         );
         if (input.evaluation) await insertEvaluation(tx, id, input.evaluation);
         const fit = await getFit(tx, id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha });
@@ -655,15 +665,19 @@ export async function unpublishFit(db: Queryable, input: { id: string; authorUse
 }
 
 /**
- * Deletes the author's own fit in whatever status, with its votes, comments, evaluations (all cascade) and
- * every report about the fit or its comments (target_id is text, not a foreign key, so they are deleted
- * here). One statement: ownership is the WHERE and the reports go in the same snapshot as the fit.
+ * Deletes the author's own fit in whatever status, with its votes, bookmarks, revisions, comments,
+ * evaluations (all cascade) and every report about the fit or its comments (target_id is text, not a foreign
+ * key, so they are deleted here). Its forks keep working: the same statement nulls their `forked_from` and marks
+ * them `forked_from_deleted` (the foreign key's SET NULL is then a no-op, and the CHECK that the two never
+ * coexist holds throughout), so the page can say the source no longer exists. One
+ * statement: ownership is the WHERE and the reports and marks go in the same snapshot as the fit.
  * False when there is no such fit of theirs.
  */
 export async function deleteFit(db: Queryable, input: { id: string; authorUserId: string }): Promise<boolean> {
   if (!ID.test(input.id)) return false;
   const { rows } = await db.query(
     `WITH gone AS (DELETE FROM fits WHERE id = $1 AND author_user_id = $2 RETURNING id),
+     forks AS (UPDATE fits SET forked_from = NULL, forked_from_deleted = true WHERE forked_from IN (SELECT id FROM gone)),
      reports AS (
        DELETE FROM fit_reports r
        WHERE (r.target_kind = 'fit' AND r.target_id IN (SELECT id FROM gone))
