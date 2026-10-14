@@ -208,6 +208,24 @@ export function boundsOf(cells: readonly Cell[]): Bounds | null {
 }
 
 /**
+ * The cells a module's icon is centred on, as the game's ApplyIconLayout and IconOrigin place it: a
+ * rectangle's whole bounds; on an L or a T, the one cell its arms meet at (the cell with the most
+ * neighbours in the shape).
+ */
+export function iconArea(cells: readonly Cell[]): Bounds | null {
+  const box = boundsOf(cells);
+  if (!box || cells.length === box.rows * box.cols) return box;
+  const keys = new Set(cells.map(cellKey));
+  const neighbours = (cell: Cell) =>
+    DIRECTIONS.filter((direction) => {
+      const offset = directionOffset(direction);
+      return keys.has(cellKey({ row: cell.row + offset.row, col: cell.col + offset.col }));
+    }).length;
+  const elbow = cells.reduce((best, cell) => (neighbours(cell) > neighbours(best) ? cell : best), cells[0]!);
+  return { minRow: elbow.row, minCol: elbow.col, rows: 1, cols: 1 };
+}
+
+/**
  * The part of a hull's grid worth drawing: every enabled cell and every `extra` cell (items that
  * stick out), with a one-cell margin, clamped to the grid (the prototype's fittingVisibleBounds).
  */

@@ -5,7 +5,7 @@
 // optional handlers and drag state from a client component.
 import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import art from "./fitting-art.generated.json";
-import { boundsOf, cellKey, directionOffset, oppositeDirection, outerEdges, visibleBounds, type Bounds, type Cell, type Direction } from "./geometry";
+import { boundsOf, cellKey, iconArea, directionOffset, oppositeDirection, outerEdges, visibleBounds, type Bounds, type Cell, type Direction } from "./geometry";
 import { moduleCells, type GridModel, type GridModule } from "./model";
 import { ModuleTooltip } from "./module-tooltip";
 import { ItemIcon } from "#/components/item-text";
@@ -56,30 +56,20 @@ const px = (cells: number) => cells * CELL;
 const ICON_INSET = 6;
 const MIN_ICON = 16;
 
-/**
- * Where a module's icon sits, as the game's ApplyIconLayout and IconOrigin place it: a square as large as
- * the footprint's short side less the inset, centred on a rectangle; on an L or a T, one cell's size,
- * on the cell its arms meet at (the cell with the most neighbours in the shape).
- */
+/** Where a module's icon sits: a square as large as its icon area's short side less the inset, centred on it. */
 export function iconBox(cells: readonly Cell[]): { left: number; top: number; size: number } | null {
   const box = boundsOf(cells);
-  if (!box) return null;
+  const area = iconArea(cells);
+  if (!box || !area) return null;
   const extent = (n: number) => px(n) - 2 * INSET;
-  if (cells.length === box.rows * box.cols) {
-    const width = extent(box.cols);
-    const height = extent(box.rows);
-    const size = Math.max(MIN_ICON, Math.min(width, height) - 2 * ICON_INSET);
-    return { left: INSET + Math.round((width - size) / 2), top: INSET + Math.round((height - size) / 2), size };
-  }
-  const keys = new Set(cells.map(cellKey));
-  const neighbours = (cell: Cell) =>
-    (["Up", "Down", "Left", "Right"] as const).filter((direction) => {
-      const offset = directionOffset(direction);
-      return keys.has(cellKey({ row: cell.row + offset.row, col: cell.col + offset.col }));
-    }).length;
-  const elbow = cells.reduce((best, cell) => (neighbours(cell) > neighbours(best) ? cell : best), cells[0]!);
-  const size = Math.max(MIN_ICON, extent(1) - 2 * ICON_INSET);
-  return { left: px(elbow.col - box.minCol) + INSET + ICON_INSET, top: px(elbow.row - box.minRow) + INSET + ICON_INSET, size };
+  const width = extent(area.cols);
+  const height = extent(area.rows);
+  const size = Math.max(MIN_ICON, Math.min(width, height) - 2 * ICON_INSET);
+  return {
+    left: px(area.minCol - box.minCol) + INSET + Math.round((width - size) / 2),
+    top: px(area.minRow - box.minRow) + INSET + Math.round((height - size) / 2),
+    size,
+  };
 }
 
 /** The part of the grid drawn: cropped bounds that also take in every module cell. */

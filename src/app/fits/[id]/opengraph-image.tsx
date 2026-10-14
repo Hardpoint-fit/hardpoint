@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import art from "#/components/grid/fitting-art.generated.json";
-import { boundsOf } from "#/components/grid/geometry";
+import { boundsOf, iconArea } from "#/components/grid/geometry";
 import { moduleCells, type GridModel } from "#/components/grid/model";
 import { art2x } from "#/lib/art/art-manifest";
 import { logoDataUri } from "#/lib/brand/logo";
@@ -21,7 +21,7 @@ const FONT = join(process.cwd(), "src/app/fonts/VCROSDNEUE.ttf");
 const T = art.tokens;
 const TIERS = art.tiers as Record<string, { bg: string; border: string; base: string }>;
 
-function MiniGrid({ model }: { model: GridModel }) {
+function MiniGrid({ model, icons }: { model: GridModel; icons: ReadonlyMap<string, string> }) {
   const cells = model.modules.flatMap(moduleCells);
   const enabled = model.slots.flatMap((slot, index) => (slot === "None" ? [] : [{ row: Math.floor(index / model.cols), col: index % model.cols }]));
   const box = boundsOf([...enabled, ...cells]);
@@ -54,15 +54,33 @@ function MiniGrid({ model }: { model: GridModel }) {
           />
         ));
       })}
+      {model.modules.map((module) => {
+        const icon = module.icon ? icons.get(module.icon) : undefined;
+        const area = iconArea(moduleCells(module));
+        if (!icon || !area) return null;
+        // As in the builder: a square on the icon area's short side, less an inset, centred on it.
+        const size = Math.min(area.rows, area.cols) * cell - Math.round(cell * 0.3);
+        const { left, top } = at(area.minRow, area.minCol);
+        return (
+          <img
+            key={`i${module.index}`}
+            src={icon}
+            width={size}
+            height={size}
+            alt=""
+            style={{ position: "absolute", left: left + (area.cols * cell - size) / 2, top: top + (area.rows * cell - size) / 2, objectFit: "contain" }}
+          />
+        );
+      })}
     </div>
   );
 }
 
 /**
- * The hull's game art as a PNG data URI for the card (the share card's renderer takes PNG, not WebP), or
- * null when it has none or it can't be read: the card then goes without.
+ * Game art as a PNG data URI for the card (the share card's renderer takes PNG, not WebP), or null when
+ * there is none or it can't be read: the card then goes without that image.
  */
-async function hullArt(url: string | null): Promise<string | null> {
+async function artPng(url: string | null): Promise<string | null> {
   if (!url) return null;
   try {
     const { default: sharp } = await import("sharp");
@@ -70,7 +88,7 @@ async function hullArt(url: string | null): Promise<string | null> {
     return `data:image/png;base64,${png.toString("base64")}`;
   } catch (error) {
     // The card goes out without the art; say why, so a missing sharp build or image shows in the logs.
-    console.warn(`share card: hull art ${url} could not be converted: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(`share card: art ${url} could not be converted: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }
@@ -94,7 +112,9 @@ export default async function FitCard({ params }: { params: Params }) {
   }
   const { fit, shown, grid } = data;
   const hull = data.hull?.name ?? "UNKNOWN HULL";
-  const icon = await hullArt(data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null);
+  const icon = await artPng(data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null);
+  const moduleArt = grid.status === "ready" ? [...new Set(grid.model.modules.flatMap((module) => (module.icon ? [module.icon] : [])))] : [];
+  const icons = new Map((await Promise.all(moduleArt.map(async (url) => [url, await artPng(url)] as const))).flatMap(([url, png]) => (png ? [[url, png] as const] : [])));
   const rating = shown.reference?.rating ?? null;
   const standing = shown.standing === "outdated" ? { text: "OUTDATED", color: T["state-negative"] } : shown.standing === "current" ? { text: "WORKS ON CURRENT BUILD", color: T["state-positive"] } : null;
   return new ImageResponse(
@@ -121,7 +141,7 @@ export default async function FitCard({ params }: { params: Params }) {
         </div>
       </div>
       <div style={{ display: "flex", width: 470, alignItems: "center", justifyContent: "center", background: T["panel-bg"], border: `1px solid ${T["accent-muted"]}` }}>
-        {grid.status === "ready" ? <MiniGrid model={grid.model} /> : <div style={{ display: "flex", fontSize: 24, color: T["text-secondary"] }}>{hull}</div>}
+        {grid.status === "ready" ? <MiniGrid model={grid.model} icons={icons} /> : <div style={{ display: "flex", fontSize: 24, color: T["text-secondary"] }}>{hull}</div>}
       </div>
     </div>,
     { ...size, fonts },

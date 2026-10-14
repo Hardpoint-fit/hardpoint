@@ -4,6 +4,7 @@ import test from "node:test";
 import { FIXTURES } from "../../lib/engine/stub-engine.mjs";
 import {
   applySlotOverrides,
+  iconArea,
   occupiedCells,
   outerEdges,
   overlappingItems,
@@ -134,4 +135,14 @@ test("the visible part of a hull is its enabled cells with a one-cell margin", (
 test("slot overrides replace a hull cell's slot type", () => {
   const slots = applySlotOverrides(["None", "Core"], [{ cell: 0, slotType: "Core" }, { cell: 9, slotType: "Core" }]);
   assert.deepEqual(slots, ["Core", "Core"]);
+});
+
+test("a module's icon centres on a rectangle's bounds and on the elbow of an L or a T", () => {
+  const rect = [{ row: 2, col: 3 }, { row: 2, col: 4 }, { row: 3, col: 3 }, { row: 3, col: 4 }];
+  assert.deepEqual(iconArea(rect), { minRow: 2, minCol: 3, rows: 2, cols: 2 });
+  const ell = [{ row: 0, col: 0 }, { row: 1, col: 0 }, { row: 1, col: 1 }];
+  assert.deepEqual(iconArea(ell), { minRow: 1, minCol: 0, rows: 1, cols: 1 });
+  const tee = [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 1, col: 1 }];
+  assert.deepEqual(iconArea(tee), { minRow: 0, minCol: 1, rows: 1, cols: 1 });
+  assert.equal(iconArea([]), null);
 });
