@@ -66,6 +66,21 @@ function Cell({ row, tag }: { row: SpecRow | null; tag: string }) {
   );
 }
 
+function TextCell({ text, tag }: { text: string; tag: string }) {
+  return (
+    <span className="compare-row__cell">
+      <span className="compare-row__tag">{tag}</span>
+      {text === "—" ? (
+        <span className="compare-missing" aria-label="Missing">
+          —
+        </span>
+      ) : (
+        <span className="specs__value">{text}</span>
+      )}
+    </span>
+  );
+}
+
 function ModuleColumn({ title, rows, side }: { title: string; rows: ModuleRow[]; side: "a" | "b" | "both" }) {
   return (
     <div className="flex flex-col gap-2">
@@ -142,6 +157,21 @@ export function CompareView({ data, signedIn }: { data: Ready; signedIn: boolean
               </div>
             )}
           </Panel>
+          {data.affinity.length > 0 && (
+            <Panel title="AFFINITY" aside="CHANGED VALUES ARE HIGHLIGHTED">
+              <div className="specs">
+                <section className="specs__section" aria-label="Affinity">
+                  {data.affinity.map((row) => (
+                    <div key={row.id} className={`compare-row ${row.differs ? "compare-row--differs" : ""}`} data-differs={row.differs}>
+                      <span className="compare-row__label">{row.label}</span>
+                      <TextCell text={row.a} tag="A" />
+                      <TextCell text={row.b} tag="B" />
+                    </div>
+                  ))}
+                </section>
+              </div>
+            </Panel>
+          )}
           <Panel title="MODULES">
             <div className="compare-modules">
               <ModuleColumn title="ONLY IN A" rows={data.modules.onlyA} side="a" />

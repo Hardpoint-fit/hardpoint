@@ -4,7 +4,7 @@
 // owner of the loadout; everything drawn is derived from it.
 import { cellKey, type Cell } from "#/components/grid/geometry";
 import type { OpenFit, OpenItem, OpenModule, OpenRoll } from "#/lib/engine/types";
-import { allocate, selectThreshold, setLevel } from "./affinity";
+import { allocate, selectThreshold, setLevel } from "#/components/affinity/affinity";
 import { dropPreview, firstOpenCell, gridOf, type Held } from "./placement";
 import * as edits from "./roll-edits";
 import { ammoOptions, hullSubject, moduleSubject, patinaMax, type BuilderCatalog, type RollSubject, type Slot } from "./rules";

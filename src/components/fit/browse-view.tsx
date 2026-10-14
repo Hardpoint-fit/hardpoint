@@ -63,6 +63,11 @@ export function FitCardView({ card, canBookmark = false }: { card: FitCard; canB
           {card.rating !== null && card.standing !== "outdated" && <span className="rating">RATING {card.rating}</span>}
         </span>
         <span className="flex flex-wrap gap-1">
+          {card.affinity && (
+            <span className="chip" title="Affinity type and ship level">
+              {card.affinity}
+            </span>
+          )}
           {card.status !== "published" && <span className={`badge badge--${card.status}`}>{card.status.toUpperCase()}</span>}
           <StandingBadge standing={card.standing} quiet />
           {canBookmark && card.status === "published" && <BookmarkButton fitId={card.id} bookmarked={card.bookmarked} />}

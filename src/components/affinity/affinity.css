@@ -1,0 +1,125 @@
+/* ---- Affinity ---------------------------------------------------------------------------------- */
+
+.affinity__unspent {
+  color: rgba(255, 180, 60, 1);
+}
+
+.affinity__ship {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-lg);
+}
+
+.affinity__level .select {
+  width: 120px;
+}
+
+.affinity__types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  align-items: start;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.affinity-type {
+  background: var(--surface-default);
+}
+
+.affinity-type__head {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  padding: 6px var(--spacing-sm);
+  color: var(--text-primary-muted);
+  font: inherit;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.affinity-type__head:hover,
+.affinity-type__head:focus-visible,
+.affinity-type__head[aria-expanded="true"] {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.affinity-type--spent .affinity-type__points {
+  color: var(--accent-orange);
+}
+
+.affinity-type__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+}
+
+.affinity-bonus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+}
+
+.affinity-bonus__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stepper__value {
+  min-width: 2ch;
+  color: var(--state-quantity);
+  text-align: center;
+}
+
+.affinity-tier {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px solid var(--rule);
+  padding-top: var(--spacing-sm);
+}
+
+.affinity-tier--locked .choices {
+  opacity: 0.6;
+}
+
+.affinity__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+  color: var(--text-primary);
+  letter-spacing: 0.12em;
+}
+
+.affinity-type__head--static {
+  cursor: default;
+}
+
+.affinity-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+}
+

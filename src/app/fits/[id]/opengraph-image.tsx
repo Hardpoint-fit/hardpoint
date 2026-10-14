@@ -9,6 +9,7 @@ import { art2x } from "#/lib/art/art-manifest";
 import { logoDataUri } from "#/lib/brand/logo";
 import { itemIcon } from "#/lib/art/item-icon";
 import { isOpenFit } from "#/lib/engine/open-fit";
+import { affinityTag } from "#/components/affinity/affinity";
 import { loadFitPage } from "#/lib/site/loaders";
 import { siteDeps } from "#/lib/site/server";
 
@@ -128,6 +129,7 @@ export default async function FitCard({ params }: { params: Params }) {
   const moduleArt = grid.status === "ready" ? [...new Set(grid.model.modules.flatMap((module) => (module.icon ? [module.icon] : [])))] : [];
   const icons = new Map((await Promise.all(moduleArt.map(async (url) => [url, await artPng(url)] as const))).flatMap(([url, png]) => (png ? [[url, png] as const] : [])));
   const rating = shown.reference?.rating ?? null;
+  const affinity = data.progression ? affinityTag(data.engine.catalog?.affinity ?? null, data.progression.affinityType, data.progression.affinityXp) : null;
   const standing = shown.standing === "outdated" ? { text: "OUTDATED", color: T["state-negative"] } : shown.standing === "current" ? { text: "WORKS ON CURRENT BUILD", color: T["state-positive"] } : null;
   return new ImageResponse(
     <div style={{ ...frame, padding: 56, gap: 56 }}>
@@ -144,6 +146,7 @@ export default async function FitCard({ params }: { params: Params }) {
           <div style={{ display: "flex", gap: 36 }}>
             <span style={{ color: T["state-quantity"] }}>{`${fit.votes} ${fit.votes === 1 ? "UPVOTE" : "UPVOTES"}`}</span>
             {rating !== null && <span style={{ color: T["state-quantity"] }}>{`RATING ${rating}`}</span>}
+            {affinity && <span style={{ color: T["accent-orange"] }}>{`AFFINITY ${affinity}`}</span>}
           </div>
           {standing && <div style={{ display: "flex", color: standing.color, fontSize: 22 }}>{standing.text}</div>}
           <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 20, letterSpacing: 8, color: T["text-secondary"] }}>

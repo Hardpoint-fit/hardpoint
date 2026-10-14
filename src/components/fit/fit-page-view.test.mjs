@@ -13,6 +13,8 @@ import { createTestDb } from "../../lib/fits/test-db.mjs";
 import { createFit, deleteFit, publishFit, unpublishFit, updateFit } from "../../lib/fits/queries.ts";
 import { setBookmark } from "../../lib/fits/bookmarks.ts";
 import { toEvaluationInput } from "../../lib/fits/service.ts";
+import { AffinityPanel } from "../affinity/affinity-panel.tsx";
+import { affinityTag } from "../affinity/affinity.ts";
 import { cardModules, loadBrowse, loadCompare, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
 import { FitCards } from "./browse-view.tsx";
@@ -382,4 +384,106 @@ test("a live admin sees a hidden fit with UNHIDE FIT; the re-verify link returns
   const [latest] = await listRevisions(db, ids.showcase);
   const html = await renderFit(stub.url, ids.showcase, { userId: "user_admin", isAdmin: false, name: "WARDEN", authEnabled: true, moderation: "reverify" }, String(latest.revision));
   assert.match(html, new RegExp(`returnTo=%2Ffits%2F${ids.showcase}%3Frev%3D${latest.revision}&amp;reverify=1`));
+});
+
+// ---- Affinity on published fits ---------------------------------------------------------------------------
+
+// Turret affinity at level 5 (XP 2164): 3 and 2 points in two bonuses, and the 5-point threshold's second choice.
+const TURRET_PROGRESSION = { affinityType: "Turret", affinityXp: 2164, allocatedPoints: [0, 0, 0, 0, 3, 2], thresholdSelections: [...Array(8).fill(255), 1] };
+
+async function publishWith(progression, title) {
+  const fit = { ...FIXTURES.fitShowcase, progression };
+  const created = await createFit(db, {
+    authorUserId: ALICE.userId,
+    authorName: ALICE.name,
+    title,
+    content: { hullItem: fit.hull.def, fit },
+    buildSha: FIXTURES.health.buildSha,
+    evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.health.buildSha },
+  });
+  await publishFit(db, { id: created.id, authorUserId: ALICE.userId, buildSha: FIXTURES.health.buildSha });
+  return created.id;
+}
+
+/** The AFFINITY panel's markup. */
+const affinityPanel = (html) => /<section class="panel affinity">.*?<\/section>/s.exec(html)?.[0] ?? "";
+
+test("a fit with an affinity shows it read-only: type, level, points per node, chosen threshold, and no controls", async () => {
+  const id = await publishWith(TURRET_PROGRESSION, "Turret affinity fit");
+  const html = await renderFit(stub.url, id, anonymous(false));
+  const panel = affinityPanel(html);
+  assert.match(panel, /<span>AFFINITY<\/span>/);
+  assert.match(panel, /TURRET AFFINITY/);
+  assert.match(panel, /SHIP LEVEL 5/);
+  assert.match(panel, /5\/5 AFFINITY POINTS/);
+  assert.match(panel, /affinity-type__points">5\/20</, "the points held in the type");
+  assert.match(panel, /TURRET DAMAGE[\s\S]*?stepper__value">3</, "points on the first bonus");
+  assert.match(panel, /OPTIMAL RANGE[\s\S]*?stepper__value">2</, "points on the second bonus");
+  assert.match(panel, /AT 5 POINTS/);
+  assert.doesNotMatch(panel, /CHOOSE ONE|NEEDS \d+ POINTS/, "only the reached thresholds, as chosen");
+  assert.doesNotMatch(panel, /<(button|select|input|textarea)\b/, "read-only: no control");
+  assert.doesNotMatch(panel, /aria-expanded|role="radio"/);
+});
+
+test("a fit without an affinity says NO AFFINITY, on the page and on a revision with none", async () => {
+  assert.match(affinityPanel(await renderFit(stub.url, ids.showcase, anonymous(false))), /NO AFFINITY\./);
+  const id = await publishWith(TURRET_PROGRESSION, "Affinity then none");
+  const plain = { ...FIXTURES.fitShowcase, progression: { ...TURRET_PROGRESSION, affinityType: "None", affinityXp: 0, allocatedPoints: [], thresholdSelections: [] } };
+  await updateFit(db, { id, authorUserId: ALICE.userId, content: { hullItem: plain.hull.def, fit: plain }, evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.health.buildSha } });
+  assert.match(affinityPanel(await renderFit(stub.url, id, anonymous(false))), /NO AFFINITY\./, "the latest has none");
+  const older = affinityPanel(await renderFit(stub.url, id, anonymous(false), "1"));
+  assert.match(older, /TURRET AFFINITY/, "revision 1 shows its own affinity");
+  assert.doesNotMatch(older, /NO AFFINITY/);
+});
+
+test("browse cards and the share card tag the affinity type and level, and only when there is a type", async () => {
+  const id = await publishWith(TURRET_PROGRESSION, "Tagged by affinity");
+  const data = await loadBrowse(deps(stub.url), {}, anonymous(false));
+  assert.equal(data.cards.find((card) => card.id === id).affinity, "TURRET 5");
+  assert.equal(data.cards.find((card) => card.id === ids.showcase).affinity, null);
+  const cards = renderToStaticMarkup(h(PublicConfigProvider, { config: { engineUrl: stub.url, authEnabled: false } }, h(FitCards, { cards: data.cards, empty: "" })));
+  assert.ok(count(cards, ">TURRET 5<") >= 1, "the tag is on the card");
+  assert.doesNotMatch(cards, />NONE \d|>NONE</, "a fit without a type has no tag");
+  const page = await loadFitPage(deps(stub.url), id, anonymous(false));
+  assert.equal(affinityTag(page.engine.catalog.affinity, page.progression.affinityType, page.progression.affinityXp), "TURRET 5", "what the share card prints");
+  assert.equal(affinityTag(null, "Turret", 2164), "TURRET", "no catalog, no level");
+  assert.equal(affinityTag(page.engine.catalog.affinity, "None", 2164), null);
+});
+
+test("compare lines up affinity type, level and points per node", async () => {
+  const a = await publishWith(TURRET_PROGRESSION, "Compare affinity A");
+  const b = await publishWith({ ...TURRET_PROGRESSION, affinityXp: 458, allocatedPoints: [0, 0, 0, 0, 1] , thresholdSelections: [] }, "Compare affinity B");
+  const data = await loadCompare(deps(stub.url), { a, b }, anonymous(false));
+  assert.equal(data.status, "ok");
+  const row = (id) => data.affinity.find((each) => each.id === id);
+  assert.deepEqual([row("type").a, row("type").b, row("type").differs], ["TURRET", "TURRET", false]);
+  assert.deepEqual([row("level").a, row("level").b, row("level").differs], ["5", "2", true]);
+  assert.deepEqual([row("Turret:0").a, row("Turret:0").b], ["3", "1"]);
+  assert.deepEqual([row("Turret:1").a, row("Turret:1").b], ["2", "0"]);
+  const html = renderToStaticMarkup(h(CompareView, { data, signedIn: false }));
+  assert.match(html, /<span>AFFINITY<\/span>/);
+  assert.match(html, /SHIP LEVEL/);
+  assert.match(html, /TURRET · TURRET DAMAGE/);
+  const none = await loadCompare(deps(stub.url), { a: ids.showcase, b: ids.removed }, anonymous(false));
+  assert.deepEqual(none.affinity, [], "neither fit has an affinity: no rows");
+});
+
+test("the same panel is editable with an editor: level select, steppers and threshold choices", async () => {
+  const noop = () => {};
+  const affinity = (await loadFitPage(deps(stub.url), ids.showcase, anonymous(false))).engine.catalog.affinity;
+  const html = renderToStaticMarkup(h(AffinityPanel, { affinity, progression: TURRET_PROGRESSION, editor: { open: "Turret", onToggle: noop, onLevel: noop, onAllocate: noop, onThreshold: noop } }));
+  assert.match(html, /<select/);
+  assert.match(html, /aria-label="Add a point to TURRET DAMAGE"/);
+  assert.match(html, /role="radio"/);
+});
+
+test("a stored fit's odd affinity values read as nothing on a card rather than failing the query", async () => {
+  const odd = { ...FIXTURES.fitShowcase, progression: { affinityType: 7, affinityXp: 1e300, allocatedPoints: [], thresholdSelections: [] } };
+  const created = await createFit(db, { authorUserId: ALICE.userId, authorName: ALICE.name, title: "Odd affinity", content: { hullItem: odd.hull.def, fit: odd }, buildSha: FIXTURES.health.buildSha, evaluation: { ...toEvaluationInput(FIXTURES.evaluateShowcase), buildSha: FIXTURES.health.buildSha } });
+  await publishFit(db, { id: created.id, authorUserId: ALICE.userId, buildSha: FIXTURES.health.buildSha });
+  const data = await loadBrowse(deps(stub.url), {}, anonymous(false));
+  assert.equal(data.cards.find((card) => card.id === created.id).affinity, null);
+  const page = await loadFitPage(deps(stub.url), created.id, anonymous(false));
+  assert.equal(page.progression, null, "a progression of the wrong shape is unreadable, not drawn");
+  assert.match(await renderFit(stub.url, created.id, anonymous(false)), /AFFINITY CAN&#x27;T BE READ|AFFINITY CAN&apos;T BE READ/);
 });

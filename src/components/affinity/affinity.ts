@@ -147,3 +147,67 @@ export function selectThreshold(affinity: CatalogAffinity, progression: OpenProg
   if (choice !== null && (choice < 0 || choice >= threshold.choices.length || typePoints(progression, moduleType) < threshold.requiredPoints)) return progression;
   return { ...progression, thresholdSelections: written(progression.thresholdSelections, slot, choice ?? SELECTION_UNSET, SELECTION_UNSET) };
 }
+
+// ---- Reading a stored fit's affinity (published fits, cards, share card, compare) -------------------------
+
+const NO_TYPE = "None";
+
+const isInts = (value: unknown): value is number[] => Array.isArray(value) && value.every((each) => Number.isInteger(each));
+
+/**
+ * The progression a stored fit holds, or null when the JSON has none that can be read. A published fit
+ * was checked by the engine, but a stored one is read back without trusting its shape.
+ */
+export function readProgression(fit: unknown): OpenProgression | null {
+  const progression = (fit as { progression?: unknown } | null)?.progression as Record<string, unknown> | null | undefined;
+  if (!progression || typeof progression !== "object") return null;
+  const { affinityType, affinityXp, allocatedPoints, thresholdSelections } = progression;
+  if (typeof affinityType !== "string" || typeof affinityXp !== "number" || !Number.isFinite(affinityXp) || !isInts(allocatedPoints) || !isInts(thresholdSelections)) return null;
+  return { affinityType, affinityXp, allocatedPoints, thresholdSelections };
+}
+
+/** Whether the hull has an affinity to show: a type, points spent, or XP beyond the first level. */
+export function hasAffinity(affinity: CatalogAffinity, progression: OpenProgression): boolean {
+  return progression.affinityType !== NO_TYPE || totalPoints(progression) > 0 || levelOf(affinity, progression.affinityXp) > 1;
+}
+
+/** A module type as the page words it: the catalog's name when it has one, else its enum name spaced. */
+export function affinityTypeLabel(affinity: CatalogAffinity | null, moduleType: string): string {
+  const found = affinity?.types.find((each) => each.moduleType === moduleType);
+  return (found?.optionName || found?.name || moduleType.replace(/([a-z0-9])([A-Z])/g, "$1 $2")).toUpperCase();
+}
+
+/** The small tag on a card: "<TYPE> <LEVEL>", or just the type when no catalog can turn XP into a level; null with no affinity type. */
+export function affinityTag(affinity: CatalogAffinity | null, type: string | null, xp: number | null): string | null {
+  if (!type || type === NO_TYPE) return null;
+  const label = affinityTypeLabel(affinity, type);
+  return affinity && xp !== null ? `${label} ${levelOf(affinity, xp)}` : label;
+}
+
+export type AffinityCompareRow = { id: string; label: string; a: string; b: string; differs: boolean };
+
+/**
+ * Two fits' affinity side by side: the type and ship level, then the allocated points of every bonus either
+ * has points in. Empty when neither has an affinity. A side with no readable progression reads "—".
+ */
+export function compareAffinity(affinity: CatalogAffinity, a: OpenProgression | null, b: OpenProgression | null): AffinityCompareRow[] {
+  const shown = [a, b].filter((each): each is OpenProgression => each !== null && hasAffinity(affinity, each));
+  if (shown.length === 0) return [];
+  const MISSING = "—";
+  const row = (id: string, label: string, text: (progression: OpenProgression) => string): AffinityCompareRow => {
+    const left = a ? text(a) : MISSING;
+    const right = b ? text(b) : MISSING;
+    return { id, label, a: left, b: right, differs: left !== right };
+  };
+  const rows = [
+    row("type", "AFFINITY TYPE", (each) => (each.affinityType === NO_TYPE ? "NONE" : affinityTypeLabel(affinity, each.affinityType))),
+    row("level", "SHIP LEVEL", (each) => String(levelOf(affinity, each.affinityXp))),
+  ];
+  for (const type of affinity.types) {
+    for (const bonus of type.bonuses) {
+      if (![a, b].some((each) => each !== null && pointsAt(each, type.moduleType, bonus.option) > 0)) continue;
+      rows.push(row(`${type.moduleType}:${bonus.option}`, `${type.optionName || type.name} · ${bonus.name}`, (each) => String(pointsAt(each, type.moduleType, bonus.option))));
+    }
+  }
+  return rows;
+}

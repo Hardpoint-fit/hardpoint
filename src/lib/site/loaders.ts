@@ -33,6 +33,8 @@ import { alignSections, countModules, diffModules, type CompareSection, type Mod
 import { UNKNOWN_ITEM_NAME } from "#/components/grid/model";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
 import { baseIcon, itemIcon } from "../art/item-icon";
+import { affinityTag, compareAffinity, readProgression, type AffinityCompareRow } from "#/components/affinity/affinity";
+import type { OpenProgression } from "../engine/types";
 
 export type SiteDeps = {
   database: () => DatabaseState;
@@ -106,6 +108,8 @@ export type FitCard = {
   rating: number | null;
   /** The fit's modules, one per item kind in mount order, with how many it fits and the icon its roll shows. */
   modules: CardModule[];
+  /** The small affinity tag, "<TYPE> <LEVEL>" (level from the catalog's XP table); null when the fit has no affinity type. */
+  affinity: string | null;
 };
 
 export type CardModule = { def: string; name: string; icon: string | null; count: number };
@@ -163,6 +167,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
     standing,
     rating,
     modules: cardModules(fit, catalog),
+    affinity: affinityTag(catalog?.affinity ?? null, fit.affinityType, fit.affinityXp),
   };
 }
 
@@ -315,6 +320,8 @@ export type FitPageData =
       revision: { number: number; of: number; statsShown: boolean; note: string | null; createdAt: string } | null;
       /** Set for an outdated published fit: what the engine says is wrong with it on the current build. */
       broken: BrokenOnBuild | null;
+      /** The shown fit's (or revision's) stored progression, for the AFFINITY panel; null when the JSON holds none that can be read. */
+      progression: OpenProgression | null;
     };
 
 export type BrokenIssue = {
@@ -413,6 +420,7 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     revisions,
     revision,
     broken: brokenOnBuild(shownFit, shown, engine.catalog),
+    progression: readProgression(shownFit.fit),
   };
 }
 
@@ -437,11 +445,13 @@ export type CompareSide =
       /** True when the stats are an older build's last valid ones, or the fit has none. */
       statsNote: string | null;
       modules: ReturnType<typeof countModules>;
+      /** The fit's stored progression, for the compare rows. */
+      progression: OpenProgression | null;
     };
 
 export type CompareData =
   | Unavailable
-  | { status: "ok"; engine: PageEngine; a: CompareSide; b: CompareSide; sections: CompareSection[]; modules: ModuleDiff };
+  | { status: "ok"; engine: PageEngine; a: CompareSide; b: CompareSide; sections: CompareSection[]; modules: ModuleDiff; affinity: AffinityCompareRow[] };
 
 /**
  * Two fits side by side. Each side is read through getFit with the viewer, so a fit the viewer can't see is
@@ -484,6 +494,7 @@ export async function loadCompare(deps: SiteDeps, ids: { a?: string; b?: string 
       rating: shown.reference?.rating ?? null,
       statsNote,
       modules: countModules(isOpenFit(fit.fit) ? fit.fit.modules.map((module) => module.item.def) : [], nameOf),
+      progression: readProgression(fit.fit),
     };
     return { side, sections: shown.result.sections, failed: false };
   };
@@ -498,6 +509,8 @@ export async function loadCompare(deps: SiteDeps, ids: { a?: string; b?: string 
     b: b.side,
     sections: alignSections(a.sections, b.sections),
     modules: diffModules(a.side.status === "found" ? a.side.modules : [], b.side.status === "found" ? b.side.modules : []),
+    // Needs the catalog's affinity tree (names, XP table); without one the rows are left out.
+    affinity: engine.catalog && a.side.status === "found" && b.side.status === "found" ? compareAffinity(engine.catalog.affinity, a.side.progression, b.side.progression) : [],
   };
 }
 

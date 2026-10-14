@@ -74,6 +74,10 @@ export type FitSummary = {
   lastValidEvaluation: Evaluation | null;
   /** Each fitted module's item, in mount order: what a fit card shows the icons of. Read from `fits.fit`. */
   moduleItems: ModuleItemRef[];
+  /** `progression.affinityType` of the stored fit ("None" without an affinity), or null when the JSON has none. Read from `fits.fit`. */
+  affinityType: string | null;
+  /** `progression.affinityXp`, null when the JSON has none; a card turns it into a level with the catalog. */
+  affinityXp: number | null;
 };
 
 /** The parts of a fitted module's item that pick its icon (art/item-icon.ts). */
@@ -296,6 +300,12 @@ const MODULE_ITEMS_SQL = `COALESCE((SELECT jsonb_agg(jsonb_build_object(
       'isIdentified', m.value #> '{item,roll,isIdentified}', 'artifact', m.value #>> '{item,roll,artifact}') ORDER BY m.n)
     FROM jsonb_path_query(f.fit, 'lax $.modules[*]') WITH ORDINALITY AS m(value, n)), '[]'::jsonb)`;
 
+// Only the two progression fields a card needs, bounded, not the whole progression: type capped in length,
+// XP only when it is a sane number (a hostile or damaged value reads as null rather than failing the query).
+const AFFINITY_TYPE_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinityType}') = 'string' THEN left(f.fit #>> '{progression,affinityType}', 40) END`;
+const AFFINITY_XP_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinityXp}') = 'number'
+    AND (f.fit #>> '{progression,affinityXp}')::numeric BETWEEN 0 AND 1000000000 THEN (f.fit #>> '{progression,affinityXp}')::float8 END`;
+
 export function summaryColumns(shaRef: string, viewerRef: string): string {
   return `f.id, f.author_user_id, p.name AS author_name, f.title, f.hull_item, f.tags, f.status,
     f.created_at, f.updated_at, f.published_at,
@@ -306,7 +316,9 @@ export function summaryColumns(shaRef: string, viewerRef: string): string {
     (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = ${shaRef}::text) AS evaluation,
     (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.valid
        ORDER BY e.evaluated_at DESC, e.build_sha DESC LIMIT 1) AS last_valid_evaluation,
-    ${MODULE_ITEMS_SQL} AS module_items`;
+    ${MODULE_ITEMS_SQL} AS module_items,
+    ${AFFINITY_TYPE_SQL} AS affinity_type,
+    ${AFFINITY_XP_SQL} AS affinity_xp`;
 }
 
 function mapModuleItems(value: unknown): ModuleItemRef[] {
@@ -350,6 +362,8 @@ export function mapSummary(row: Row): FitSummary {
     evaluation: mapEvaluation(row.evaluation),
     lastValidEvaluation: mapEvaluation(row.last_valid_evaluation),
     moduleItems: mapModuleItems(row.module_items),
+    affinityType: typeof row.affinity_type === "string" ? row.affinity_type : null,
+    affinityXp: row.affinity_xp === null || row.affinity_xp === undefined ? null : Number(row.affinity_xp),
   };
 }
 

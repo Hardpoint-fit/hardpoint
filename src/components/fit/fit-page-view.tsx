@@ -17,6 +17,8 @@ import { itemIcon } from "#/lib/art/item-icon";
 import { CopyFitString } from "./copy-fit-string";
 import { ComparePicker } from "./compare-picker";
 import { isOpenFit } from "#/lib/engine/open-fit";
+import { AffinityPanel } from "#/components/affinity/affinity-panel";
+import { affinityTypeLabel } from "#/components/affinity/affinity";
 
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
@@ -186,6 +188,26 @@ function History({ fitId, revisions, viewing }: { fitId: string; revisions: Read
   );
 }
 
+/** The fit's affinity, read-only, as the builder's panel lays it out. Without the catalog's affinity tree only the stored type and XP can be told. */
+function FitAffinity({ progression, catalog }: { progression: Ready["progression"]; catalog: Ready["engine"]["catalog"] }) {
+  if (!progression) {
+    return (
+      <Panel title="AFFINITY">
+        <p className="note">THIS FIT&apos;S AFFINITY CAN&apos;T BE READ.</p>
+      </Panel>
+    );
+  }
+  if (!catalog) {
+    return (
+      <Panel title="AFFINITY">
+        <p className="note">THE AFFINITY TREE NEEDS THE LOADOUT ENGINE, WHICH ISN&apos;T ANSWERING.</p>
+        {progression.affinityType !== "None" && <p className="note">{affinityTypeLabel(null, progression.affinityType)} AFFINITY · {progression.affinityXp} XP</p>}
+      </Panel>
+    );
+  }
+  return <AffinityPanel affinity={catalog.affinity} progression={progression} />;
+}
+
 /** The fit's distinct modules, each linking to the browse page of fits that carry it. */
 function ModuleList({ modules }: { modules: GridModule[] }) {
   const distinct = new Map<string, { module: GridModule; count: number }>();
@@ -291,6 +313,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               </div>
             )}
           </Panel>
+          <FitAffinity progression={data.progression} catalog={engine.catalog} />
           {data.revisions.length > 0 && <History fitId={fit.id} revisions={data.revisions} viewing={revision?.number ?? null} />}
           <Comments threads={data.comments} fitId={fit.id} viewer={viewer} open={published} />
         </div>
