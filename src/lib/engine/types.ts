@@ -1,4 +1,4 @@
-// The loadout engine's JSON, mirrored from its C# records (tools/loadout-engine/Citadel.LoadoutEngine:
+// The loadout engine's JSON, mirrored from its C# records (tools/game-data-api/Citadel.GameDataApi:
 // OpenFit.cs, Evaluator.cs, CatalogBuilder.cs, ItemFacts.cs, Program.cs). The engine writes camelCase with enums as
 // their C# names. GUIDs are decimal strings and FP values are raw decimal strings. types.test.mjs checks
 // these shapes against real engine responses recorded in __fixtures__, so keep them in step with the C#.
