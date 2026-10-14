@@ -11,7 +11,7 @@ import { setBookmark } from "../fits/bookmarks.ts";
 import { toEvaluationInput } from "../fits/service.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { createTestDb } from "../fits/test-db.mjs";
-import { loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadFitPage, loadReports } from "./loaders.ts";
+import { brokenOnBuild, loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadCompare, loadFitPage, loadReports } from "./loaders.ts";
 import { ALICE, BOB, CURRENT_SHA, seedSite } from "./seed.mjs";
 import { setFollow } from "../fits/pilots.ts";
 
@@ -418,4 +418,69 @@ test("the bookmarks page data is the signed-in pilot's published bookmarks as ca
   assert.equal(browse.cards.find((card) => card.id === ids.pending).bookmarked, false);
   await setBookmark(db, { fitId: ids.showcase, userId: BOB.userId, bookmarked: false });
   await setBookmark(db, { fitId: ids.removed, userId: BOB.userId, bookmarked: false });
+});
+
+test("an outdated published fit says which module the current build rejects and the build it last worked on; no other fit does", async () => {
+  const deps = depsFor(stub.url);
+  const data = await loadFitPage(deps, ids.removed, ANONYMOUS);
+  assert.equal(data.broken.lastWorkedBuild, "0000000000000000000000000000000000000001");
+  assert.equal(data.broken.issues.length, 1);
+  assert.deepEqual({ ...data.broken.issues[0], message: undefined }, { moduleName: "UNKNOWN ITEM", def: null, message: undefined }, "a removed item has no def to link");
+  assert.ok(data.broken.issues[0].message.length > 0);
+  assert.equal((await loadFitPage(deps, ids.showcase, ANONYMOUS)).broken, null, "valid on the current build");
+  assert.equal((await loadFitPage(deps, ids.pending, ANONYMOUS)).broken, null, "not checked yet is not broken");
+});
+
+test("broken issues name modules from the fit and the catalog, and a fit-wide issue is the whole fit", () => {
+  const catalog = FIXTURES.catalog;
+  const fit = { status: "published", fit: FIXTURES.fitShowcase };
+  const first = FIXTURES.fitShowcase.modules[0].item.def;
+  const firstName = catalog.items.find((item) => item.def === first).name;
+  const shown = {
+    standing: "outdated",
+    reference: { buildSha: "abc" },
+    issues: [
+      { moduleIndex: 0, kind: "A", message: "too hot" },
+      { moduleIndex: -1, kind: "C", message: "no power" },
+      { moduleIndex: 99, kind: "D", message: "out of range" },
+    ],
+  };
+  const broken = brokenOnBuild(fit, shown, catalog);
+  assert.deepEqual(broken.issues.map((i) => [i.moduleName, i.def, i.message]), [[firstName, first, "too hot"], [null, null, "no power"], [null, null, "out of range"]]);
+  assert.equal(broken.lastWorkedBuild, "abc");
+  assert.deepEqual(brokenOnBuild(fit, shown, null).issues.map((i) => i.moduleName), ["MODULE", null, null]);
+  assert.equal(brokenOnBuild({ ...fit, status: "draft" }, shown, catalog), null);
+  assert.equal(brokenOnBuild(fit, { ...shown, standing: "invalid" }, catalog), null);
+});
+
+test("compare reads each side through the viewer's visibility; a fit they can't see is missing and the page still loads", async () => {
+  const deps = depsFor(stub.url);
+  const both = await loadCompare(deps, { a: ids.showcase, b: ids.removed }, ANONYMOUS);
+  assert.equal(both.status, "ok");
+  assert.equal(both.a.status, "found");
+  assert.equal(both.a.title, "Scarab cipher brawler");
+  assert.equal(both.a.standing, "current");
+  assert.equal(both.b.standing, "outdated");
+  assert.match(both.b.statsNote, /LAST VALID BUILD/);
+  assert.ok(both.sections.length > 0 && both.sections.every((section) => section.rows.length > 0));
+  assert.ok(both.modules.both.length + both.modules.onlyA.length + both.modules.onlyB.length > 0);
+  assert.ok(both.modules.both.length > 0, "the same hull's fits share modules");
+
+  const hidden = await loadCompare(deps, { a: ids.showcase, b: ids.draft }, { userId: BOB.userId, isAdmin: false });
+  assert.deepEqual(hidden.b, { status: "missing", id: ids.draft }, "another pilot's draft reads as missing");
+  assert.deepEqual(hidden.sections.flatMap((s) => s.rows.filter((r) => r.differs)), [], "nothing to compare against");
+  const own = await loadCompare(deps, { a: ids.showcase, b: ids.draft }, { userId: ALICE.userId, isAdmin: false });
+  assert.equal(own.b.status, "found");
+
+  const only = await loadCompare(deps, { a: ids.showcase }, ANONYMOUS);
+  assert.equal(only.status, "ok");
+  assert.deepEqual(only.b, { status: "empty" });
+  const none = await loadCompare(deps, { a: "nosuchfit0", b: "x" }, ANONYMOUS);
+  assert.deepEqual([none.a.status, none.b.status], ["missing", "missing"]);
+  assert.equal((await loadCompare(depsFor(stub.url, () => ({ status: "unavailable" })), { a: ids.showcase }, ANONYMOUS)).status, "unavailable");
+});
+
+test("a fit compared with itself differs in nothing", async () => {
+  const data = await loadCompare(depsFor(stub.url), { a: ids.showcase, b: ids.showcase }, ANONYMOUS);
+  assert.deepEqual(data.sections.flatMap((s) => s.rows.filter((r) => r.differs)), [], "a fit against itself differs in nothing");
 });

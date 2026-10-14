@@ -10,11 +10,15 @@ import type { DatabaseState, Db } from "../fits/db";
 import { spendWriteBudget, type WriteAction } from "../fits/write-limits";
 import { slowDownMessage } from "../slow-down";
 import { publish as publishService, saveDraft, type Refusal } from "../fits/service";
-import { setBookmark } from "../fits/bookmarks";
+import { listBookmarks, setBookmark } from "../fits/bookmarks";
+import { parseBrowseParams } from "../fits/filters";
+import { DESCRIPTION_MAX } from "../fits/limits";
+import { renderMarkdown } from "../fits/markdown";
 import { setBio, setFollow } from "../fits/pilots";
 import { markAllRead, openNotification as openNotificationRow, type OpenedNotification } from "../fits/notifications";
 import {
   FitDataError,
+  browseFits,
   createComment,
   createReport,
   deleteComment as deleteCommentRow,
@@ -271,4 +275,27 @@ export function follow(deps: ActionDeps, input: { userId: string; following: boo
 /** Sets the signed-in pilot's own bio; there is no id to forge, the session says whose it is. */
 export function editBio(deps: ActionDeps, input: { bio: string }): Promise<ActionResult<{ bio: string }>> {
   return withAuthor(deps, "bio edit", { budget: "profile" }, async (db, author) => ({ ok: true, bio: await setBio(db, { pilot: author, bio: input.bio }) }));
+}
+
+/**
+ * The writing preview: the Markdown renderer the fit page uses, on text no longer than a description.
+ * Signed-in pilots only (signed-out visitors can't post), under the "preview" budget; the size is checked
+ * before the budget is spent. The result is the page's own sanitized HTML.
+ */
+export function previewMarkdown(deps: ActionDeps, input: { text: string }): Promise<ActionResult<{ html: string }>> {
+  if (input.text.length > DESCRIPTION_MAX) return Promise.resolve(refuse("invalid", 400, "That text is too long to preview."));
+  return withAuthor(deps, "markdown preview", { budget: "preview" }, async () => ({ ok: true, html: renderMarkdown(input.text) }));
+}
+
+export type CompareChoice = { id: string; title: string; status: FitStatus };
+
+/** For the compare picker: the pilot's newest bookmarks and own fits (any status, they may see them all), up to `limit` each. */
+export function compareChoices(deps: ActionDeps, input: { limit?: number } = {}): Promise<ActionResult<{ bookmarks: CompareChoice[]; mine: CompareChoice[] }>> {
+  const limit = input.limit ?? 20;
+  return withAuthor(deps, "compare choices", { own: true }, async (db, author) => {
+    const pick = (fit: { id: string; title: string; status: FitStatus }): CompareChoice => ({ id: fit.id, title: fit.title, status: fit.status });
+    const bookmarks = await listBookmarks(db, { userId: author.userId, limit });
+    const mine = await browseFits(db, { query: { ...parseBrowseParams({}), author: author.userId }, limit, viewer: { userId: author.userId, isAdmin: false } });
+    return { ok: true, bookmarks: bookmarks.fits.map(pick), mine: mine.fits.map(pick) };
+  });
 }

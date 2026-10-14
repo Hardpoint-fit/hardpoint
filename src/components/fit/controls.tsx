@@ -3,6 +3,8 @@
 // The fit page's interactive controls. Each calls a server action and shows its refusal message
 // in place; the server renders NotConfigured instead of the write controls when sign-in is off.
 import { useState, useTransition, type FormEvent } from "react";
+import { MarkdownEditor } from "#/components/markdown-editor";
+import { COMMENT_MAX } from "#/lib/fits/limits";
 import {
   addCommentAction,
   bookmarkAction,
@@ -124,20 +126,19 @@ export function CommentForm({ fitId, parentId = null, cta = "POST" }: { fitId: s
   };
   return (
     <form className="flex flex-col gap-2" onSubmit={submit}>
-      <textarea
-        className="textarea"
+      <MarkdownEditor
         value={body}
-        onChange={(event) => setBody(event.target.value)}
-        maxLength={2000}
+        onChange={setBody}
+        maxLength={COMMENT_MAX}
         placeholder={parentId ? "REPLY" : "SAY SOMETHING ABOUT THIS FIT"}
-        aria-label={parentId ? "Reply" : "Comment"}
+        label={parentId ? "Reply" : "Comment"}
         required
       />
       <span className="flex flex-wrap items-center gap-2">
         <button type="submit" className="btn" disabled={pending || body.trim() === ""}>
           {cta}
         </button>
-        <span className="note">MARKDOWN. {2000 - body.length} LEFT</span>
+        <span className="note">MARKDOWN. {COMMENT_MAX - body.length} LEFT</span>
         <Problem message={problem} />
       </span>
     </form>
@@ -176,7 +177,7 @@ export function EditComment({ fitId, id, body }: { fitId: string; id: string; bo
   };
   return (
     <form className="flex w-full flex-col gap-2" onSubmit={submit}>
-      <textarea className="textarea" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={2000} aria-label="Edit comment" required />
+      <MarkdownEditor value={draft} onChange={setDraft} maxLength={COMMENT_MAX} label="Edit comment" required />
       <span className="flex flex-wrap items-center gap-2">
         <button type="submit" className="btn" disabled={pending}>
           SAVE

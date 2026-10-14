@@ -13,10 +13,13 @@ import { createTestDb } from "../../lib/fits/test-db.mjs";
 import { createFit, deleteFit, publishFit, unpublishFit, updateFit } from "../../lib/fits/queries.ts";
 import { setBookmark } from "../../lib/fits/bookmarks.ts";
 import { toEvaluationInput } from "../../lib/fits/service.ts";
-import { loadBrowse, loadFitPage } from "../../lib/site/loaders.ts";
+import { loadBrowse, loadCompare, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
 import { FitCards } from "./browse-view.tsx";
 import { FitPageView } from "./fit-page-view.tsx";
+import { AppRouterContext } from "next/dist/shared/lib/app-router-context.shared-runtime.js";
+import { CompareView } from "./compare-view.tsx";
+import { MarkdownEditor } from "../markdown-editor.tsx";
 import { PublicConfigProvider } from "../../lib/public-config.tsx";
 
 let db;
@@ -286,4 +289,51 @@ test("browse cards carry the bookmark toggle only for a signed-in viewer, and on
   assert.equal(count(cards(true), ">BOOKMARKED<"), 1, "the one BOB bookmarked");
   assert.ok(count(cards(true), ">BOOKMARK<") >= 2);
   assert.doesNotMatch(cards(false), /BOOKMARK/);
+});
+
+test("an outdated fit shows BROKEN ON THIS BUILD with the issue and the last build it worked on; a current fit shows none", async () => {
+  const broken = await renderFit(stub.url, ids.removed, anonymous(false));
+  assert.match(broken, /BROKEN ON THIS BUILD/);
+  assert.match(broken, /LAST WORKED ON BUILD 00000000/);
+  assert.match(broken, /aria-label="Issues on the current build"[^>]*>.*UNKNOWN ITEM/s);
+  assert.doesNotMatch(await renderFit(stub.url, ids.showcase, anonymous(false)), /BROKEN ON THIS BUILD/);
+});
+
+test("the fit page offers COMPARE", async () => {
+  assert.match(await renderFit(stub.url, ids.showcase, anonymous(false)), />COMPARE</);
+});
+
+test("the compare page shows both fits, marks differing rows with — for a missing one, and a Fit not found column", async () => {
+  const render = async (a, b, viewer = anonymous(false)) => {
+    const data = await loadCompare(deps(stub.url), { a, b }, viewer);
+    assert.equal(data.status, "ok");
+    return renderToStaticMarkup(h(AppRouterContext.Provider, { value: { push() {} } }, h(CompareView, { data, signedIn: false })));
+  };
+  // The stub engine answers every fit with the same stats, so make one row differ and another go missing by hand.
+  const loaded = await loadCompare(deps(stub.url), { a: ids.showcase, b: ids.removed }, anonymous(false));
+  const [first, second] = loaded.sections[0].rows;
+  loaded.sections[0].rows[0] = { ...first, b: { ...first.b, primary: { ...first.b.primary, text: "9,999" } }, differs: true };
+  loaded.sections[0].rows[1] = { ...second, b: null, differs: true };
+  const marked = renderToStaticMarkup(h(CompareView, { data: loaded, signedIn: false }));
+  assert.match(marked, /compare-row compare-row--differs"[^>]*data-differs="true"/);
+  assert.match(marked, /9,999/);
+  assert.match(marked, /<span class="compare-missing" aria-label="Missing">—<\/span>/);
+  assert.match(await render(ids.showcase, ids.removed), /data-differs="false"/);
+  const html = await render(ids.showcase, ids.removed);
+  assert.match(html, /Scarab cipher brawler/);
+  assert.match(html, /Old build regalia runner/);
+  assert.match(html, /ONLY IN A/);
+  assert.match(html, /IN BOTH/);
+  const hidden = await render(ids.showcase, ids.draft);
+  assert.match(hidden, /FIT NOT FOUND/);
+  assert.doesNotMatch(hidden, /Unfinished idea/, "another pilot's draft is never named");
+  assert.match(hidden, /HULL SPECS|CHOOSE ANOTHER FIT/);
+});
+
+test("the markdown editor offers WRITE and PREVIEW and starts on the textarea", () => {
+  const html = renderToStaticMarkup(h(MarkdownEditor, { value: "**hi**", onChange() {}, maxLength: 100, label: "Comment" }));
+  assert.match(html, /role="tab"[^>]*aria-selected="true"[^>]*>WRITE</);
+  assert.match(html, /role="tab"[^>]*aria-selected="false"[^>]*>PREVIEW</);
+  assert.match(html, /<textarea[^>]*aria-label="Comment"/);
+  assert.doesNotMatch(html, /<strong>/, "the browser never renders Markdown itself");
 });

@@ -14,6 +14,7 @@ import { HullSpecs, SPECS_PENDING } from "./hull-specs";
 import { ItemIcon } from "#/components/item-text";
 import { itemIcon } from "#/lib/art/item-icon";
 import { CopyFitString } from "./copy-fit-string";
+import { ComparePicker } from "./compare-picker";
 import { isOpenFit } from "#/lib/engine/open-fit";
 
 type Ready = Extract<FitPageData, { status: "ok" }>;
@@ -123,6 +124,39 @@ function ForkNotes({ fork }: { fork: Ready["fork"] }) {
   );
 }
 
+/**
+ * An outdated published fit: what the engine says is wrong with it on the current build, module by module,
+ * and the last build it worked on. The issues are the stored verdict's; nothing is evaluated here.
+ */
+function BrokenPanel({ broken }: { broken: NonNullable<Ready["broken"]> }) {
+  return (
+    <Panel title="BROKEN ON THIS BUILD" aside={broken.lastWorkedBuild ? `LAST WORKED ON ${buildLabel(broken.lastWorkedBuild)}` : undefined}>
+      {broken.issues.length === 0 ? (
+        <p className="note note--error">THE CURRENT BUILD REJECTS THIS FIT. THE ENGINE GAVE NO DETAILS.</p>
+      ) : (
+        <ul className="broken-issues" aria-label="Issues on the current build">
+          {broken.issues.map((issue, i) => (
+            <li key={i} className="tone-negative">
+              {issue.moduleName === null ? (
+                "WHOLE FIT"
+              ) : issue.def ? (
+                <Link className="link" href={`/?module=${encodeURIComponent(issue.def)}`}>
+                  {issue.moduleName}
+                </Link>
+              ) : (
+                issue.moduleName
+              )}
+              {": "}
+              {issue.message.toUpperCase()}
+            </li>
+          ))}
+        </ul>
+      )}
+      {!broken.lastWorkedBuild && <p className="note">NO EARLIER BUILD IS RECORDED AS VALID.</p>}
+    </Panel>
+  );
+}
+
 /** The fit's revisions, newest first: each opens that revision read-only; the newest opens the fit itself. */
 function History({ fitId, revisions, viewing }: { fitId: string; revisions: Ready["revisions"]; viewing: number | null }) {
   const latest = revisions[0]!.revision;
@@ -212,6 +246,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
       </div>
       <div className="fit-layout">
         <div className="fit-layout__main">
+          {data.broken && <BrokenPanel broken={data.broken} />}
           <Panel
             title="FIT"
             aside={
@@ -293,6 +328,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               <Link className="btn btn--quiet" href={fromHref}>
                 COPY FIT TO BUILDER
               </Link>
+              <ComparePicker fitId={fit.id} signedIn={viewer.authEnabled && viewer.userId !== null} />
               {viewer.userId === fit.authorUserId && fit.status !== "hidden" && (
                 <Link className="btn" href={`/fits/${encodeURIComponent(fit.id)}/edit`}>
                   EDIT

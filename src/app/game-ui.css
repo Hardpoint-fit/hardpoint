@@ -1307,3 +1307,166 @@ a.chip:hover {
   flex: 1 1 14rem;
   min-width: 0;
 }
+
+/* ---- Writing preview (markdown-editor.tsx) ---------------------------------------------------- */
+
+.md-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.md-editor__tabs {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.md-editor__preview {
+  min-height: 72px;
+  border: 1px solid var(--panel-border);
+  background: var(--input-bg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  overflow-wrap: anywhere;
+}
+
+/* ---- Compare (/compare) ------------------------------------------------------------------------ */
+
+.compare-heads {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.compare-side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.compare-side__title {
+  margin: 0;
+  font-size: var(--font-size-header);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, 1fr));
+  align-items: baseline;
+  gap: var(--spacing-md);
+  border-bottom: 1px solid var(--rule);
+  padding: 3px 0;
+  font-size: var(--font-size-tiny);
+}
+
+.compare-row__label {
+  color: var(--text-secondary-muted);
+  letter-spacing: 0.12em;
+}
+
+.compare-row__cell {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.compare-row__cell > .compare-row__tag {
+  display: none;
+  color: var(--text-secondary);
+}
+
+.compare-row--differs .compare-row__cell .specs__value {
+  color: var(--accent-orange);
+}
+
+.compare-missing {
+  color: var(--text-secondary);
+}
+
+.compare-modules {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+}
+
+.compare-modules ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-small, var(--font-size-normal));
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Under 720px the two fits stack one above the other, and each row names which fit a value is from. */
+@media (max-width: 720px) {
+  .compare-heads,
+  .compare-modules {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .compare-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+    padding: var(--spacing-xs) 0;
+  }
+
+  .compare-row__cell > .compare-row__tag {
+    display: inline;
+    margin-right: var(--spacing-sm);
+  }
+}
+
+.compare-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.compare-picker__list {
+  display: flex;
+  max-height: 220px;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.compare-picker__list button {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  background: transparent;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--font-size-small, var(--font-size-normal));
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.compare-picker__list button:hover,
+.compare-picker__list button:focus-visible {
+  background: var(--surface-hover);
+  outline: none;
+}
+
+/* ---- BROKEN ON THIS BUILD (fit page) --------------------------------------------------------- */
+
+.broken-issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-small, var(--font-size-normal));
+  letter-spacing: 0.06em;
+}

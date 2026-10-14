@@ -6,12 +6,14 @@ import { createEngineClient } from "../engine/client.ts";
 import { startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, bookmark, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { addComment, bookmark, compareChoices, previewMarkdown, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { listRevisions } from "../fits/revisions.ts";
 import { listBookmarks } from "../fits/bookmarks.ts";
 import { getForkInfo } from "../fits/forks.ts";
 import { getPilotProfile } from "../fits/pilots.ts";
+import { DESCRIPTION_MAX } from "../fits/limits.ts";
+import { renderMarkdown } from "../fits/markdown.ts";
 import { WRITE_BUDGETS } from "../fits/write-limits.ts";
 import { ADMIN, ALICE, BOB, seedSite } from "./seed.mjs";
 
@@ -317,4 +319,47 @@ test("a new fit saved with a source is credited once; an edit, a hidden source a
   // The same source is fine for its own author.
   const own = await saveFit(deps(authAs(ALICE.userId)), { fitId: null, title: "From my draft", description: "", tags: [], fit: FIXTURES.fit, forkedFrom: ids.draft });
   assert.equal((await getForkInfo(db, own.fit.fitId, { userId: ALICE.userId, isAdmin: false })).credit.state, "source");
+});
+
+test("the writing preview renders the page's sanitized Markdown for signed-in pilots only, bounded and rate-limited", async () => {
+  const source = "**bold** <script>alert(1)</script> [x](javascript:alert(1)) [ok](https://example.com)";
+  assert.equal((await previewMarkdown(deps(authAs(BOB.userId, { enabled: false })), { text: "hi" })).status, 503);
+  assert.equal((await previewMarkdown(deps(authAs(null)), { text: "hi" })).status, 401);
+  assert.equal((await previewMarkdown(deps(authAs(BOB.userId), { database: { status: "unavailable" } }), { text: "hi" })).status, 503);
+  const bob = deps(authAs(BOB.userId));
+  const result = await previewMarkdown(bob, { text: source });
+  assert.equal(result.ok, true);
+  assert.equal(result.html, renderMarkdown(source), "the same renderer the fit page uses");
+  assert.match(result.html, /<strong>bold<\/strong>/);
+  assert.doesNotMatch(result.html, /<script|href="javascript/i);
+  assert.match(result.html, /href="https:\/\/example\.com"/);
+  assert.equal((await previewMarkdown(bob, { text: "" })).ok, true);
+
+  const tooLong = await previewMarkdown(bob, { text: "x".repeat(DESCRIPTION_MAX + 1) });
+  assert.equal(tooLong.status, 400);
+  assert.equal((await previewMarkdown(bob, { text: "x".repeat(DESCRIPTION_MAX) })).ok, true);
+  assert.equal((await db.query(`SELECT count(*)::int AS n FROM write_budget_windows WHERE user_id = $1 AND budget LIKE 'preview/%'`, [BOB.userId])).rows[0].n, 1, "a refused size spends nothing");
+
+  const now = new Date("2026-10-14T12:00:00Z");
+  const limited = { ...deps(authAs(ALICE.userId)), now: () => now };
+  const spent = WRITE_BUDGETS.preview[0].limit;
+  assert.equal(spent, 60);
+  for (let i = 0; i < spent; i++) assert.equal((await previewMarkdown(limited, { text: "a" })).ok, true);
+  const refused = await previewMarkdown(limited, { text: "a" });
+  assert.equal(refused.status, 429);
+  assert.equal((await vote(limited, { fitId: ids.pending, voted: true })).ok, true, "votes have their own budget");
+});
+
+test("compare choices are the pilot's own bookmarks and fits only, capped", async () => {
+  assert.equal((await compareChoices(deps(authAs(null)))).status, 401);
+  assert.equal((await compareChoices(deps(authAs(ALICE.userId, { enabled: false })))).status, 503);
+  await bookmark(deps(authAs(BOB.userId)), { fitId: ids.showcase, bookmarked: true });
+  const bob = await compareChoices(deps(authAs(BOB.userId)));
+  assert.deepEqual(bob.bookmarks.map((c) => c.id), [ids.showcase]);
+  assert.deepEqual(bob.mine.map((c) => c.id).sort(), [ids.pending, ids.removed].sort());
+  const alice = await compareChoices(deps(authAs(ALICE.userId)));
+  assert.deepEqual(alice.bookmarks, [], "bookmarks are private");
+  assert.ok(alice.mine.some((c) => c.id === ids.draft && c.status === "draft"), "own drafts are offered");
+  assert.ok(!alice.mine.some((c) => c.id === ids.removed), "never another pilot's fit");
+  assert.equal((await compareChoices(deps(authAs(ALICE.userId)), { limit: 1 })).mine.length, 1);
 });

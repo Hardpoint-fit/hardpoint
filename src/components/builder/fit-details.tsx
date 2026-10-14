@@ -10,6 +10,7 @@ import { isEditableFit } from "#/lib/engine/open-fit";
 import type { OpenFit } from "#/lib/engine/types";
 import { MAX_TAGS, normalizeTags } from "#/lib/fits/filters";
 import { DESCRIPTION_MAX, REVISION_NOTE_MAX, TITLE_MAX } from "#/lib/fits/limits";
+import { MarkdownEditor } from "#/components/markdown-editor";
 import { NotConfigured, Panel } from "#/components/ui";
 import { fitStringProblem } from "#/components/fit/copy-fit-string";
 import { normalizeFitString } from "./fit-string";
@@ -149,17 +150,18 @@ export function FitDetails({
         TITLE
         <input className="input" value={meta.title} maxLength={TITLE_MAX} onChange={(event) => dispatch({ type: "meta", patch: { title: event.target.value } })} placeholder="NAME THIS FIT" />
       </label>
-      <label className="field">
+      <div className="field">
         DESCRIPTION
-        <textarea
-          className="textarea textarea--tall"
+        <MarkdownEditor
           value={meta.description}
+          onChange={(description) => dispatch({ type: "meta", patch: { description } })}
           maxLength={DESCRIPTION_MAX}
-          onChange={(event) => dispatch({ type: "meta", patch: { description: event.target.value } })}
           placeholder="HOW TO FLY IT, WHAT IT BEATS"
+          label="Description"
+          tall
         />
         <span className="note">MARKDOWN. {DESCRIPTION_MAX - meta.description.length} LEFT</span>
-      </label>
+      </div>
       <label className="field">
         TAGS
         <input

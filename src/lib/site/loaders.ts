@@ -27,6 +27,8 @@ import { getRevision, listRevisions, parseRevisionParam, type Revision, type Rev
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
 import { moduleInfos, type ModuleInfo } from "./module-search";
+import { alignSections, countModules, diffModules, type CompareSection, type ModuleDiff } from "../fits/compare";
+import { UNKNOWN_ITEM_NAME } from "#/components/grid/model";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
 import { baseIcon } from "../art/item-icon";
 
@@ -264,7 +266,39 @@ export type FitPageData =
        * content, and `statsShown` says whether `shown` describes it (only the latest revision has a verdict).
        */
       revision: { number: number; of: number; statsShown: boolean; note: string | null; createdAt: string } | null;
+      /** Set for an outdated published fit: what the engine says is wrong with it on the current build. */
+      broken: BrokenOnBuild | null;
     };
+
+export type BrokenIssue = {
+  /** The module's catalog name; null for a fit-wide issue ("Whole fit") or when no catalog is held. */
+  moduleName: string | null;
+  /** The module's item def when the catalog knows the item (so "fits using this module" can be offered); else null. */
+  def: string | null;
+  message: string;
+};
+
+export type BrokenOnBuild = { issues: BrokenIssue[]; /** The build of the most recent valid verdict, if any. */ lastWorkedBuild: string | null };
+
+/**
+ * The "broken on this build" panel's content: only for a published fit that is outdated (it passed on an
+ * earlier build and fails on the current one). Issues are the engine's stored ones for the current build;
+ * each module is read from `moduleIndex` against the fit's modules and named by the catalog.
+ */
+export function brokenOnBuild(fit: Pick<FitDetail, "status" | "fit">, shown: Pick<Shown, "standing" | "issues" | "reference">, catalog: Catalog | null): BrokenOnBuild | null {
+  if (fit.status !== "published" || shown.standing !== "outdated") return null;
+  const modules = isOpenFit(fit.fit) ? fit.fit.modules : [];
+  const items = new Map((catalog?.items ?? []).map((item) => [item.def, item.name]));
+  return {
+    issues: shown.issues.map((issue) => {
+      const module = issue.moduleIndex >= 0 ? modules[issue.moduleIndex] : undefined;
+      if (!module) return { moduleName: null, def: null, message: issue.message };
+      const known = items.get(module.item.def);
+      return { moduleName: known ?? (catalog ? UNKNOWN_ITEM_NAME : "MODULE"), def: known === undefined ? null : module.item.def, message: issue.message };
+    }),
+    lastWorkedBuild: shown.reference?.buildSha ?? null,
+  };
+}
 
 /** What `shown` holds for a revision that has no verdict of its own. */
 const NO_STATS: Shown = { standing: "unknown", reference: null, referenceIsOld: false, result: { stats: [], conduits: [], regaliaSets: [], sections: null }, issues: [] };
@@ -331,6 +365,92 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, re
     fork,
     revisions,
     revision,
+    broken: brokenOnBuild(shownFit, shown, engine.catalog),
+  };
+}
+
+// ---------------------------------------------------------------------------------------------------
+// Compare
+
+export type CompareSide =
+  /** No fit asked for on this side. */
+  | { status: "empty" }
+  /** The fit doesn't exist or the viewer may not see it (the same answer for both). */
+  | { status: "missing"; id: string }
+  | {
+      status: "found";
+      id: string;
+      title: string;
+      authorUserId: string;
+      authorName: string;
+      fitStatus: FitSummary["status"];
+      hullName: string;
+      standing: Standing;
+      rating: number | null;
+      /** True when the stats are an older build's last valid ones, or the fit has none. */
+      statsNote: string | null;
+      modules: ReturnType<typeof countModules>;
+    };
+
+export type CompareData =
+  | Unavailable
+  | { status: "ok"; engine: PageEngine; a: CompareSide; b: CompareSide; sections: CompareSection[]; modules: ModuleDiff };
+
+/**
+ * Two fits side by side. Each side is read through getFit with the viewer, so a fit the viewer can't see is
+ * "missing" exactly like one that doesn't exist. Stats are the stored verdicts' hull spec sections, as the
+ * fit page shows them (the current build's, or the last valid one for an outdated fit); nothing is evaluated.
+ */
+export async function loadCompare(deps: SiteDeps, ids: { a?: string; b?: string }, viewer: Viewer): Promise<CompareData> {
+  const engine = await pageEngine(deps);
+  const db = databaseOf(deps);
+  if (!db) return { status: "unavailable", engine };
+  const names = new Map((engine.catalog?.items ?? []).map((item) => [item.def, item.name]));
+  const nameOf = (def: string) => names.get(def) ?? UNKNOWN_ITEM_NAME;
+
+  const read = async (id: string | undefined) => {
+    if (!id) return { side: { status: "empty" } as CompareSide, sections: null, failed: false };
+    const fit = await guarded("compare read", () => getFit(db, id, { viewer, buildSha: engine.currentSha }));
+    if (fit === null) {
+      const reachable = await guarded("probe", () => db.query("SELECT 1"));
+      return { side: { status: "missing", id } as CompareSide, sections: null, failed: !reachable };
+    }
+    const shown = shownEvaluation(fit, engine.currentSha);
+    const hull = engine.catalog?.hulls.find((each) => each.def === fit.hullItem);
+    const statsNote =
+      shown.reference === null
+        ? "THIS FIT HAS NEVER PASSED THE ENGINE, SO IT HAS NO STATS."
+        : shown.result.sections === null
+          ? "STATS APPEAR AFTER THE NEXT CHECK."
+          : shown.referenceIsOld
+            ? `STATS ARE FROM ITS LAST VALID BUILD.`
+            : null;
+    const side: CompareSide = {
+      status: "found",
+      id: fit.id,
+      title: fit.title,
+      authorUserId: fit.authorUserId,
+      authorName: fit.authorName,
+      fitStatus: fit.status,
+      hullName: hull?.name ?? "UNKNOWN HULL",
+      standing: shown.standing,
+      rating: shown.reference?.rating ?? null,
+      statsNote,
+      modules: countModules(isOpenFit(fit.fit) ? fit.fit.modules.map((module) => module.item.def) : [], nameOf),
+    };
+    return { side, sections: shown.result.sections, failed: false };
+  };
+
+  const a = await read(ids.a);
+  const b = await read(ids.b);
+  if (a.failed || b.failed) return { status: "unavailable", engine };
+  return {
+    status: "ok",
+    engine,
+    a: a.side,
+    b: b.side,
+    sections: alignSections(a.sections, b.sections),
+    modules: diffModules(a.side.status === "found" ? a.side.modules : [], b.side.status === "found" ? b.side.modules : []),
   };
 }
 

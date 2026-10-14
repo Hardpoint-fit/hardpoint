@@ -6,7 +6,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { isEditableFit } from "#/lib/engine/open-fit";
-import { FIT_JSON_MAX_BYTES } from "#/lib/fits/limits";
+import { DESCRIPTION_MAX, FIT_JSON_MAX_BYTES } from "#/lib/fits/limits";
 import * as core from "#/lib/site/actions-core";
 import { actionDeps } from "#/lib/site/server";
 
@@ -165,4 +165,15 @@ export async function openNotificationAction(id: unknown): Promise<void> {
 export async function markAllNotificationsReadAction(): Promise<void> {
   const result = await core.markAllNotificationsRead(actionDeps());
   if (result.ok) revalidatePath("/", "layout");
+}
+
+/** The writing preview's HTML: the fit page's own renderer, for text up to a description's length. */
+export async function previewMarkdownAction(markdown: unknown): Promise<core.ActionResult<{ html: string }>> {
+  if (!text(markdown, DESCRIPTION_MAX)) return BAD_INPUT;
+  return core.previewMarkdown(actionDeps(), { text: markdown });
+}
+
+/** The compare picker's lists: the signed-in pilot's bookmarks and own fits. */
+export async function compareChoicesAction(): Promise<core.ActionResult<{ bookmarks: core.CompareChoice[]; mine: core.CompareChoice[] }>> {
+  return core.compareChoices(actionDeps());
 }
