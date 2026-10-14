@@ -55,6 +55,15 @@ async function rewindToCopiedNames(target) {
   `);
 }
 
+// Schema 9 as production has it: pilots and foreign keys exist, the copied names are nullable and NULL.
+async function rewindToSchema9(target) {
+  await target.exec(`
+    DELETE FROM schema_version WHERE version >= 10;
+    ALTER TABLE fits ADD COLUMN author_name text;
+    ALTER TABLE fit_comments ADD COLUMN author_name text;
+  `);
+}
+
 const copiedNameColumns = async (target) =>
   (
     await target.query(
@@ -62,7 +71,7 @@ const copiedNameColumns = async (target) =>
     )
   ).rows;
 
-test("the schema backfills pilots from the names copied onto fits and comments, and keeps the copies nullable", async () => {
+test("the schema backfills pilots from the names copied onto fits and comments, and drops the copies", async () => {
   const old = await PGlite.create();
   await applySchema(old);
   await rewindToCopiedNames(old);
@@ -88,14 +97,7 @@ test("the schema backfills pilots from the names copied onto fits and comments, 
     { user_id: "user_dave", name: "dave" },
     { user_id: "user_erin", name: "PILOT" },
   ]);
-  assert.deepEqual(
-    await copiedNameColumns(old),
-    [
-      { table_name: "fit_comments", is_nullable: "YES" },
-      { table_name: "fits", is_nullable: "YES" },
-    ],
-    "the copies stay for the old code still running, and accept the NULLs this code leaves",
-  );
+  assert.deepEqual(await copiedNameColumns(old), [], "the copies are gone once the pilots are backfilled");
 
   // Old rows read through the pilots join.
   const shaped = {
@@ -106,29 +108,38 @@ test("the schema backfills pilots from the names copied onto fits and comments, 
   const comments = await listComments(shaped, "aaaaaaaaaa");
   assert.deepEqual(comments.map((c) => c.authorName).sort(), ["PILOT", "bob-latest", "carol", "dave"]);
 
-  // This code writes no copy, so its rows carry NULL.
   const fresh = await createFit(shaped, { authorUserId: "user_frank", authorName: "FRANK", title: "New code", content: sampleFit(), buildSha: SHA });
   await createComment(shaped, { fitId: "cccccccccc", authorUserId: "user_alice", authorName: "ALICE", body: "new comment" });
-  assert.equal((await old.query("SELECT author_name FROM fits WHERE id = $1", [fresh.id])).rows[0].author_name, null);
-  assert.deepEqual((await old.query("SELECT author_name FROM fit_comments WHERE body = 'new comment'")).rows, [{ author_name: null }]);
+  assert.ok(fresh.id);
 
-  // The old code during the rollout: a write by an author with a pilot row goes through; a first-ever author is
-  // refused by the foreign key (documented in schema.sql).
-  await old.exec(
-    "INSERT INTO fits (id, author_user_id, author_name, title, hull_item, fit, created_build_sha) VALUES ('eeeeeeeeee', 'user_bob', 'bob', 'Old code', '1000', '{}', 'sha')",
-  );
-  await assert.rejects(
-    old.exec("INSERT INTO fits (id, author_user_id, author_name, title, hull_item, fit, created_build_sha) VALUES ('ffffffffff', 'user_new', 'new', 'Old code', '1000', '{}', 'sha')"),
-    /fits_author_pilot_fk/,
-  );
-
-  // Later starts don't backfill again: renamed pilots keep their names, NULL copies change nothing.
+  // Later starts don't backfill again: renamed pilots keep their names.
   await old.query("UPDATE pilots SET name = 'ALICE' WHERE user_id = 'user_alice'");
   await applySchema(old);
   assert.equal(await nameOfIn(old, "user_alice"), "ALICE");
   assert.equal(await nameOfIn(old, "user_frank"), "FRANK");
   assert.equal((await old.query("SELECT count(*)::int AS n FROM schema_version WHERE version = 4")).rows[0].n, 1);
+  assert.deepEqual(await copiedNameColumns(old), []);
   await old.close();
+});
+
+test("a schema 9 database (nullable, NULL copies) migrates to 10 and drops them; applying again is a no-op", async () => {
+  const target = await PGlite.create();
+  await applySchema(target);
+  await rewindToSchema9(target);
+  await target.exec("INSERT INTO pilots (user_id, name) VALUES ('user_alice', 'ALICE')");
+  await target.exec(
+    "INSERT INTO fits (id, author_user_id, title, hull_item, fit, created_build_sha) VALUES ('aaaaaaaaaa', 'user_alice', 'Nine', '1000', '{}', 'sha')",
+  );
+  assert.equal((await copiedNameColumns(target)).length, 2);
+  await applySchema(target);
+  assert.deepEqual(await copiedNameColumns(target), []);
+  assert.equal((await target.query("SELECT count(*)::int AS n FROM fits")).rows[0].n, 1, "rows survive the drop");
+  assert.equal(await nameOfIn(target, "user_alice"), "ALICE");
+  assert.equal((await target.query("SELECT count(*)::int AS n FROM schema_version WHERE version = 10")).rows[0].n, 1);
+  await applySchema(target);
+  assert.deepEqual(await copiedNameColumns(target), []);
+  assert.deepEqual((await target.query("SELECT max(version)::int AS v FROM schema_version")).rows, [{ v: 10 }]);
+  await target.close();
 });
 
 test("the backfill holds writes to fits and comments only in the start that records schema 4", async () => {
@@ -153,7 +164,7 @@ test("the backfill holds writes to fits and comments only in the start that reco
     "the first start: the backfill holds writes until the migration commits",
   );
   await applySchema(target);
-  assert.deepEqual(await lockModes(target), [], "later starts, columns still present: no lock on writes");
+  assert.deepEqual(await lockModes(target), [], "later starts: no lock on writes");
   await target.close();
 });
 

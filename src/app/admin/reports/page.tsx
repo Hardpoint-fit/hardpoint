@@ -21,7 +21,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
     <main className="page">
       <div className="page-title">
         <h1>OPEN REPORTS</h1>
-        <span className="eyebrow">HIDE WHAT BREAKS THE RULES · RESOLVE THE REST</span>
       </div>
       <AdminNav current="reports" />
       {data === null ? (

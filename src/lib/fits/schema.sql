@@ -112,27 +112,8 @@ CREATE TABLE IF NOT EXISTS pilots (
 );
 
 -- Before schema 4 the name was copied onto every fit and comment at write time (fits.author_name and
--- fit_comments.author_name, NOT NULL). This release keeps those columns but stops using them: no code here
--- reads or writes them. They stay because the previous site and `reevaluate` cron keep running while Railway
--- rolls this one out (and keep running if this start fails its health check), and they still insert names.
--- So: allow NULL (this code inserts none), backfill pilots once, add the foreign keys.
--- Follow-up (plan: "Follow-up: drop fits/fit_comments.author_name"): once no instance of the old code runs, a
--- later schema version drops both columns.
--- Rollout window: the old code inserting a fit or comment for an author who has no pilot row is refused by the
--- foreign keys below (it never creates pilot rows). Every author who wrote before this start has a row from
--- the backfill, so only a first-ever write through an old instance fails, and that pilot can retry on the new one.
-DO $$
-BEGIN
-  -- Checked first so a later start never takes ALTER TABLE's exclusive lock for a no-op.
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-             WHERE table_schema = current_schema() AND table_name = 'fits' AND column_name = 'author_name' AND is_nullable = 'NO') THEN
-    ALTER TABLE fits ALTER COLUMN author_name DROP NOT NULL;
-  END IF;
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-             WHERE table_schema = current_schema() AND table_name = 'fit_comments' AND column_name = 'author_name' AND is_nullable = 'NO') THEN
-    ALTER TABLE fit_comments ALTER COLUMN author_name DROP NOT NULL;
-  END IF;
-END $$;
+-- fit_comments.author_name). Schema 4 backfills pilots from those copies, adds the foreign keys below, and
+-- schema 10 drops the columns (guarded drop after the foreign keys).
 
 -- The backfill runs once: in the transaction that first records schema version 4 (at the end of this file), and
 -- only where the copies exist. A later start, or a database this schema created, skips it and locks nothing.
@@ -175,6 +156,20 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fit_comments_author_pilot_fk') THEN
     ALTER TABLE fit_comments ADD CONSTRAINT fit_comments_author_pilot_fk FOREIGN KEY (author_user_id) REFERENCES pilots (user_id);
+  END IF;
+END $$;
+
+-- Schema 10: the copied names are gone. Checked first so a later start never takes ALTER TABLE's exclusive
+-- lock for a no-op. The backfill above has already read them where they existed.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'fits' AND column_name = 'author_name') THEN
+    ALTER TABLE fits DROP COLUMN author_name;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'fit_comments' AND column_name = 'author_name') THEN
+    ALTER TABLE fit_comments DROP COLUMN author_name;
   END IF;
 END $$;
 
@@ -312,3 +307,4 @@ INSERT INTO schema_version (version) VALUES (6) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (7) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (8) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (9) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (10) ON CONFLICT DO NOTHING;
