@@ -1,6 +1,9 @@
-// A fitted module's tooltip, in the game's item tooltip shape (ItemTooltip.uss .mtt): name, tier,
-// quality and slot, then what the engine said about it and its rolled modifiers in the game's words.
+// A fitted module's tooltip, in the game's item tooltip shape (ItemTooltip.uss .mtt): icon, name, tier,
+// quality and slot, the description and the stat lines, then what the engine said about it and its
+// rolled modifiers in the game's words.
 import { formatStatValue, statLabel, statTone } from "#/lib/fits/stat-format";
+import { ItemDescription, ItemIcon } from "#/components/item-text";
+import { TooltipFacts } from "#/components/rolled-facts";
 import type { GridModule } from "./model";
 
 /** An FP value as an open fit stores it: the raw 48.16 fixed-point integer, as a decimal string. */
@@ -15,18 +18,25 @@ export function ModuleTooltip({ module }: { module: GridModule }) {
   const filledPorts = module.ports.filter((port) => port.cipher !== null).length;
   return (
     <div className="plate">
-      <div className="plate__name">{module.name}</div>
-      <div className="plate__sub">
-        {module.known ? (
-          <>
-            <span className={`accent-${module.tier}`}>{RARITY_NAMES[module.rarity] ?? module.rarity.toUpperCase()}</span>
-            <span className={`accent-quality-${quality}`}>{module.quality.toUpperCase()} QUALITY</span>
-            {module.slotType && <span className="tone-neutral">{module.slotType.toUpperCase()}</span>}
-          </>
-        ) : (
-          <span className="tone-negative">NOT IN THE CURRENT BUILD</span>
-        )}
+      <div className="plate__head">
+        <ItemIcon src={module.icon} size={32} />
+        <div className="plate__head-text">
+          <div className="plate__name">{module.name}</div>
+          <div className="plate__sub">
+            {module.known ? (
+              <>
+                <span className={`accent-${module.tier}`}>{RARITY_NAMES[module.rarity] ?? module.rarity.toUpperCase()}</span>
+                <span className={`accent-quality-${quality}`}>{module.quality.toUpperCase()} QUALITY</span>
+                {module.slotType && <span className="tone-neutral">{module.slotType.toUpperCase()}</span>}
+              </>
+            ) : (
+              <span className="tone-negative">NOT IN THE CURRENT BUILD</span>
+            )}
+          </div>
+        </div>
       </div>
+      <ItemDescription text={module.description} />
+      {module.known && <TooltipFacts item={module.item} catalogFacts={module.facts} />}
       {module.issues.length > 0 && (
         <>
           <div className="plate__divider" />

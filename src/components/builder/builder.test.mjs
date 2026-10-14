@@ -85,10 +85,18 @@ test("the workspace opens on the hull picker, and on a fit draws the grid, palet
   assert.match(picker, /CHOOSE A HULL/);
   assert.match(picker, /SCARAB/);
   assert.match(picker, /IMPORT A FIT STRING/);
+  assert.equal(picker.split('class="hull-card ').length - 1, FIXTURES.catalog.hulls.length);
+  assert.equal(picker.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.webp"/g)?.length, FIXTURES.catalog.hulls.length, "every hull card shows its art");
 
   const html = render({ ...NEW, fit: FIXTURES.fit }, { enabled: false, signedIn: false });
-  for (const text of ["ITEMS", "SCARAB fitting grid", "AFFINITY", "INSPECTOR", "STATS", "FIT DETAILS", "EXPORT FIT STRING", "CHECKING"]) assert.ok(html.includes(text), text);
+  for (const text of ["ITEMS", "SCARAB fitting grid", "AFFINITY", "INSPECTOR", "HULL SPECS", "FIT DETAILS", "EXPORT FIT STRING", "CHECKING"]) assert.ok(html.includes(text), text);
   assert.equal(html.split('data-module="').length - 1, FIXTURES.fit.modules.length);
+  // Icons: one per palette entry, and one inside each module's footprint on the grid.
+  const palette = html.slice(html.indexOf('aria-label="Items"'), html.indexOf("</ul>", html.indexOf('aria-label="Items"')));
+  assert.equal(palette.split("data-palette-item").length - 1, FIXTURES.catalog.items.length);
+  assert.equal(palette.match(/class="item-icon" src="\/art\//g)?.length, FIXTURES.catalog.items.length, "every palette entry shows its art");
+  assert.equal(html.split('class="fg-module__icon"').length - 1, FIXTURES.fit.modules.length, "every module has its art in its footprint");
+  assert.doesNotMatch(html, /fg-module--no-art/);
   assert.ok(html.includes(SIGN_IN_UNAVAILABLE_MESSAGE.replace("'", "&#x27;")), "sign-in off: the save controls give way to the note");
   assert.ok(!html.includes("SAVE DRAFT"));
 

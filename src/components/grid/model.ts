@@ -7,10 +7,13 @@ import type {
   CatalogItem,
   ConduitLink,
   EvaluationIssue,
+  FactRow,
   OpenFit,
+  OpenItem,
   OpenModifier,
   RegaliaGroup,
 } from "#/lib/engine/types";
+import { itemIcon } from "#/lib/art/item-icon";
 import { applySlotOverrides, occupiedCells, placeFootprint, type Cell, type Footprint, type PlacedPort } from "./geometry";
 
 /** The game's tier palettes (--tier-<key>-surface-* tokens). */
@@ -41,6 +44,8 @@ export type GridModule = {
   /** Index in the open fit's modules: what the engine's issues and links refer to. */
   index: number;
   def: string;
+  /** The item as the fit stores it, for asking the engine about its roll. */
+  item: OpenItem;
   /** False when the current catalog has no such item (removed by a patch): drawn as UNKNOWN ITEM. */
   known: boolean;
   name: string;
@@ -64,6 +69,14 @@ export type GridModule = {
   /** Conduit links the engine found for this module, or null when it reported none. */
   conduitConnections: number | null;
   regalia: { set: string; setName: string; fittedCount: number; pieces: number } | null;
+  /** The image the game shows for this roll (art/item-icon.ts), or null for the no-art placeholder. */
+  icon: string | null;
+  /** The catalog's description: plain text. */
+  description: string | null;
+  /** The catalog's facts for the plainest roll; the engine's for this roll arrive in the browser. */
+  facts: FactRow[];
+  /** Each Tek Cipher's cell with the cipher's own image. */
+  ciphers: { cell: Cell; name: string; icon: string | null }[];
 };
 
 export type GridModel = {
@@ -89,6 +102,10 @@ export type GridCatalog = {
   items: ReadonlyMap<string, CatalogItem>;
   /** Regalia set def to its name and piece count. */
   regaliaSets?: ReadonlyMap<string, { name: string; pieces: number }>;
+  /** Artifact def to its name: an identified artifact shows the artifact's own icon. */
+  artifacts?: ReadonlyMap<string, { name: string }>;
+  /** Cipher def to its name, which finds its icon. */
+  ciphers?: ReadonlyMap<string, { name: string }>;
 };
 
 export const UNKNOWN_ITEM_NAME = "UNKNOWN ITEM";
@@ -106,9 +123,11 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
     const conduit = evaluation?.conduits?.find((link) => link.moduleIndex === index);
     const group = evaluation?.regaliaSets?.find((set) => set.moduleIndices.includes(index));
     const setInfo = group ? catalog.regaliaSets?.get(group.set) : undefined;
+    const artifactName = roll.artifact ? (catalog.artifacts?.get(roll.artifact)?.name ?? null) : null;
     return {
       index,
       def: module.item.def,
+      item: module.item,
       known: item !== undefined,
       name: item?.name ?? UNKNOWN_ITEM_NAME,
       category: item?.category ?? null,
@@ -129,6 +148,14 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
       regalia: group
         ? { set: group.set, setName: setInfo?.name ?? "REGALIA SET", fittedCount: group.fittedCount, pieces: setInfo?.pieces ?? group.fittedCount }
         : null,
+      icon: item ? itemIcon({ path: item.path, category: item.category }, roll, artifactName) : null,
+      description: item?.description ?? null,
+      facts: item?.facts ?? [],
+      ciphers: footprint.ports.flatMap((port) => {
+        if (!port.expansion || !port.cipher) return [];
+        const name = catalog.ciphers?.get(port.cipher)?.name ?? null;
+        return [{ cell: port.expansion, name: name ?? "UNKNOWN CIPHER", icon: name ? itemIcon({ path: name, category: "Portable" }, { rarity: "Normal", isIdentified: true }) : null }];
+      }),
     };
   });
   return {
@@ -151,9 +178,13 @@ export function moduleCells(module: GridModule): Cell[] {
 export function catalogLookups(catalog: {
   items: readonly CatalogItem[];
   regaliaSets: readonly { def: string; name: string; pieces: readonly string[] }[];
-}): { items: Map<string, CatalogItem>; regaliaSets: Map<string, { name: string; pieces: number }> } {
+  artifacts: readonly { def: string; name: string }[];
+  ciphers: readonly { def: string; name: string }[];
+}): Omit<GridCatalog, "hull"> & { items: Map<string, CatalogItem> } {
   return {
     items: new Map(catalog.items.map((item) => [item.def, item])),
     regaliaSets: new Map(catalog.regaliaSets.map((set) => [set.def, { name: set.name, pieces: set.pieces.length }])),
+    artifacts: new Map(catalog.artifacts.map((artifact) => [artifact.def, artifact])),
+    ciphers: new Map(catalog.ciphers.map((cipher) => [cipher.def, cipher])),
   };
 }

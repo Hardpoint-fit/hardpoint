@@ -5,7 +5,9 @@ import type { CatalogItem, OpenFit, OpenModifier, OpenRoll } from "#/lib/engine/
 import { formatStatValue, statLabel, statTone } from "#/lib/fits/stat-format";
 import { Panel } from "#/components/ui";
 import { enumWords, rarityName } from "./labels";
-import { ShapeGlyph } from "./palette";
+import { ItemDescription, ItemIcon } from "#/components/item-text";
+import { RolledFacts } from "#/components/rolled-facts";
+import { itemIcon } from "#/lib/art/item-icon";
 import {
   FP_ONE,
   addableModifiers,
@@ -339,6 +341,13 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
   const template = templateOf(cat, roll);
   const maxPatina = patinaMax(cat, roll);
   const ports = portOptions(subject, roll);
+  const hull = target === "hull" ? cat.hulls.get(fit.hull.def) : undefined;
+  const artifactName = roll.artifact ? (cat.artifacts.get(roll.artifact)?.name ?? null) : null;
+  const icon = catalogItem
+    ? itemIcon({ path: catalogItem.path, category: catalogItem.category }, roll, artifactName)
+    : hull
+      ? itemIcon({ path: hull.path, category: "Ship" }, roll, artifactName)
+      : null;
 
   return (
     <Panel
@@ -358,7 +367,7 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
       }
     >
       <div className="inspector__title">
-        {catalogItem && <ShapeGlyph item={catalogItem} size={9} />}
+        <ItemIcon src={icon} size={48} />
         <div>
           <div className={`inspector__name accent-${tier}`}>{subject.name}</div>
           <div className="note">
@@ -367,6 +376,12 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
           </div>
         </div>
       </div>
+      {catalogItem && (
+        <div className="inspector__about">
+          <ItemDescription text={catalogItem.description} />
+          <RolledFacts item={item} catalogFacts={catalogItem.facts} />
+        </div>
+      )}
 
       <Section title="QUALITY">
         <Choices

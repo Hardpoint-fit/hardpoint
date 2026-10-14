@@ -22,6 +22,7 @@ import {
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
+import { baseIcon } from "../art/item-icon";
 
 export type SiteDeps = {
   database: () => DatabaseState;
@@ -80,6 +81,8 @@ export type FitCard = {
   id: string;
   title: string;
   hullName: string;
+  /** The hull item's base icon, or null (no art, or a hull the build doesn't have). */
+  hullIcon: string | null;
   authorUserId: string;
   authorName: string;
   tags: string[];
@@ -94,10 +97,12 @@ export type FitCard = {
 export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: string | null): FitCard {
   const standing = standingOf(fit, currentSha);
   const rating = standing === "current" ? fit.evaluation!.rating : (fit.lastValidEvaluation?.rating ?? null);
+  const hull = catalog?.hulls.find((each) => each.def === fit.hullItem);
   return {
     id: fit.id,
     title: fit.title,
-    hullName: catalog?.hulls.find((hull) => hull.def === fit.hullItem)?.name ?? "UNKNOWN HULL",
+    hullName: hull?.name ?? "UNKNOWN HULL",
+    hullIcon: hull ? baseIcon(hull.path) : null,
     authorUserId: fit.authorUserId,
     authorName: fit.authorName,
     tags: fit.tags,
@@ -186,7 +191,7 @@ export function gridFor(fit: FitDetail, catalog: Catalog | null, shown: Shown): 
   const hull = catalog.hulls.find((each) => each.def === open.hull.def);
   if (!hull) return { status: "unknown_hull" };
   const lookups = catalogLookups(catalog);
-  const model = buildGridModel({ hull, items: lookups.items, regaliaSets: lookups.regaliaSets }, open, {
+  const model = buildGridModel({ hull, ...lookups }, open, {
     issues: shown.issues,
     conduits: shown.result.conduits,
     regaliaSets: shown.result.regaliaSets,

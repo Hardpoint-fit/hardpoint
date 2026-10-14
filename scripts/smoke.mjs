@@ -17,6 +17,7 @@ import pg from "pg";
 import { startStubEngine } from "../src/lib/engine/stub-engine.mjs";
 import { applySchema } from "../src/lib/fits/migrate.mjs";
 import { seedSite } from "../src/lib/site/seed.mjs";
+import { artManifest } from "../src/lib/art/art-manifest.ts";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const standalone = join(appRoot, ".next/standalone");
@@ -25,8 +26,10 @@ const serve = process.argv.includes("--serve");
 
 if (!databaseUrl) throw new Error("Set SMOKE_DATABASE_URL to a throwaway Postgres database.");
 if (!existsSync(join(standalone, "server.js"))) throw new Error("Run `pnpm build` first.");
-// As the Dockerfile does: the standalone server serves the static assets from beside it.
+// As the Dockerfile does: the standalone server serves the static assets and public/ (the game art) from beside it.
 cpSync(join(appRoot, ".next/static"), join(standalone, ".next/static"), { recursive: true });
+cpSync(join(appRoot, "public"), join(standalone, "public"), { recursive: true });
+const ART_URL = Object.values(artManifest.modules)[0].base;
 
 async function freePort() {
   const server = createServer();
@@ -118,6 +121,15 @@ try {
     has: ["Scarab cipher brawler", "COOLANT RESERVOIR", "MAX VELOCITY", "KASSIK", "WORKS ON CURRENT BUILD", "COPY FIT STRING", "Does the <strong>cipher</strong>", "Sign-in isn&#x27;t configured"],
     lacks: ["<script>alert(1)</script>", "UPVOTED"],
   });
+  // Icons, descriptions, fact rows and the stored hull specs on the fit page; hull art on the cards.
+  await check(up, `/fits/${ids.showcase}`, {
+    has: ['class="fg-module__icon"', 'class="item-icon" src="/art/', "AUTOMATICALLY VENTS HEAT WHEN UNSTABLE", "DEACTIVATION COOLDOWN", "HULL SPECS", 'data-spec="effective-health"', "TIME TO SCRAM"],
+    lacks: ["STATS APPEAR AFTER THE NEXT CHECK"],
+  });
+  await check(up, `/fits/${ids.pending}`, { has: ["STATS APPEAR AFTER THE NEXT CHECK", 'class="fg-module__icon"'] });
+  await check(up, "/", { has: ['class="item-icon" src="/art/'] });
+  await check(up, ART_URL, { type: "image/webp" });
+  await check(up, ART_URL.replace(".webp", "@2x.webp"), { type: "image/webp" });
   await check(up, `/fits/${ids.removed}`, { has: ["UNKNOWN ITEM", "OUTDATED", "doesn&#x27;t exist in the current build", "LAST VALID"] });
   await check(up, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(up, `/fits/${ids.draft}`, { status: 404 });
@@ -149,7 +161,7 @@ try {
   sites.push(down);
   results.push("== engine down");
   await check(down, "/", { has: ["ISN&#x27;T ANSWERING", "Scarab cipher brawler"] });
-  await check(down, `/fits/${ids.showcase}`, { has: ["ISN&#x27;T ANSWERING", "MAX VELOCITY", "THE GRID NEEDS THE LOADOUT ENGINE"] });
+  await check(down, `/fits/${ids.showcase}`, { has: ["ISN&#x27;T ANSWERING", "MAX VELOCITY", "THE GRID NEEDS THE LOADOUT ENGINE", 'data-spec="effective-health"', "EFFECTIVE HEALTH"] });
   await check(down, `/fits/${ids.removed}`, { has: ["ISN&#x27;T ANSWERING", "Old build regalia runner"] });
   await check(down, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(down, `/u/${ALICE_ID}`, { has: ["Scarab cipher brawler"] });

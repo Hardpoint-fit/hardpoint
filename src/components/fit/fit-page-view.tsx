@@ -9,6 +9,9 @@ import { FittingGrid } from "#/components/grid/fitting-grid";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
 import { CommentForm, EditComment, ReplyToggle, ReportButton, VoteButton } from "./controls";
 import { StatsTable } from "./stats-table";
+import { HullSpecs, SPECS_PENDING } from "./hull-specs";
+import { ItemIcon } from "#/components/item-text";
+import { itemIcon } from "#/lib/art/item-icon";
 import { CopyFitString } from "./copy-fit-string";
 import { isOpenFit } from "#/lib/engine/open-fit";
 
@@ -84,10 +87,12 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
   const published = fit.status === "published";
   const hullName = data.hull?.name ?? "UNKNOWN HULL";
   const rating = shown.reference?.rating ?? null;
+  const hullIcon = data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
   return (
     <main className="page">
       <EngineBanner engine={engine} />
-      <div className="page-title">
+      <div className="page-title fit-head">
+        <ItemIcon src={hullIcon} size={48} className="fit-head__icon" />
         <span className="eyebrow">
           {hullName} · {data.hull ? `${data.hull.shipClass.toUpperCase()} · ${data.hull.role === "None" ? "NO ROLE" : data.hull.role.toUpperCase()}` : "NOT IN THIS BUILD"}
         </span>
@@ -180,7 +185,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
             )}
           </Panel>
           <Panel
-            title="STATS"
+            title="HULL SPECS"
             aside={shown.reference ? (shown.referenceIsOld ? `LAST VALID · ${buildLabel(shown.reference.buildSha)}` : buildLabel(shown.reference.buildSha)) : undefined}
           >
             {shown.reference === null ? (
@@ -190,10 +195,21 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
                 {shown.referenceIsOld && shown.standing === "outdated" && (
                   <p className="note note--error">THIS FIT FAILS ON THE CURRENT BUILD. THESE STATS ARE FROM ITS LAST VALID BUILD.</p>
                 )}
-                <StatsTable stats={shown.result.stats} catalog={engine.catalog} />
+                {shown.result.sections === null ? (
+                  // Stored before the engine sent hull specs: the re-evaluation job asks again. An outdated
+                  // fit's last valid build can't be asked again, so it says so rather than promise.
+                  <p className="note">{shown.standing === "outdated" ? "NO HULL SPECS WERE KEPT FROM ITS LAST VALID BUILD." : SPECS_PENDING}</p>
+                ) : (
+                  <HullSpecs sections={shown.result.sections} />
+                )}
               </>
             )}
           </Panel>
+          {shown.reference !== null && (
+            <Panel title="MODIFIERS">
+              <StatsTable stats={shown.result.stats} catalog={engine.catalog} />
+            </Panel>
+          )}
         </aside>
       </div>
     </main>

@@ -8,6 +8,7 @@ import art from "./fitting-art.generated.json";
 import { boundsOf, cellKey, directionOffset, oppositeDirection, outerEdges, visibleBounds, type Bounds, type Cell, type Direction } from "./geometry";
 import { moduleCells, type GridModel, type GridModule } from "./model";
 import { ModuleTooltip } from "./module-tooltip";
+import { ItemIcon } from "#/components/item-text";
 import "./fitting-grid.css";
 
 type Rect = { x: number; y: number; width: number; height: number };
@@ -47,6 +48,36 @@ export type FittingGridProps = {
 };
 
 const px = (cells: number) => cells * CELL;
+
+/** InventoryGridItemElement's DefaultIconInset and MinIconSize. */
+const ICON_INSET = 6;
+const MIN_ICON = 16;
+
+/**
+ * Where a module's icon sits, as the game's ApplyIconLayout and IconOrigin place it: a square as large as
+ * the footprint's short side less the inset, centred on a rectangle; on an L or a T, one cell's size,
+ * on the cell its arms meet at (the cell with the most neighbours in the shape).
+ */
+export function iconBox(cells: readonly Cell[]): { left: number; top: number; size: number } | null {
+  const box = boundsOf(cells);
+  if (!box) return null;
+  const extent = (n: number) => px(n) - 2 * INSET;
+  if (cells.length === box.rows * box.cols) {
+    const width = extent(box.cols);
+    const height = extent(box.rows);
+    const size = Math.max(MIN_ICON, Math.min(width, height) - 2 * ICON_INSET);
+    return { left: INSET + Math.round((width - size) / 2), top: INSET + Math.round((height - size) / 2), size };
+  }
+  const keys = new Set(cells.map(cellKey));
+  const neighbours = (cell: Cell) =>
+    (["Up", "Down", "Left", "Right"] as const).filter((direction) => {
+      const offset = directionOffset(direction);
+      return keys.has(cellKey({ row: cell.row + offset.row, col: cell.col + offset.col }));
+    }).length;
+  const elbow = cells.reduce((best, cell) => (neighbours(cell) > neighbours(best) ? cell : best), cells[0]!);
+  const size = Math.max(MIN_ICON, extent(1) - 2 * ICON_INSET);
+  return { left: px(elbow.col - box.minCol) + INSET + ICON_INSET, top: px(elbow.row - box.minRow) + INSET + ICON_INSET, size };
+}
 
 /** The part of the grid drawn: cropped bounds that also take in every module cell. */
 export function gridBounds(model: GridModel, crop = true): Bounds {
@@ -106,6 +137,7 @@ function ModuleView({
     "tip-anchor",
     `fg-module--${module.tier}`,
     module.known ? "" : "fg-module--unknown",
+    module.known && !module.icon ? "fg-module--no-art" : "",
     module.conduitConnections !== null && module.conduitConnections > 0 ? "fg-module--linked" : "",
     module.issues.length > 0 ? "fg-module--issue" : "",
     selected ? "fg-module--selected" : "",
@@ -116,6 +148,8 @@ function ModuleView({
   const labelBox = boundsOf(module.cells)!;
   const first = module.cells[0]!;
   const firstAt = local(first);
+  const icon = module.icon ? iconBox(module.cells) : null;
+  const baseAt = { x: px(labelBox.minCol - box.minCol), y: px(labelBox.minRow - box.minRow) };
   return (
     <div
       className={classes}
@@ -162,8 +196,22 @@ function ModuleView({
           })}
         </svg>
       )}
+      {icon && (
+        <span className="fg-module__icon" style={{ left: baseAt.x + icon.left, top: baseAt.y + icon.top, width: icon.size, height: icon.size }}>
+          <ItemIcon src={module.icon} size={icon.size} />
+        </span>
+      )}
+      {module.ciphers.map((cipher) => {
+        const at = local(cipher.cell);
+        const size = SLOT - 2 * ICON_INSET;
+        return (
+          <span key={`c${cellKey(cipher.cell)}`} className="fg-module__icon" style={{ left: at.x + INSET + ICON_INSET, top: at.y + INSET + ICON_INSET, width: size, height: size }}>
+            <ItemIcon src={cipher.icon} size={size} mirrored />
+          </span>
+        );
+      })}
       <span
-        className="fg-module__label"
+        className={`fg-module__label ${icon ? "fg-module__label--name" : ""}`}
         style={{
           left: px(labelBox.minCol - box.minCol) + INSET,
           top: px(labelBox.minRow - box.minRow) + INSET,

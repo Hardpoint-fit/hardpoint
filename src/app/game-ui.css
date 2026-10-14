@@ -403,6 +403,106 @@ a.chip:hover {
   color: rgba(255, 255, 255, 0.55);
 }
 
+/* ---- Item icon, description and facts (ItemTooltip.uss .mtt__row--description, --metric) -------- */
+
+.item-icon {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+/* Cipher art faces the other way, as .module-overlay__icon--cipher draws it. */
+.item-icon--mirrored {
+  scale: -1 1;
+}
+
+/* No art: a quiet frame with the font's "?" in place of the image. */
+.item-icon--none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px dashed rgba(107, 122, 122, 0.55);
+  color: var(--text-secondary);
+  font-size: var(--font-size-small);
+  line-height: 1;
+}
+
+.plate__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.plate__head-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.item-desc {
+  margin: 3px 0 0;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.facts__note {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.facts__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+}
+
+.facts__label {
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  overflow-wrap: anywhere;
+}
+
+.facts__value-group {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-tiny);
+  white-space: nowrap;
+}
+
+.facts__value {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.facts__value.positive {
+  color: var(--state-positive);
+}
+
+.facts__value.negative {
+  color: var(--state-negative);
+}
+
+.facts__unit {
+  color: rgb(136, 136, 136);
+}
+
 /* Shown while its anchor is hovered or focused. */
 .tip-anchor {
   position: relative;
@@ -514,6 +614,10 @@ a.chip:hover {
   }
 }
 
+.fit-head {
+  align-items: center;
+}
+
 .fit-title {
   margin: 0;
   font-size: var(--font-size-header);
@@ -576,6 +680,142 @@ a.chip:hover {
     top: 100%;
     right: 0;
   }
+}
+
+/* ---- Hull specs (HullSpecsPanel.uss: .fitting-stat-category, .fitting-stat-row, .stat-hint-bubble) -- */
+
+.specs {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.specs__section {
+  display: flex;
+  flex-direction: column;
+}
+
+.specs__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(83, 96, 96, 0.25);
+  padding: 1px 0 3px;
+}
+
+.specs__title {
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(178, 189, 189, 0.55);
+  font-size: var(--font-size-small);
+  letter-spacing: 0.45em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.specs__summary {
+  display: flex;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.specs__summary .specs__value {
+  color: rgba(226, 232, 232, 0.92);
+}
+
+.specs__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.specs__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-tiny);
+  outline: none;
+  cursor: default;
+}
+
+.specs__label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-secondary-muted);
+  letter-spacing: 0.12em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 120ms ease-out;
+}
+
+.specs__row:hover .specs__label,
+.specs__row:focus-visible .specs__label {
+  color: rgba(226, 232, 232, 0.88);
+}
+
+.specs__values {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.specs__value {
+  color: var(--text-primary-muted);
+}
+
+.specs__value.positive {
+  color: rgba(123, 255, 0, 0.75);
+}
+
+.specs__value.negative {
+  color: rgba(255, 82, 82, 0.75);
+}
+
+.specs__unit {
+  margin-left: var(--spacing-xs);
+  color: rgb(136, 136, 136);
+}
+
+.specs__arrow {
+  margin: 0 var(--spacing-xs);
+  color: var(--text-primary-muted);
+}
+
+.specs__tip {
+  top: calc(100% + 4px);
+  left: 0;
+}
+
+.hint {
+  display: flex;
+  max-width: 220px;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid rgba(78, 91, 91, 0.5);
+  background: rgba(10, 12, 14, 0.95);
+  padding: 6px 8px;
+  pointer-events: none;
+}
+
+.hint__title {
+  color: rgba(226, 232, 232, 0.88);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.12em;
+}
+
+.hint__text {
+  color: rgba(178, 189, 189, 0.65);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.08em;
+  line-height: 1.4;
 }
 
 .comment-thread {
@@ -690,6 +930,19 @@ a.chip:hover {
   color: inherit;
   text-decoration: none;
   outline: none;
+}
+
+.fit-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.fit-card__head-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .fit-card__hull {

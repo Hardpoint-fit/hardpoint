@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import test, { after, before } from "node:test";
 import { createElement as h } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { FIXTURES } from "../../lib/engine/stub-engine.mjs";
 import { createCatalogCache } from "../../lib/engine/catalog-cache.ts";
 import { createEngineClient } from "../../lib/engine/client.ts";
 import { createEngineMonitor } from "../../lib/engine/engine-state.ts";
@@ -58,6 +59,41 @@ test("the grid draws every module, the cipher cell, port notches, conduit and re
   assert.match(html, /KASSIK&#x27;S SEVERANCE/, "the set bonus source is named");
   assert.doesNotMatch(html, /fg-module--issue/);
   assert.doesNotMatch(html, /<script>alert/, "the description is sanitized");
+});
+
+test("the fit page shows the hull's art, every module's art, descriptions, fact rows and the stored hull specs", async () => {
+  const html = await renderFit(stub.url, ids.showcase, anonymous(false));
+  assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.webp"/, "the hull's art in the header");
+  assert.equal(count(html, 'class="fg-module__icon"'), 13 + 1, "each module's art, and the cipher's in its cell");
+  assert.match(html, /item-icon item-icon--mirrored" src="\/art\//, "the cipher's art faces the other way, as in the game");
+  // AUTO VENTING's tooltip: its description and its catalog fact rows.
+  assert.match(html, /<p class="item-desc">AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY\.<\/p>/);
+  assert.match(html, /<span class="facts__label">DEACTIVATION COOLDOWN<\/span>/);
+  assert.match(html, /<span class="facts__value positive">\+1,200%<\/span>/);
+  // A rolled module (the Augmented turret) shows its plainest roll's rows, named for what they are.
+  assert.match(html, /STANDARD ROLL/);
+  // The hull specs panel, from the stored verdict: sections, headline values, rows, units and help.
+  assert.match(html, /HULL SPECS/);
+  for (const section of FIXTURES.evaluateShowcase.sections) assert.ok(html.includes(`aria-label="${section.label}"`), section.label);
+  assert.match(html, /<span class="specs__title">DEFENSE<\/span><span class="specs__summary"><span class="specs__value ">3,644<\/span><span class="specs__unit">HP<\/span>/);
+  assert.match(html, /data-spec="time-to-scram"><span class="specs__label">TIME TO SCRAM<\/span><span class="specs__values"><span class="specs__value ">STABLE<\/span><\/span>/);
+  assert.match(html, /<span class="specs__value ">24<\/span><span class="specs__arrow">→<\/span><span class="specs__value negative">21<\/span><span class="specs__unit">%<\/span>/, "a comparison row, toned as the engine tones it");
+  assert.match(html, /COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE\./, "the row's help");
+  assert.match(html, /MODIFIERS/);
+});
+
+test("with the engine down the fit page still shows the stored hull specs (Review Focus #2)", async () => {
+  const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
+  assert.match(html, /THE GRID NEEDS THE LOADOUT ENGINE/);
+  assert.match(html, /data-spec="effective-health"/);
+  assert.match(html, /EFFECTIVE HEALTH/);
+});
+
+test("a verdict stored before the engine sent hull specs says the stats come with the next check", async () => {
+  const html = await renderFit(stub.url, ids.pending, anonymous(false));
+  assert.match(html, /CHECKING ON NEW BUILD/);
+  assert.match(html, /STATS APPEAR AFTER THE NEXT CHECK\./);
+  assert.doesNotMatch(html, /data-spec=/);
 });
 
 test("a removed item is drawn as UNKNOWN ITEM with its issue, and the fit reads as outdated (Review Focus #2)", async () => {
@@ -115,5 +151,6 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.match(html, /ALICE/);
   assert.match(html, /2 UPVOTES/);
   assert.match(html, /1 UPVOTE</);
+  assert.equal(html.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.webp"/g)?.length, 3, "each card shows its hull's art");
   assert.equal(count(html, "badge--outdated"), 1);
 });

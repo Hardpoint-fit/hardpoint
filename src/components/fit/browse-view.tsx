@@ -4,6 +4,7 @@ import Link from "next/link";
 import { toBrowseSearch, type BrowseQuery, type SortKey } from "#/lib/fits/filters";
 import type { FitCard, HullInfo } from "#/lib/site/loaders";
 import { StandingBadge, count } from "#/components/ui";
+import { ItemIcon } from "#/components/item-text";
 
 const SORTS: { key: SortKey; label: string }[] = [
   { key: "top-week", label: "TOP THIS WEEK" },
@@ -16,8 +17,13 @@ export function FitCardView({ card }: { card: FitCard }) {
   return (
     <li className="fit-card">
       <Link className="fit-card__link" href={`/fits/${card.id}`}>
-        <span className="fit-card__hull">{card.hullName}</span>
-        <span className="fit-card__title">{card.title}</span>
+        <span className="fit-card__head">
+          <ItemIcon src={card.hullIcon} size={40} />
+          <span className="fit-card__head-text">
+            <span className="fit-card__hull">{card.hullName}</span>
+            <span className="fit-card__title">{card.title}</span>
+          </span>
+        </span>
       </Link>
       <span className="fit-card__meta">
         <Link className="link" href={`/u/${encodeURIComponent(card.authorUserId)}`}>

@@ -11,6 +11,7 @@ import { FittingGrid, gridBounds } from "#/components/grid/fitting-grid";
 import { buildGridModel, type GridModule } from "#/components/grid/model";
 import { Panel, buildLabel } from "#/components/ui";
 import { StatsTable } from "#/components/fit/stats-table";
+import { HullSpecs } from "#/components/fit/hull-specs";
 import type { EvaluationResponse } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
 import { CopyFitString } from "#/components/fit/copy-fit-string";
@@ -91,7 +92,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   const model = useMemo(
     () =>
       fit && hull
-        ? buildGridModel({ hull, items: cat.items, regaliaSets: cat.regaliaSets }, fit, result ? { issues: result.issues, conduits: result.conduits, regaliaSets: result.regaliaSets } : null)
+        ? buildGridModel({ hull, items: cat.items, regaliaSets: cat.regaliaSets, artifacts: cat.artifacts, ciphers: cat.ciphers }, fit, result ? { issues: result.issues, conduits: result.conduits, regaliaSets: result.regaliaSets } : null)
         : null,
     [fit, hull, cat, result],
   );
@@ -438,7 +439,7 @@ function StatsPanel({
   const stale = shown !== null && result === null;
   return (
     <Panel
-      title="STATS"
+      title="HULL SPECS"
       className={stale ? "stats-panel--stale" : undefined}
       aside={
         shown ? (
@@ -460,6 +461,8 @@ function StatsPanel({
         <>
           {stale && !evaluation.outage && <p className="note">UPDATING</p>}
           {shown.valid ? null : <p className="note">AN INVALID FIT HAS NO STATS OR RATING. FIX THE ISSUES ON THE GRID.</p>}
+          {shown.valid && Array.isArray(shown.sections) && shown.sections.length > 0 && <HullSpecs sections={shown.sections} />}
+          {shown.valid && <div className="stats-panel__heading">MODIFIERS</div>}
           {shown.regaliaSets.length > 0 && (
             <ul className="set-list" aria-label="Regalia sets">
               {shown.regaliaSets.map((group) => {

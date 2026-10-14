@@ -4,6 +4,9 @@ import { ImageResponse } from "next/og";
 import art from "#/components/grid/fitting-art.generated.json";
 import { boundsOf } from "#/components/grid/geometry";
 import { moduleCells, type GridModel } from "#/components/grid/model";
+import { art2x } from "#/lib/art/art-manifest";
+import { itemIcon } from "#/lib/art/item-icon";
+import { isOpenFit } from "#/lib/engine/open-fit";
 import { loadFitPage } from "#/lib/site/loaders";
 import { siteDeps } from "#/lib/site/server";
 
@@ -54,6 +57,21 @@ function MiniGrid({ model }: { model: GridModel }) {
   );
 }
 
+/**
+ * The hull's game art as a PNG data URI for the card (the share card's renderer takes PNG, not WebP), or
+ * null when it has none or it can't be read: the card then goes without.
+ */
+async function hullArt(url: string | null): Promise<string | null> {
+  if (!url) return null;
+  try {
+    const { default: sharp } = await import("sharp");
+    const png = await sharp(join(process.cwd(), "public", art2x(url))).png().toBuffer();
+    return `data:image/png;base64,${png.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
 type Params = Promise<{ id: string }>;
 
 export default async function FitCard({ params }: { params: Params }) {
@@ -70,13 +88,17 @@ export default async function FitCard({ params }: { params: Params }) {
   }
   const { fit, shown, grid } = data;
   const hull = data.hull?.name ?? "UNKNOWN HULL";
+  const icon = await hullArt(data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null);
   const rating = shown.reference?.rating ?? null;
   const standing = shown.standing === "outdated" ? { text: "OUTDATED", color: T["state-negative"] } : shown.standing === "current" ? { text: "WORKS ON CURRENT BUILD", color: T["state-positive"] } : null;
   return new ImageResponse(
     <div style={{ ...frame, padding: 56, gap: 56 }}>
       <div style={{ display: "flex", flexDirection: "column", flex: 1, justifyContent: "space-between" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: T["accent-orange"] }}>{`${hull} FIT`}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            {icon && <img src={icon} width={88} height={88} style={{ objectFit: "contain" }} alt="" />}
+            <div style={{ display: "flex", fontSize: 26, letterSpacing: 8, color: T["accent-orange"] }}>{`${hull} FIT`}</div>
+          </div>
           <div style={{ display: "flex", fontSize: 60, letterSpacing: 4, lineHeight: 1.1, textTransform: "uppercase" }}>{fit.title}</div>
           <div style={{ display: "flex", fontSize: 26, letterSpacing: 4, color: T["text-primary-muted"] }}>{`BY ${fit.authorName.toUpperCase()}`}</div>
         </div>

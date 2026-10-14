@@ -287,9 +287,8 @@
   --cut: 7px;
   display: flex;
   width: 100%;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: center;
+  gap: var(--spacing-md);
   border: 0;
   background: var(--strip-card-bg);
   padding: var(--spacing-md) var(--spacing-lg);
@@ -308,8 +307,22 @@
 
 .hull-card:hover .hull-card__name,
 .hull-card:focus-visible .hull-card__name,
-.hull-card--current .hull-card__name {
+.hull-card--current .hull-card__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hull-card__name {
   color: var(--accent-orange);
+}
+
+.hull-card__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .hull-card__name {
@@ -396,18 +409,34 @@
   background: var(--accent-orange-dim);
 }
 
-.palette-item__shape {
+.palette-item__icon {
   display: flex;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   background: var(--slot-grid-bg, rgba(83, 96, 96, 0.12));
 }
 
+/* The footprint, small, at the row's end. */
+.palette-item__shape {
+  display: flex;
+  margin-left: auto;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.palette-tip {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  pointer-events: none;
+}
+
 .palette-item__text {
   display: flex;
+  flex: 1;
   min-width: 0;
   flex-direction: column;
   gap: 2px;
@@ -483,6 +512,12 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
+}
+
+.inspector__about {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
 }
 
 .inspector__name {
@@ -748,7 +783,8 @@
 
 /* ---- Stats and details --------------------------------------------------------------------------- */
 
-.stats-panel--stale .stats {
+.stats-panel--stale .stats,
+.stats-panel--stale .specs {
   opacity: 0.55;
 }
 
@@ -771,4 +807,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+}
+
+/* ---- Hull specs ---------------------------------------------------------------------------------- */
+
+.stats-panel__heading {
+  border-bottom: 1px solid rgba(83, 96, 96, 0.25);
+  padding-bottom: 3px;
+  color: rgba(178, 189, 189, 0.55);
+  font-size: var(--font-size-small);
+  letter-spacing: 0.45em;
 }

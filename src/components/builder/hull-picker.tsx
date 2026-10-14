@@ -1,5 +1,7 @@
 // Where a new fit starts: every hull in the build by class, with its role and grid size.
 import { Panel } from "#/components/ui";
+import { ItemIcon } from "#/components/item-text";
+import { baseIcon } from "#/lib/art/item-icon";
 import { roleName } from "./labels";
 import type { BuilderCatalog } from "./rules";
 
@@ -30,9 +32,12 @@ export function HullPicker({ cat, current, onPick, onCancel }: { cat: BuilderCat
                 return (
                   <li key={hull.def}>
                     <button type="button" className={`hull-card ${hull.def === current ? "hull-card--current" : ""}`} onClick={() => onPick(hull.def)} aria-pressed={hull.def === current}>
-                      <span className="hull-card__name">{hull.name}</span>
-                      <span className="hull-card__meta">
-                        {roleName(hull.role)} · {open} CELLS
+                      <ItemIcon src={baseIcon(hull.path)} size={48} />
+                      <span className="hull-card__text">
+                        <span className="hull-card__name">{hull.name}</span>
+                        <span className="hull-card__meta">
+                          {roleName(hull.role)} · {open} CELLS
+                        </span>
                       </span>
                     </button>
                   </li>

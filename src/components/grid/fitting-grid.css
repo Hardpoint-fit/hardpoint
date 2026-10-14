@@ -163,6 +163,27 @@
   pointer-events: none;
 }
 
+/* With art, the name sits top-left over the icon, as the overlay's name does (ModuleOverlay.uss). */
+.fg-module__label--name {
+  align-items: flex-start;
+  justify-content: flex-start;
+  color: var(--text-primary);
+  text-align: left;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.9);
+}
+
+/* The icon, scaled to fit inside the footprint (.module-overlay__icon). */
+.fg-module__icon {
+  position: absolute;
+  display: flex;
+  pointer-events: none;
+}
+
+.fg-module__icon .item-icon {
+  width: 100%;
+  height: 100%;
+}
+
 .fg-module--unknown .fg-module__label {
   background: var(--fg-hazard-base);
   color: var(--fg-invalid);
