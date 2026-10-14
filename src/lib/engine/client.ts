@@ -157,6 +157,8 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
         const body: unknown = await response.json().catch(() => null);
         return fail("rejected", engineErrorMessage(body) ?? "The engine rejected the request.");
       }
+      // 502/503/504 are the proxy (or the engine saying "busy") while the engine is down or restarting.
+      if (response.status === 502 || response.status === 503 || response.status === 504) return fail("unavailable", ENGINE_UNREACHABLE_MESSAGE);
       if (response.status >= 500) return fail("failed", ENGINE_FAILED_MESSAGE);
       if (!response.ok) return fail("unavailable", ENGINE_UNREACHABLE_MESSAGE);
 

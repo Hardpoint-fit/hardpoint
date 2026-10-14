@@ -139,7 +139,7 @@ test("a 400 is rejected with the engine's message", async () => {
   assert.equal(err(await client.evaluate(undefined)).kind, "rejected");
 });
 
-test("413, 429 and 5xx map to tooLarge, rateLimited and failed", async () => {
+test("413, 429 and 5xx map to tooLarge, rateLimited, failed and unavailable", async () => {
   stub.fail(413);
   assert.equal(err(await client.evaluate(FIXTURES.fit)).kind, "tooLarge");
   stub.fail(429);
@@ -148,7 +148,7 @@ test("413, 429 and 5xx map to tooLarge, rateLimited and failed", async () => {
   stub.fail(500);
   assert.equal(err(await client.evaluate(FIXTURES.fit)).kind, "failed");
   stub.fail(503);
-  assert.equal(err(await client.health()).kind, "failed");
+  assert.equal(err(await client.health()).kind, "unavailable");
 });
 
 test("a real over-limit body gets the engine's 413", async () => {
@@ -249,4 +249,15 @@ test("a 5xx is 'failed' (the engine answered), with the engine's text kept out o
   const e = err(await boom.evaluate(FIXTURES.fit));
   assert.equal(e.kind, "failed");
   assert.equal(e.message, ENGINE_FAILED_MESSAGE);
+});
+
+test("502, 503 and 504 (the proxy, or the engine busy) are unreachable, not a failed check", async () => {
+  for (const status of [502, 503, 504]) {
+    const proxied = createEngineClient({ baseUrl: "http://engine.test", fetch: async () => new Response("<html>bad gateway</html>", { status }) });
+    const e = err(await proxied.evaluate(FIXTURES.fit));
+    assert.equal(e.kind, "unavailable", String(status));
+    assert.match(e.message, /can't be reached/);
+  }
+  const busy = createEngineClient({ baseUrl: "http://engine.test", fetch: async () => new Response(JSON.stringify({ error: { code: "busy", message: "busy" } }), { status: 503 }) });
+  assert.equal(err(await busy.evaluate(FIXTURES.fit)).kind, "unavailable");
 });
