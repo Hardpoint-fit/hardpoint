@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test, { after, before, beforeEach } from "node:test";
+import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { applySchema } from "./migrate.mjs";
 import { createTestDb, sampleFit } from "./test-db.mjs";
@@ -82,6 +83,29 @@ test("the schema backfills pilots from the names copied onto fits and comments, 
   assert.equal((await old.query("SELECT name FROM pilots WHERE user_id = 'user_alice'")).rows[0].name, "ALICE");
   assert.equal((await old.query("SELECT count(*)::int AS n FROM schema_version WHERE version = 4")).rows[0].n, 1);
   await old.close();
+});
+
+test("the backfill holds writes to fits and comments until its transaction ends, and later starts don't", async () => {
+  const schema = await readFile(new URL("./schema.sql", import.meta.url), "utf8");
+  const lockModes = async (target) => {
+    await target.exec(`BEGIN;\n${schema}`);
+    const { rows } = await target.query(
+      "SELECT DISTINCT mode FROM pg_locks WHERE relation IN ('fits'::regclass, 'fit_comments'::regclass) AND mode = 'ShareRowExclusiveLock'",
+    );
+    await target.exec("ROLLBACK");
+    return rows.map((row) => row.mode);
+  };
+  const fresh = await PGlite.create();
+  await applySchema(fresh);
+  assert.deepEqual(await lockModes(fresh), [], "steady state: no lock on writes");
+  await fresh.exec(`
+    ALTER TABLE fits DROP CONSTRAINT fits_author_pilot_fk;
+    ALTER TABLE fit_comments DROP CONSTRAINT fit_comments_author_pilot_fk;
+    ALTER TABLE fits ADD COLUMN author_name text;
+    ALTER TABLE fit_comments ADD COLUMN author_name text;
+  `);
+  assert.deepEqual(await lockModes(fresh), ["ShareRowExclusiveLock"], "while the copies exist, writes wait for the migration");
+  await fresh.close();
 });
 
 // --- sign-in and the write guard ---------------------------------------------------------------

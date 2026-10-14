@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS pilots (
 );
 
 -- Before schema 4 the name was copied onto every fit and comment at write time. Backfill each writer's
--- most recent copy, then drop the copies below. Guarded so it runs only while those columns exist: once
+-- most recent copy, then drop the copies below. Guarded so it (and its lock) runs only while those columns exist: once
 -- they are dropped this block finds nothing to read and does nothing.
 DO $$
 DECLARE
@@ -127,6 +127,10 @@ BEGIN
     sources := sources || 'SELECT author_user_id, author_name, created_at FROM fit_comments'::text;
   END IF;
   IF cardinality(sources) > 0 THEN
+    -- A site still running the old code keeps writing names onto rows while this runs. Hold its writes
+    -- (reads go on) until this transaction commits, so no author without a pilot row lands between the
+    -- backfill and the foreign keys below. Taken only while the copies exist: later starts lock nothing.
+    LOCK TABLE fits, fit_comments IN SHARE ROW EXCLUSIVE MODE;
     EXECUTE format(
       'INSERT INTO pilots (user_id, name)
        SELECT DISTINCT ON (user_id) user_id, COALESCE(NULLIF(btrim(name), ''''), ''PILOT'')

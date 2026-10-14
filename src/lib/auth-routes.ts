@@ -7,6 +7,9 @@ import { SIGN_IN_OUTAGE_MESSAGE, SIGN_IN_UNAVAILABLE_MESSAGE } from "./auth-erro
 import type { SiteConfig } from "./config.ts";
 import { SignInError, beginSignIn, completeSignIn, safeReturnTo, type OidcClientConfig } from "./oidc.ts";
 
+/** How long sign-in waits for the pilot to be recorded before it goes on without. */
+export const RECORD_PILOT_TIMEOUT_MS = 2_000;
+
 /** Who just signed in, for the site to record (the pilot's row in the fits database). */
 export type SignedIn = { userId: string; name: string; picture: string | null };
 import {
@@ -78,10 +81,16 @@ export async function handleSignIn(request: Request, config: SiteConfig): Promis
 
 /**
  * GET /auth/callback — Citadel's sign-in redirects here with a code; on success the session cookie is set.
- * `onSignedIn` records the pilot. It fails open: if it throws, sign-in still completes and the failure is
- * logged by class and code only, never with the pilot's id, name or picture.
+ * `onSignedIn` records the pilot. It fails open: if it throws, or hasn't finished within `recordTimeoutMs`
+ * (a stalled database), sign-in still completes and the failure is logged by class and code only, never
+ * with the pilot's id, name or picture.
  */
-export async function handleCallback(request: Request, config: SiteConfig, onSignedIn?: (pilot: SignedIn) => Promise<void>): Promise<Response> {
+export async function handleCallback(
+  request: Request,
+  config: SiteConfig,
+  onSignedIn?: (pilot: SignedIn) => Promise<void>,
+  { recordTimeoutMs = RECORD_PILOT_TIMEOUT_MS }: { recordTimeoutMs?: number } = {},
+): Promise<Response> {
   const oidc = oidcConfig(config);
   if (!oidc) return notConfigured();
   const secret = config.sessionSecret!;
@@ -91,11 +100,17 @@ export async function handleCallback(request: Request, config: SiteConfig, onSig
   try {
     const { session, returnTo, profile } = await completeSignIn(oidc, new URL(request.url), transaction);
     if (onSignedIn) {
+      let timer: ReturnType<typeof setTimeout> | undefined;
       try {
-        await onSignedIn({ userId: session.userId, name: session.name, picture: profile.picture });
+        const timeout = new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(Object.assign(new Error("timed out"), { code: "timeout" })), recordTimeoutMs);
+        });
+        await Promise.race([onSignedIn({ userId: session.userId, name: session.name, picture: profile.picture }), timeout]);
       } catch (error) {
         const code = (error as { code?: unknown } | null)?.code;
         console.error("auth callback: recording the pilot failed:", error instanceof Error ? error.constructor.name : typeof error, code ?? "");
+      } finally {
+        clearTimeout(timer);
       }
     }
     return redirect(`${config.siteUrl}${returnTo}`, 303, [clearSignIn, cookieHeader(SESSION_COOKIE, await sealSession(secret, session), SESSION_LIFETIME_SECONDS)]);

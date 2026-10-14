@@ -51,7 +51,7 @@ function setCookies(response) {
 }
 
 /** /auth/signin -> the provider -> /auth/callback. Returns the callback's response. */
-async function signIn({ returnTo = "/fits/abc?x=1", tamper, onSignedIn } = {}) {
+async function signIn({ returnTo = "/fits/abc?x=1", tamper, onSignedIn, options } = {}) {
   const start = await handleSignIn(get(`/auth/signin?returnTo=${encodeURIComponent(returnTo)}`), config);
   assert.equal(start.status, 302);
   const transaction = setCookies(start)[SIGN_IN_COOKIE];
@@ -59,7 +59,7 @@ async function signIn({ returnTo = "/fits/abc?x=1", tamper, onSignedIn } = {}) {
   let back = idp.authorize(start.headers.get("location"));
   let cookie = `${SIGN_IN_COOKIE}=${transaction.value}`;
   ({ back, cookie } = tamper?.({ back, cookie }) ?? { back, cookie });
-  return handleCallback(get(`${back.pathname}${back.search}`, { cookie }), config, onSignedIn);
+  return handleCallback(get(`${back.pathname}${back.search}`, { cookie }), config, onSignedIn, options);
 }
 
 async function sessionOf(response) {
@@ -417,4 +417,23 @@ test("recording the pilot fails open: sign-in still completes, and the log names
   assert.equal(errors.length, 1);
   assert.match(errors[0], /23514/);
   for (const secret of ["user_2fakePilot", "ahab", "img.clerk.com"]) assert.ok(!errors[0].includes(secret), secret);
+});
+
+test("a stalled pilot record times out: sign-in completes instead of hanging", async () => {
+  const errors = [];
+  const original = console.error;
+  console.error = (...args) => errors.push(args.join(" "));
+  let response;
+  const started = Date.now();
+  try {
+    response = await signIn({ onSignedIn: () => new Promise(() => {}), options: { recordTimeoutMs: 50 } });
+  } finally {
+    console.error = original;
+  }
+  assert.ok(Date.now() - started < 2_000, "it didn't wait on the stalled record");
+  assert.equal(response.status, 303);
+  assert.ok((await sessionOf(response))?.session.userId, "the session is set");
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /timeout/);
+  for (const secret of ["user_2fakePilot", "ahab"]) assert.ok(!errors[0].includes(secret), secret);
 });
