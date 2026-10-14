@@ -241,3 +241,14 @@ test("the page loaders: a signed-in pilot's list and the header's count, 99+ and
   assert.equal(data.notifications.length, 1);
   assert.equal((await loadNotifications({ ...deps, database: () => ({ status: "unavailable" }) }, {}, ALICE.userId)).status, "unavailable");
 });
+
+test("followers are told on a fit's first publication only, not when it is republished after an unpublish", async () => {
+  const fit = await draft();
+  await setFollow(db, { follower: BOB, followeeUserId: ALICE.userId, following: true });
+  await publishFit(db, { id: fit.id, authorUserId: ALICE.userId, buildSha: SHA });
+  assert.deepEqual(await kinds(BOB), ["follow_fit"]);
+  await unpublishFit(db, { id: fit.id, authorUserId: ALICE.userId });
+  assert.deepEqual(await kinds(BOB), []);
+  await publishFit(db, { id: fit.id, authorUserId: ALICE.userId, buildSha: SHA });
+  assert.deepEqual(await kinds(BOB), [], "the republish says nothing");
+});

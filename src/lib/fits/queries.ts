@@ -630,7 +630,7 @@ export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetai
 export async function publishFit(db: Db, input: { id: string; authorUserId: string; buildSha: string; note?: string | null }): Promise<FitDetail> {
   const note = validateRevisionNote(input.note);
   return db.transaction(async (tx) => {
-    const { rows } = await tx.query<Row>(`SELECT author_user_id, status FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
+    const { rows } = await tx.query<Row>(`SELECT author_user_id, status, published_at FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
     const current = rows[0];
     if (!current || !ID.test(input.id)) throw new FitDataError("not_found", "No such fit.");
     if (current.author_user_id !== input.authorUserId || current.status === "hidden") {
@@ -647,7 +647,8 @@ export async function publishFit(db: Db, input: { id: string; authorUserId: stri
     );
     if (current.status !== "published") {
       await appendRevision(tx, { fitId: input.id, buildSha: input.buildSha, note });
-      await notifyFollowers(tx, { fitId: input.id, authorUserId: input.authorUserId });
+      // Followers hear of a fit once: a republish after an unpublish is not news.
+      if (current.published_at === null) await notifyFollowers(tx, { fitId: input.id, authorUserId: input.authorUserId });
     }
     return (await getFit(tx, input.id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha }))!;
   });
