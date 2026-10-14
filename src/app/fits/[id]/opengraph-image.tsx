@@ -150,11 +150,12 @@ export default async function FitCard({ params }: { params: Params }) {
           <div style={{ display: "flex", fontSize: 26, letterSpacing: 4, color: T["text-primary-muted"] }}>{`BY ${fit.authorName.toUpperCase()}`}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 28, letterSpacing: 4 }}>
-          <div style={{ display: "flex", gap: 36 }}>
+          {/* Votes and rating share a line; the affinity tag gets its own, since all three overflow the column. */}
+          <div style={{ display: "flex", flexWrap: "wrap", columnGap: 36, rowGap: 8 }}>
             <span style={{ color: T["state-quantity"] }}>{`${fit.votes} ${fit.votes === 1 ? "UPVOTE" : "UPVOTES"}`}</span>
             {rating !== null && <span style={{ color: T["state-quantity"] }}>{`RATING ${rating}`}</span>}
-            {affinity && <span style={{ color: T["accent-orange"] }}>{`AFFINITY ${affinity}`}</span>}
           </div>
+          {affinity && <div style={{ display: "flex", color: T["accent-orange"] }}>{`AFFINITY ${affinity}`}</div>}
           {standing && <div style={{ display: "flex", color: standing.color, fontSize: 22 }}>{standing.text}</div>}
           <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 20, letterSpacing: 8, color: T["text-secondary"] }}>
             <img src={logo} width={36} height={36} alt="" />
