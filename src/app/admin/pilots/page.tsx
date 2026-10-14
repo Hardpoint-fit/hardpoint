@@ -19,7 +19,6 @@ export default async function PilotsPage({ searchParams }: { searchParams: Searc
     <main className="page">
       <div className="page-title">
         <h1>PILOTS</h1>
-        <span className="eyebrow">FIND A PILOT · BAN OR UNBAN</span>
       </div>
       <AdminNav current="pilots" />
       {data === null ? (

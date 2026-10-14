@@ -26,7 +26,6 @@ export default async function BookmarksPage({ searchParams }: { searchParams: Se
       <EngineBanner engine={data.engine} />
       <div className="page-title">
         <h1>BOOKMARKS</h1>
-        <span className="eyebrow">PUBLISHED FITS YOU SAVED · NEWEST FIRST</span>
       </div>
       {data.status === "unavailable" ? (
         <UnavailableState />

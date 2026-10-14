@@ -13,7 +13,6 @@ export default async function BrowsePage({ searchParams }: { searchParams: Searc
       <EngineBanner engine={data.engine} />
       <div className="page-title">
         <h1>SHIP FITS</h1>
-        <span className="eyebrow">BUILT BY PILOTS · CHECKED BY THE GAME&apos;S OWN RULES</span>
       </div>
       {data.status === "unavailable" ? (
         <UnavailableState />
