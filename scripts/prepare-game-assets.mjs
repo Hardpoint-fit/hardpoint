@@ -67,7 +67,7 @@ export function buildTokensCss(sheets = TOKEN_SHEETS) {
 const css = ([r, g, b, a]) => `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${+a.toFixed(3)})`;
 
 // The colours the site's grid draws besides the tier palette (which the tokens carry).
-const GRID_COLORS = ["ConduitConnected", "InvalidRed", "InvalidRedBorder", "InvalidRedFill", "RegaliaSelectedGreen", "RegaliaWeldGreen", "HazardTapeBase", "HazardTapeRed", "SelectionAmber"];
+const GRID_COLORS = ["ConduitConnected", "InvalidRed", "InvalidRedBorder", "InvalidRedFill", "RegaliaWeldGreen", "HazardTapeBase", "HazardTapeRed", "SelectionAmber"];
 
 // Token values the share card (next/og, which can't read CSS variables) draws with.
 const CARD_TOKENS = ["panel-bg", "header-bg", "text-primary", "text-primary-muted", "text-secondary", "accent-orange", "accent-muted", "state-positive", "state-negative", "state-quantity"];
