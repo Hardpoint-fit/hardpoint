@@ -3,7 +3,7 @@ import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import { SiteHeader } from "#/components/site-header";
 import { PublicConfigProvider } from "#/lib/public-config";
-import { getPublicConfig } from "#/lib/site-config";
+import { getConfig, getPublicConfig } from "#/lib/site-config";
 import "./game-tokens.generated.css";
 import "./globals.css";
 import "./game-ui.css";
@@ -16,11 +16,17 @@ const vcr = localFont({
   variable: "--font-vcr",
 });
 
-export const metadata: Metadata = {
-  title: "Citadel Theorycrafting",
-  description: "Build, share and compare Citadel ship fits.",
-  icons: { icon: { url: "/logo.svg", type: "image/svg+xml" } },
-};
+// metadataBase makes share-card and icon URLs absolute on the public origin; Next would otherwise use the
+// address the server listens on, which link previews can't reach.
+export function generateMetadata(): Metadata {
+  return {
+    metadataBase: new URL(getConfig().siteUrl),
+    title: "Citadel Theorycrafting",
+    description: "Build, share and compare Citadel ship fits.",
+    // Listed by hand: an explicit icon list replaces the one Next would build from apple-icon.ts.
+    icons: { icon: { url: "/logo.svg", type: "image/svg+xml" }, apple: "/apple-icon" },
+  };
+}
 
 // The public config comes from the run-time environment, so no page is prerendered at build time.
 export const dynamic = "force-dynamic";
