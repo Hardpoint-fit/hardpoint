@@ -238,7 +238,7 @@ try {
   sites.push(down);
   results.push("== engine down");
   await check(down, "/", { has: ["ISN&#x27;T ANSWERING", "Scarab cipher brawler"] });
-  await check(down, `/fits/${ids.showcase}`, { has: ["ISN&#x27;T ANSWERING", "MAX VELOCITY", "THE GRID NEEDS THE GAME DATA API", 'data-spec="effective-health"', "EFFECTIVE HEALTH"] });
+  await check(down, `/fits/${ids.showcase}`, { has: ["ISN&#x27;T ANSWERING", "MAX VELOCITY", "THE GRID NEEDS THE ENGINE", 'data-spec="effective-health"', "EFFECTIVE HEALTH"] });
   await check(down, `/fits/${ids.removed}`, { has: ["ISN&#x27;T ANSWERING", "Old build regalia runner"] });
   await check(down, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(down, `/u/${ALICE_ID}`, { has: ["Scarab cipher brawler"] });

@@ -84,7 +84,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
 
 test("with the engine down the fit page still shows the stored hull specs (Review Focus #2)", async () => {
   const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
-  assert.match(html, /THE GRID NEEDS THE GAME DATA API/);
+  assert.match(html, /THE GRID NEEDS THE ENGINE/);
   assert.match(html, /data-spec="effective-health"/);
   assert.match(html, /EFFECTIVE HEALTH/);
 });
@@ -110,9 +110,9 @@ test("a removed item is drawn as UNKNOWN ITEM with its issue, and the fit reads 
 
 test("with the engine down the page renders its stored stats under a banner (Review Focus #4)", async () => {
   const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
-  assert.match(html, /THE GAME DATA API ISN&#x27;T ANSWERING/);
+  assert.match(html, /THE ENGINE ISN&#x27;T ANSWERING/);
   assert.match(html, /MAX VELOCITY/);
-  assert.match(html, /THE GRID NEEDS THE GAME DATA API/);
+  assert.match(html, /THE GRID NEEDS THE ENGINE/);
   const up = await renderFit(stub.url, ids.showcase, anonymous(false));
   assert.doesNotMatch(up, /ISN&#x27;T ANSWERING/);
 });

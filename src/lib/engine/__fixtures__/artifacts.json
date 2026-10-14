@@ -4,7 +4,6 @@
   {
    "def": "275107089619583858",
    "name": "OATH BRINGER",
-   "path": "Config/Quantum/Definitions/Artifacts/OATH",
    "item": "1442637265074437522",
    "modifiers": [
     {
@@ -44,7 +43,6 @@
   {
    "def": "278460097613111756",
    "name": "YELLOWJACKET",
-   "path": "Config/Quantum/Definitions/Artifacts/YELLOWJACKET",
    "item": "1426216244610980278",
    "modifiers": [
     {
@@ -77,7 +75,6 @@
   {
    "def": "358841703442488635",
    "name": "EREBOS",
-   "path": "Config/Quantum/Definitions/Artifacts/EREBOS",
    "item": "1326187971131623458",
    "modifiers": [
     {
@@ -121,7 +118,6 @@
   {
    "def": "522214128622278413",
    "name": "DREADNOUGHTS BANE",
-   "path": "Config/Quantum/Definitions/Artifacts/DREAD_BANE",
    "item": "1530715940003253209",
    "modifiers": [
     {

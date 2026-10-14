@@ -100,14 +100,20 @@ test("when revalidation fails the held catalog keeps serving, and retries wait",
   assert.equal(catalogRequests().length, 3);
 });
 
-test("with nothing held, a failure is returned, and the next get tries again", async () => {
+test("with nothing held, a failure is returned, and retries are spaced by retryMs", async () => {
   const cache = make();
   stub.fail(503);
   const failed = await cache.get();
   assert.equal(failed.ok, false);
   assert.equal(failed.error.kind, "unavailable");
+  const asked = catalogRequests().length;
   stub.fail(null);
-  assert.equal((await cache.get()).ok, true);
+  clock += 9_000;
+  assert.deepEqual(await cache.get(), failed, "inside the retry delay the failure is served without a request");
+  assert.equal(catalogRequests().length, asked);
+  clock += 2_000;
+  assert.equal((await cache.get()).ok, true, "after it, the API is asked again");
+  assert.equal(catalogRequests().length, asked + 1);
 });
 
 test("concurrent gets share one request", async () => {

@@ -206,8 +206,6 @@ export type CatalogSlotPlacement = { slotType: string; covers: string[]; hardpoi
 export type CatalogHull = {
   def: string;
   name: string;
-  /** The hull item prototype's asset path (Identifier.Path). */
-  path: string;
   shipClass: string;
   /** The ShipRole of the ship the hull unlocks; "None" when it has none. */
   role: string;
@@ -222,8 +220,6 @@ export type CatalogHull = {
 export type CatalogItem = {
   def: string;
   name: string;
-  /** The item prototype's asset path (Identifier.Path). */
-  path: string;
   /** The module's authored description, trimmed; null when it has none. Plain text, may hold newlines. */
   description: string | null;
   /** The item tooltip's facts for its default roll (ItemFacts.Default): Standard quality, the lowest of `roll.rarities`. */
@@ -308,8 +304,6 @@ export type CatalogQuality = { quality: string; multiplier: string };
 export type CatalogArtifact = {
   def: string;
   name: string;
-  /** The artifact definition's asset path (Identifier.Path); its name is a display name. */
-  path: string;
   item: string;
   modifiers: CatalogTemplateLine[];
   scaledStat: CatalogScaledStatRange | null;
@@ -352,8 +346,6 @@ export type CatalogHarmonicSet = {
 export type CatalogCipher = {
   def: string;
   name: string;
-  /** The cipher item prototype's asset path (Identifier.Path). */
-  path: string;
   stat: string;
   operation: string;
   value: string;

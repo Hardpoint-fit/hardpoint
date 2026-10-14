@@ -124,11 +124,15 @@ function envelopeOf(body: unknown): ErrorBody["error"] | null {
   return typeof code === "string" && typeof message === "string" ? { code, message } : null;
 }
 
-/** One tag for the catalog: a hash of its parts' tags, or null when a part has none. */
-async function catalogEtag(parts: CatalogParts): Promise<string | null> {
+/**
+ * One tag for the catalog: a hash of its parts' tags and of the origin its art URLs were made absolute
+ * with, so a changed GAME_DATA_API_URL gives browsers a new tag and they drop their copy. Null when a
+ * part has no tag.
+ */
+async function catalogEtag(parts: CatalogParts, artBase: string | null): Promise<string | null> {
   const tags = CATALOG_PARTS.map((part) => parts[part].etag);
   if (tags.some((tag) => tag === null)) return null;
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(tags.join("\n")));
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode([...tags, `art:${artBase ?? ""}`].join("\n")));
   return `"${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}"`;
 }
 
@@ -146,7 +150,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     guard: (value: unknown) => value is T,
     extra: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal } = {},
   ): Promise<Raw<T>> {
-    if (options.baseUrl === null) return fail("unavailable", "The game data API isn't configured.");
+    if (options.baseUrl === null) return fail("unavailable", "The engine isn't configured.");
     try {
       const doFetch = options.fetch ?? fetch;
       const response = await doFetch(`${options.baseUrl}${path}`, {
@@ -165,26 +169,26 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       });
 
       if (response.status === 304) return { ok: true, notModified: true };
-      if (response.status === 413) return fail("tooLarge", "That fit is too large for the game data API.");
+      if (response.status === 413) return fail("tooLarge", "That fit is too large for the engine.");
       if (response.status === 429) {
         const retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
         return { ok: false, error: { kind: "rateLimited", message: "Too many requests. Wait a moment and try again.", ...(retryAfterMs === undefined ? {} : { retryAfterMs }) } };
       }
       if (response.status === 400) {
         const envelope = envelopeOf(await response.json().catch(() => null));
-        return fail("rejected", envelope?.message ?? "The game data API rejected the request.");
+        return fail("rejected", envelope?.message ?? "The engine rejected the request.");
       }
-      if (!response.ok) return fail("unavailable", `The game data API answered ${response.status}.`);
+      if (!response.ok) return fail("unavailable", `The engine answered ${response.status}.`);
 
       const body: unknown = await response.json().catch(() => null);
-      if (!guard(body)) return fail("unavailable", "The game data API sent an answer the site doesn't understand.");
+      if (!guard(body)) return fail("unavailable", "The engine sent an answer the site doesn't understand.");
       return { ok: true, notModified: false, value: body, etag: response.headers.get("etag") };
     } catch (error) {
       if (extra.signal?.aborted) return fail("cancelled", "The request was cancelled.");
       if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
-        return fail("timeout", "The game data API took too long to answer.");
+        return fail("timeout", "The engine took too long to answer.");
       }
-      return fail("unavailable", "The game data API can't be reached.");
+      return fail("unavailable", "The engine can't be reached.");
     }
   }
 
@@ -193,7 +197,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     !result.ok
       ? result
       : result.notModified
-        ? fail("unavailable", "The game data API sent an unexpected answer.")
+        ? fail("unavailable", "The engine sent an unexpected answer.")
         : { ok: true, value: result.value };
 
   /** One try at the catalog: every part, asked for together. `changed` when the parts are of different builds. */
@@ -213,10 +217,10 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     let anyChanged = false;
     for (const [index, part] of CATALOG_PARTS.entries()) {
       const result = results[index]!;
-      if (!result.ok) return fail("unavailable", "The game data API sent an unexpected answer.");
+      if (!result.ok) return fail("unavailable", "The engine sent an unexpected answer.");
       if (result.notModified) {
         // A 304 answers a request that sent the held tag, so the part is held.
-        if (!held) return fail("unavailable", "The game data API sent an unexpected answer.");
+        if (!held) return fail("unavailable", "The engine sent an unexpected answer.");
         parts[part] = held.parts[part];
       } else {
         anyChanged = true;
@@ -229,7 +233,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     const bodies = Object.fromEntries(CATALOG_PARTS.map((part) => [part, assembled[part].body])) as CatalogBodies;
     // The parts were fetched one request each; a build that went live in between leaves them mixed.
     if (commonBuild(bodies) === null) return "changed";
-    return { ok: true, value: { status: "ok", catalog: assembleCatalog(bodies, artBase), etag: await catalogEtag(assembled), parts: assembled } };
+    return { ok: true, value: { status: "ok", catalog: assembleCatalog(bodies, artBase), etag: await catalogEtag(assembled, artBase), parts: assembled } };
   }
 
   return {
@@ -241,7 +245,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       const first = await fetchCatalog(opts.held ?? null);
       if (first !== "changed") return first;
       const second = await fetchCatalog(null);
-      return second === "changed" ? fail("unavailable", "The game data API changed builds while the catalog was loading.") : second;
+      return second === "changed" ? fail("unavailable", "The engine changed builds while the catalog was loading.") : second;
     },
     async evaluate(fit, opts = {}) {
       return plain(await call("POST", "/v1/fits/evaluate", timeouts.evaluateMs, isEvaluation, { body: { fit }, signal: opts.signal }));

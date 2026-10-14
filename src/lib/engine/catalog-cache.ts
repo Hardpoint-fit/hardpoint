@@ -30,6 +30,8 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
   const now = options.now ?? Date.now;
   let held: Held | null = null;
   let inFlight: Promise<EngineResult<Catalog>> | null = null;
+  // With nothing held, a failure is remembered for `retryMs` so a down API is not asked again by every request.
+  let failed: { result: EngineResult<Catalog>; until: number } | null = null;
 
   async function refresh(): Promise<EngineResult<Catalog>> {
     // The catalog is the same only if the API says so by its tags: the same build can carry new content.
@@ -39,15 +41,17 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
         held.nextCheckAt = now() + retryMs;
         return { ok: true, value: held.catalog };
       }
+      failed = { result, until: now() + retryMs };
       return result;
     }
     if (result.value.status === "notModified") {
       // Only asked with an etag, so something is held.
-      if (!held) return { ok: false, error: { kind: "unavailable", message: "The game data API sent an unexpected answer." } };
+      if (!held) return { ok: false, error: { kind: "unavailable", message: "The engine sent an unexpected answer." } };
       held.nextCheckAt = now() + recheckMs;
       return { ok: true, value: held.catalog };
     }
     const { catalog, etag, parts } = result.value;
+    failed = null;
     held = { catalog, etag, parts, nextCheckAt: now() + recheckMs };
     return { ok: true, value: catalog };
   }
@@ -55,6 +59,7 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
   return {
     get() {
       if (held && now() < held.nextCheckAt) return Promise.resolve({ ok: true, value: held.catalog });
+      if (!held && failed && now() < failed.until) return Promise.resolve(failed.result);
       // Concurrent callers share one request.
       inFlight ??= refresh().finally(() => {
         inFlight = null;

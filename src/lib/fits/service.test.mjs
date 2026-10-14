@@ -142,7 +142,7 @@ test("publish refuses cleanly when the engine is down, even if the draft has a v
   assert.equal(result.ok, false);
   assert.equal(result.reason, "engine");
   assert.equal(result.engineError.kind, "unavailable");
-  assert.match(result.message, /game data API/i);
+  assert.match(result.message, /engine/i);
   assert.match(result.message, /draft is saved/i);
   assert.equal((await read(fit.id)).status, "draft");
 });

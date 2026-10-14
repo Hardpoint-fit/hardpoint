@@ -4,7 +4,6 @@
   {
    "def": "1274722114706556685",
    "name": "SCARAB",
-   "path": "Content/SessionDestinations/Shared/Quantum/Ships/SCARAB/SCARAB HullEntityPrototype",
    "shipClass": "Cruiser",
    "role": "Destroyer",
    "rows": 15,
@@ -743,7 +742,6 @@
   {
    "def": "1421202711594240286",
    "name": "SERAPH",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/ShipItem/Seraph HullEntityPrototype",
    "shipClass": "Cruiser",
    "role": "Interceptor",
    "rows": 15,

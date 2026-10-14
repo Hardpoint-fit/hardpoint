@@ -12,8 +12,9 @@ function held(): Held {
   const key = `${apiInternalUrl}|${apiUrl}`;
   if (globals.__engineServer?.key === key) return globals.__engineServer;
   // The server calls the API on its internal address; the art URLs in the catalog are for browsers, so
-  // they use the public one.
-  const client = createEngineClient({ baseUrl: apiInternalUrl, artBaseUrl: apiUrl ?? apiInternalUrl });
+  // they use the public one only (without it they stay API-relative; the internal address means nothing
+  // to a browser).
+  const client = createEngineClient({ baseUrl: apiInternalUrl, artBaseUrl: apiUrl });
   // Pages wait on the status check, so it gives up sooner than the client's default.
   const status = createEngineClient({ baseUrl: apiInternalUrl, timeouts: { statusMs: 1_500 } });
   return (globals.__engineServer = { key, client, catalog: createCatalogCache(client), monitor: createEngineMonitor(status) });

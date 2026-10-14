@@ -41,7 +41,11 @@ const read = (name) => JSON.parse(readFileSync(new URL(name, fixtures), "utf8"))
 const recorded = FIXTURES.catalog;
 const live = await (await fetch(`${engine}/v1/hulls`)).json();
 if (live.build !== recorded.buildSha) throw new Error(`the API runs ${live.build}, the fixture catalog is ${recorded.buildSha}`);
-const hulls = EXTRA_HULLS.map((name) => live.hulls.find((hull) => hull.name === name));
+// `path` was hidden from the API's JSON; drop it from a recording of one that still sends it.
+const hulls = EXTRA_HULLS.map((name) => {
+  const { path, ...hull } = live.hulls.find((each) => each.name === name);
+  return hull;
+});
 const catalog = { ...recorded, hulls: [...recorded.hulls, ...hulls] };
 const cat = indexCatalog(catalog);
 const itemNamed = (name) => catalog.items.find((item) => item.name === name);

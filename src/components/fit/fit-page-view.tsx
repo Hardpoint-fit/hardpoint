@@ -18,7 +18,7 @@ import { isOpenFit } from "#/lib/engine/open-fit";
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
 const GRID_NOTES: Record<Exclude<Ready["grid"]["status"], "ready">, string> = {
-  no_catalog: "THE GRID NEEDS THE GAME DATA API, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
+  no_catalog: "THE GRID NEEDS THE ENGINE, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
   unknown_hull: "THIS HULL ISN'T IN THE CURRENT BUILD.",
   unreadable: "THIS FIT CAN'T BE DRAWN.",
 };

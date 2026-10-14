@@ -4,7 +4,6 @@
   {
    "def": "1276464883135659217",
    "name": "COOLANT RESERVOIR",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Coolant ReservoirEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -596,7 +595,6 @@
   {
    "def": "1278500398224355069",
    "name": "SURVEY SCANNER",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Survey ScannerEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -1182,7 +1180,6 @@
   {
    "def": "1480822076687262645",
    "name": "REPAIR PROJECTOR",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Turrets/Repairer Variants/RepairProjectorEntityPrototype",
    "description": "RAPIDLY CYCLES THE REPAIR BATTERY UNTIL ITS CHARGES ARE EMPTY OR THE SURGE ENDS.",
    "facts": [
     {
@@ -1770,7 +1767,6 @@
   {
    "def": "1285107459712062168",
    "name": "AUTO VENTING",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Actives/Self/Auto VentingEntityPrototype",
    "description": "AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY.",
    "facts": [
     {
@@ -2282,7 +2278,6 @@
   {
    "def": "1304164571492635706",
    "name": "ARMOR HARDENER",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Actives/Self/ArmorHardenerEntityPrototype",
    "description": "BOOSTS YOUR ARMOR'S KINETIC AND EXPLOSIVE RESISTANCE WHILE ACTIVE.",
    "facts": [
     {
@@ -2844,7 +2839,6 @@
   {
    "def": "1304467395283315534",
    "name": "LIGHTFRAME THRUSTERS",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/2x1/Lightframe ThrustersEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -3294,7 +3288,6 @@
   {
    "def": "1309670480061494117",
    "name": "INCENDIARY SALVO",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/2x1/Incendiary SalvoEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -3769,7 +3762,6 @@
   {
    "def": "1329495787612835751",
    "name": "SLIP COATING",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Utility/2x1/Slip CoatingEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -4352,7 +4344,6 @@
   {
    "def": "1340739176998289780",
    "name": "TRACER ROUNDS",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/2x1/Tracer RoundsEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -4759,7 +4750,6 @@
   {
    "def": "1343056967634011071",
    "name": "BARRIER RACK",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Defensive/2x1/Barrier RackEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -5206,7 +5196,6 @@
   {
    "def": "1387039041809030747",
    "name": "PROPULSION CONDUIT",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/1x1/Propulsion ConduitEntityPrototype",
    "description": "Connects to ports of propulsion type modules to increase effectiveness. Regalia pieces of the same set that connect to it are linked.",
    "facts": [
     {
@@ -5577,7 +5566,6 @@
   {
    "def": "1442753905704368467",
    "name": "INERTIA COUPLER",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Propulsion/1x1/Inertia CouplerEntityPrototype",
    "description": null,
    "facts": [
     {
@@ -6009,7 +5997,6 @@
   {
    "def": "1493464852498204501",
    "name": "HEATSINK MAGAZINE",
-   "path": "Content/SessionDestinations/Shared/Quantum/Modules/StatEffect/Module Passives/Offensive/L/Heatsink MagazineEntityPrototype",
    "description": null,
    "facts": [
     {

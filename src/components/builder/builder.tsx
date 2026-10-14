@@ -27,7 +27,7 @@ export function Builder({ start, auth }: { start: BuilderStart; auth: BuilderAut
       if (!response.ok) throw new Error(String(response.status));
       setLoaded({ status: "ready", catalog: (await response.json()) as Catalog });
     } catch {
-      setLoaded({ status: "failed", message: "THE BUILDER NEEDS THE GAME DATA API'S CATALOG, AND THE SITE HASN'T GOT ONE YET." });
+      setLoaded({ status: "failed", message: "THE BUILDER NEEDS THE ENGINE'S CATALOG, AND THE SITE HASN'T GOT ONE YET." });
     }
   }, []);
 
@@ -45,7 +45,7 @@ export function Builder({ start, auth }: { start: BuilderStart; auth: BuilderAut
             {loaded.status === "failed" ? (
               <>
                 <span>{loaded.message}</span>
-                <span className="note">IT ARRIVES WITH THE GAME DATA API. TRY AGAIN IN A MOMENT.</span>
+                <span className="note">IT ARRIVES WITH THE ENGINE. TRY AGAIN IN A MOMENT.</span>
                 <button type="button" className="btn" onClick={() => void load()}>
                   TRY AGAIN
                 </button>

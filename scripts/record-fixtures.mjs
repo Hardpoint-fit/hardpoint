@@ -91,11 +91,15 @@ const named = (list, names, what) =>
 const byDef = (list, defs, what) =>
   defs.map((def) => list.find((entry) => entry.def === def) ?? (() => { throw new Error(`${what} ${def} is not in the live build`); })());
 
+// Items, hulls, ciphers and artifacts carried the Unity asset `path` until the API hid it; drop it so a
+// recording from an API that still sends it matches one from an API that doesn't.
+const withoutPath = (entries) => entries.map(({ path, ...rest }) => rest);
+
 const cut = {
-  items: { build: status.build, items: named(live.items.items, ITEM_NAMES, "item") },
-  hulls: { build: status.build, hulls: named(live.hulls.hulls, HULL_NAMES, "hull") },
-  ciphers: { build: status.build, ciphers: byDef(live.ciphers.ciphers, DEFS.ciphers, "cipher") },
-  artifacts: { build: status.build, artifacts: byDef(live.artifacts.artifacts, DEFS.artifacts, "artifact") },
+  items: { build: status.build, items: withoutPath(named(live.items.items, ITEM_NAMES, "item")) },
+  hulls: { build: status.build, hulls: withoutPath(named(live.hulls.hulls, HULL_NAMES, "hull")) },
+  ciphers: { build: status.build, ciphers: withoutPath(byDef(live.ciphers.ciphers, DEFS.ciphers, "cipher")) },
+  artifacts: { build: status.build, artifacts: withoutPath(byDef(live.artifacts.artifacts, DEFS.artifacts, "artifact")) },
   "regalia-sets": { build: status.build, regaliaSets: byDef(live["regalia-sets"].regaliaSets, DEFS.regaliaSets, "regalia set") },
   affinity: live.affinity,
   regalia: { build: status.build, regalia: byDef(live.regalia.regalia, DEFS.regalia, "regalia") },

@@ -50,6 +50,14 @@ test("the catalog is read from the resource routes and assembled, with its art U
   assert.equal(first.catalog.artifacts.find((artifact) => artifact.art === null)?.art, null, "an artifact without an icon keeps null");
 });
 
+test("the catalog's etag changes with the art origin, so browsers drop a copy with old art URLs", async () => {
+  const one = ok(await createEngineClient({ baseUrl: stub.url, artBaseUrl: "https://api.thecitadel.com" }).catalog());
+  const same = ok(await createEngineClient({ baseUrl: stub.url, artBaseUrl: "https://api.thecitadel.com" }).catalog());
+  const moved = ok(await createEngineClient({ baseUrl: stub.url, artBaseUrl: "https://api.example.test" }).catalog());
+  assert.equal(same.etag, one.etag);
+  assert.notEqual(moved.etag, one.etag);
+});
+
 test("art URLs use the public API origin, not the address the server calls", async () => {
   const split = createEngineClient({ baseUrl: stub.url, artBaseUrl: "https://api.thecitadel.com" });
   const { catalog } = ok(await split.catalog());
