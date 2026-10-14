@@ -165,7 +165,7 @@ export type PlacementRulesBody = { build: string; placementRules: CatalogSlotPla
 export type GridConsumablesBody = { build: string; gridConsumables: CatalogGridConsumable[] };
 export type BreachTiersBody = { build: string; breachTiers: CatalogBreachTier[] };
 export type StatsBody = { build: string; stats: CatalogStat[] };
-export type FittingGridStyleBody = { build: string; fittingGridStyle: FittingGridStyle | null };
+export type FittingGridBody = { build: string; fittingGrid: FittingGridStyle | null };
 
 /**
  * An entity's art: API-relative URLs (`/v1/art/<file>.webp`, 128px; the 256px twin has @2x before .webp).
@@ -204,7 +204,7 @@ export type Catalog = {
   breachTiers: CatalogBreachTier[];
   /** Every stat type as the game words it (GET /v1/stats). */
   stats: CatalogStat[];
-  /** How the game draws its fitting grid (GET /v1/fitting-grid-style); null from an older engine, which then has no grid to draw. */
+  /** How the game draws its fitting grid (GET /v1/ui/fitting-grid); null from an older engine, which then has no grid to draw. */
   gridStyle: FittingGridStyle | null;
 };
 

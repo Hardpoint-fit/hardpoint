@@ -1,6 +1,6 @@
 {
  "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
- "fittingGridStyle": {
+ "fittingGrid": {
   "cellSize": 48,
   "slotInset": 3,
   "ports": {

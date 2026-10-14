@@ -293,7 +293,7 @@ export type GridState =
   | { status: "ready"; model: GridModel; style: FittingGridStyle }
   /** No catalog: the engine has been down since this server started. */
   | { status: "no_catalog" }
-  /** The engine doesn't say how to draw a grid (an older one, without /v1/fitting-grid-style). */
+  /** The engine doesn't say how to draw a grid (an older one, without /v1/ui/fitting-grid). */
   | { status: "no_style" }
   /** The hull isn't in the current build. */
   | { status: "unknown_hull" }

@@ -102,7 +102,7 @@ const cases = [
   ["grid-consumables.json", "GridConsumablesBody", FIXTURES.parts.gridConsumables],
   ["breach-tiers.json", "BreachTiersBody", FIXTURES.parts.breachTiers],
   ["stats.json", "StatsBody", FIXTURES.parts.stats],
-  ["fitting-grid-style.json", "FittingGridStyleBody", FIXTURES.parts.fittingGridStyle],
+  ["ui/fitting-grid.json", "FittingGridBody", FIXTURES.parts.fittingGrid],
   ["the assembled catalog", "Catalog", FIXTURES.catalog],
   ["fit.json", "OpenFit", FIXTURES.fit],
   ["evaluate-valid.json", "EvaluationResponse", FIXTURES.evaluateValid],

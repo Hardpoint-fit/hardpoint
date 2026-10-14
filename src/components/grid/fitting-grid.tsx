@@ -5,7 +5,7 @@
 // optional handlers and drag state from a client component.
 //
 // Scale: every length here is worked out in the game's art space (its 48px cells: the catalog's grid style,
-// GET /v1/fitting-grid-style) and drawn through `u`, which multiplies it by `--fg-u`, the size of one art
+// GET /v1/ui/fitting-grid) and drawn through `u`, which multiplies it by `--fg-u`, the size of one art
 // pixel. `--fg-u` follows from `--fg-cell`, the drawn cell size, which scale.ts derives from the space the
 // grid has. Nothing else sizes the grid.
 import type { CSSProperties, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent, ReactNode } from "react";

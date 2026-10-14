@@ -510,7 +510,7 @@ test("an older engine without the grid style or the affinity layout: the page sa
   t.mock.method(console, "warn", () => {});
   const { layout, ...tree } = FIXTURES.parts.affinity.affinity;
   const older = await startStubEngine({
-    "GET /v1/fitting-grid-style": (req, res) => {
+    "GET /v1/ui/fitting-grid": (req, res) => {
       res.writeHead(404, { "content-type": "application/json" });
       res.end(JSON.stringify({ error: { code: "not_found", message: "No such route." } }));
     },

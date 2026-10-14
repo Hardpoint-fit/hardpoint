@@ -8,7 +8,7 @@ import type {
   BreachTiersBody,
   Catalog,
   CiphersBody,
-  FittingGridStyleBody,
+  FittingGridBody,
   GridConsumablesBody,
   HarmonicSetsBody,
   HereticalSpecialsBody,
@@ -42,7 +42,8 @@ export const CATALOG_ROUTES = {
   gridConsumables: { path: "/v1/grid-consumables", key: "gridConsumables" },
   breachTiers: { path: "/v1/breach-tiers", key: "breachTiers" },
   stats: { path: "/v1/stats", key: "stats" },
-  fittingGridStyle: { path: "/v1/fitting-grid-style", key: "fittingGridStyle" },
+  // The game's UI style for the grid, not game data: under /v1/ui/, outside sde.zip.
+  fittingGrid: { path: "/v1/ui/fitting-grid", key: "fittingGrid" },
 } as const;
 
 export type CatalogPart = keyof typeof CATALOG_ROUTES;
@@ -53,14 +54,14 @@ export const CATALOG_PARTS = Object.keys(CATALOG_ROUTES) as CatalogPart[];
  * for the grid style), which hides what is built on it (grid modification, rolling, drawing the grid) behind
  * a note instead of failing the whole catalog.
  */
-export const OPTIONAL_CATALOG_PARTS = ["gridConsumables", "breachTiers", "fittingGridStyle"] as const satisfies readonly CatalogPart[];
+export const OPTIONAL_CATALOG_PARTS = ["gridConsumables", "breachTiers", "fittingGrid"] as const satisfies readonly CatalogPart[];
 export type OptionalCatalogPart = (typeof OPTIONAL_CATALOG_PARTS)[number];
 
 export const isOptionalPart = (part: CatalogPart): part is OptionalCatalogPart =>
   (OPTIONAL_CATALOG_PARTS as readonly CatalogPart[]).includes(part);
 
 /** Parts whose content is one object rather than a list. */
-const OBJECT_PARTS: readonly CatalogPart[] = ["affinity", "fittingGridStyle"];
+const OBJECT_PARTS: readonly CatalogPart[] = ["affinity", "fittingGrid"];
 
 /** The body an optional part reads as when its route is missing: nothing (no entries, or null), of the catalog's build. */
 export function absentPartBody<P extends OptionalCatalogPart>(part: P, build: string): CatalogBodies[P] {
@@ -84,7 +85,7 @@ export type CatalogBodies = {
   gridConsumables: GridConsumablesBody;
   breachTiers: BreachTiersBody;
   stats: StatsBody;
-  fittingGridStyle: FittingGridStyleBody;
+  fittingGrid: FittingGridBody;
 };
 
 /** Just enough of a check to tell the API from a proxy's error page or a wrong URL. */
@@ -138,6 +139,6 @@ export function assembleCatalog(bodies: CatalogBodies, artBase: string | null): 
     gridConsumables: withArt(bodies.gridConsumables.gridConsumables, artBase),
     breachTiers: bodies.breachTiers.breachTiers,
     stats: bodies.stats.stats,
-    gridStyle: bodies.fittingGridStyle.fittingGridStyle,
+    gridStyle: bodies.fittingGrid.fittingGrid,
   };
 }
