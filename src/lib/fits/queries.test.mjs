@@ -51,7 +51,7 @@ before(async () => {
 });
 after(() => db.close());
 beforeEach(async () => {
-  await db.exec("TRUNCATE fits, fit_reports CASCADE");
+  await db.exec("TRUNCATE fits, fit_reports, pilots CASCADE");
 });
 
 async function draft(owner = ALICE, overrides = {}) {
@@ -88,7 +88,7 @@ test("applying the schema again is a no-op, and schema_version records each vers
   await applySchema(db);
   await applySchema(db);
   const { rows } = await db.query("SELECT version FROM schema_version ORDER BY version");
-  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }]);
+  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }]);
 });
 
 test("concurrent applies on a fresh database all succeed", async () => {
@@ -97,7 +97,7 @@ test("concurrent applies on a fresh database all succeed", async () => {
   const fresh = await PGlite.create();
   await Promise.all([applySchema(fresh), applySchema(fresh), applySchema(fresh)]);
   const { rows } = await fresh.query("SELECT count(*)::int AS n FROM schema_version");
-  assert.equal(rows[0].n, 3);
+  assert.equal(rows[0].n, 4);
   await fresh.close();
 });
 
@@ -537,8 +537,8 @@ test("reports validate their target and reason, and the queue previews what was 
   const queue = await listOpenReports(db);
   assert.equal(queue.reports.length, 2);
   const [onFit, onComment] = queue.reports;
-  assert.deepEqual(onFit.target, { fitId: fit.id, preview: "Reported fit", hidden: false });
-  assert.deepEqual(onComment.target, { fitId: fit.id, preview: "bad words here", hidden: false });
+  assert.deepEqual(onFit.target, { fitId: fit.id, preview: "Reported fit", hidden: false, authorUserId: "user_alice", authorName: "alice" });
+  assert.deepEqual(onComment.target, { fitId: fit.id, preview: "bad words here", hidden: false, authorUserId: "u1", authorName: "n" });
   await setCommentHidden(db, comment.id, true);
   assert.equal((await listOpenReports(db)).reports[1].target.hidden, true);
   assert.equal(await resolveReportsForTarget(db, "comment", comment.id), 1);

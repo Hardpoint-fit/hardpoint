@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS schema_version (
 CREATE TABLE IF NOT EXISTS fits (
   id text PRIMARY KEY CHECK (id ~ '^[0-9A-Za-z]{10}$'),
   author_user_id text NOT NULL,
-  author_name text NOT NULL,
   title text NOT NULL CHECK (char_length(title) BETWEEN 1 AND 80),
   description text NOT NULL DEFAULT '' CHECK (char_length(description) <= 10000),
   hull_item text NOT NULL,
@@ -58,7 +57,6 @@ CREATE TABLE IF NOT EXISTS fit_comments (
   -- One level of replies: null for a top-level comment, else a top-level comment of the same fit.
   parent_id bigint REFERENCES fit_comments (id) ON DELETE CASCADE,
   author_user_id text NOT NULL,
-  author_name text NOT NULL,
   body text NOT NULL CHECK (char_length(body) BETWEEN 1 AND 2000),
   created_at timestamptz NOT NULL DEFAULT now(),
   edited_at timestamptz,
@@ -100,6 +98,71 @@ CREATE TABLE IF NOT EXISTS write_budget_windows (
   PRIMARY KEY (user_id, budget, window_start)
 );
 
+-- Pilots: the one owner of a pilot's display name, avatar and bio. A row is upserted at every sign-in
+-- (name from the session, avatar from Clerk's `picture`), and a write by a signed-in pilot without one
+-- (a session issued before this table existed) creates it from the session name (queries.ts ensurePilot).
+-- Fits and comments name their author only by user id and join here to read the name.
+CREATE TABLE IF NOT EXISTS pilots (
+  user_id text PRIMARY KEY,
+  name text NOT NULL CHECK (char_length(name) >= 1),
+  avatar_url text CHECK (avatar_url ~ '^https://'),
+  bio text NOT NULL DEFAULT '' CHECK (char_length(bio) <= 500),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Before schema 4 the name was copied onto every fit and comment at write time. Backfill each writer's
+-- most recent copy, then drop the copies below. Guarded so it runs only while those columns exist: once
+-- they are dropped this block finds nothing to read and does nothing.
+DO $$
+DECLARE
+  sources text[] := '{}';
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'fits' AND column_name = 'author_name') THEN
+    sources := sources || 'SELECT author_user_id, author_name, created_at FROM fits'::text;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns
+             WHERE table_schema = current_schema() AND table_name = 'fit_comments' AND column_name = 'author_name') THEN
+    sources := sources || 'SELECT author_user_id, author_name, created_at FROM fit_comments'::text;
+  END IF;
+  IF cardinality(sources) > 0 THEN
+    EXECUTE format(
+      'INSERT INTO pilots (user_id, name)
+       SELECT DISTINCT ON (user_id) user_id, COALESCE(NULLIF(btrim(name), ''''), ''PILOT'')
+       FROM (%s) AS written (user_id, name, at)
+       ORDER BY user_id, at DESC, name
+       ON CONFLICT (user_id) DO NOTHING',
+      array_to_string(sources, ' UNION ALL '));
+  END IF;
+END $$;
+
+-- Every author has a pilot row (the backfill above, then ensurePilot inside each write).
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fits_author_pilot_fk') THEN
+    ALTER TABLE fits ADD CONSTRAINT fits_author_pilot_fk FOREIGN KEY (author_user_id) REFERENCES pilots (user_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fit_comments_author_pilot_fk') THEN
+    ALTER TABLE fit_comments ADD CONSTRAINT fit_comments_author_pilot_fk FOREIGN KEY (author_user_id) REFERENCES pilots (user_id);
+  END IF;
+END $$;
+
+ALTER TABLE fits DROP COLUMN IF EXISTS author_name;
+ALTER TABLE fit_comments DROP COLUMN IF EXISTS author_name;
+
+-- Who follows whom. Counts are computed from these rows.
+CREATE TABLE IF NOT EXISTS pilot_follows (
+  follower_user_id text NOT NULL REFERENCES pilots (user_id) ON DELETE CASCADE,
+  followee_user_id text NOT NULL REFERENCES pilots (user_id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (follower_user_id, followee_user_id),
+  CHECK (follower_user_id <> followee_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS pilot_follows_followee_idx ON pilot_follows (followee_user_id);
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (4) ON CONFLICT DO NOTHING;

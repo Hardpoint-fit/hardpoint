@@ -68,7 +68,18 @@ export function FitCards({ cards, empty }: { cards: FitCard[]; empty: string }) 
 const unique = (values: string[]) => [...new Set(values)].sort();
 const words = (value: string) => value.replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase();
 
-export function BrowseFilters({ query, hulls, action = "/" }: { query: BrowseQuery; hulls: HullInfo[]; action?: string }) {
+/** `signedIn` shows "From pilots I follow", which means nothing to a signed-out reader. */
+export function BrowseFilters({
+  query,
+  hulls,
+  action = "/",
+  signedIn = false,
+}: {
+  query: BrowseQuery;
+  hulls: HullInfo[];
+  action?: string;
+  signedIn?: boolean;
+}) {
   const classes = unique(hulls.map((hull) => hull.hullClass));
   const roles = unique(hulls.map((hull) => hull.role).filter((role) => role !== "None"));
   return (
@@ -127,6 +138,12 @@ export function BrowseFilters({ query, hulls, action = "/" }: { query: BrowseQue
         <input type="checkbox" name="current" value="1" defaultChecked={query.currentBuild} />
         WORKS ON CURRENT BUILD
       </label>
+      {signedIn && (
+        <label className="check filters__check">
+          <input type="checkbox" name="following" value="1" defaultChecked={query.following} />
+          FROM PILOTS I FOLLOW
+        </label>
+      )}
       <span className="filters__buttons">
         <button type="submit" className="btn">
           APPLY

@@ -10,6 +10,7 @@ import type { DatabaseState, Db } from "../fits/db";
 import { spendWriteBudget, type WriteAction } from "../fits/write-limits";
 import { slowDownMessage } from "../slow-down";
 import { publish as publishService, saveDraft, type Refusal } from "../fits/service";
+import { setBio, setFollow } from "../fits/pilots";
 import {
   FitDataError,
   createComment,
@@ -227,4 +228,17 @@ export function deleteFit(deps: ActionDeps, input: { fitId: string }): Promise<A
       ? { ok: true, fitId: input.fitId }
       : refuse("not_found", 404, "No such fit of yours."),
   );
+}
+
+/** Follows or unfollows another pilot. Idempotent; a pilot can't follow themself. */
+export function follow(deps: ActionDeps, input: { userId: string; following: boolean }): Promise<ActionResult<{ following: boolean; followers: number }>> {
+  return withAuthor(deps, "follow", { budget: "follow" }, async (db, author) => ({
+    ok: true,
+    ...(await setFollow(db, { follower: author, followeeUserId: input.userId, following: input.following })),
+  }));
+}
+
+/** Sets the signed-in pilot's own bio; there is no id to forge, the session says whose it is. */
+export function editBio(deps: ActionDeps, input: { bio: string }): Promise<ActionResult<{ bio: string }>> {
+  return withAuthor(deps, "bio edit", { budget: "profile" }, async (db, author) => ({ ok: true, bio: await setBio(db, { pilot: author, bio: input.bio }) }));
 }

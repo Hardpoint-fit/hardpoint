@@ -19,6 +19,7 @@ import {
   type Report,
   type Viewer,
 } from "../fits/queries";
+import { getPilotProfile, type PilotProfile } from "../fits/pilots";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
@@ -127,7 +128,9 @@ export async function loadBrowse(
   const engine = await pageEngine(deps);
   const db = databaseOf(deps);
   if (!db) return { status: "unavailable", engine };
-  const query = { ...parseBrowseParams(params), ...overrides };
+  const parsed = { ...parseBrowseParams(params), ...overrides };
+  // "From pilots I follow" means nothing signed out: drop it so the form and links don't carry it either.
+  const query = viewer.userId === null ? { ...parsed, following: false } : parsed;
   const cursor = params instanceof URLSearchParams ? params.get("cursor") : params.cursor;
   const page = await guarded("browse", () =>
     browseFits(db, {
@@ -151,12 +154,33 @@ export async function loadBrowse(
 
 export type AuthorData =
   | Unavailable
-  | (Extract<BrowseData, { status: "ok" }> & { authorUserId: string; authorName: string | null });
+  | { status: "not_found"; engine: PageEngine }
+  | (Extract<BrowseData, { status: "ok" }> & { pilot: PilotProfile });
 
-export async function loadAuthor(deps: SiteDeps, userId: string, params: SearchParamsInput, viewer: Viewer): Promise<AuthorData> {
-  const data = await loadBrowse(deps, params, viewer, { author: userId, hull: undefined, hullClass: undefined, role: undefined, tags: [] });
+/** An empty profile for a signed-in pilot whose row sign-in hasn't written yet (their first write creates it). */
+function freshPilot(userId: string, name: string): PilotProfile {
+  return { userId, name, avatarUrl: null, bio: "", publishedFits: 0, upvotesReceived: 0, topFit: null, followers: 0, following: 0, viewerFollows: false };
+}
+
+/**
+ * A pilot's page: their header (profile and totals) and their fits. A pilot with no row doesn't exist,
+ * except to themself when signed in before their row was written; then `viewerName` names them.
+ */
+export async function loadAuthor(
+  deps: SiteDeps,
+  userId: string,
+  params: SearchParamsInput,
+  viewer: Viewer & { name?: string | null },
+): Promise<AuthorData> {
+  const data = await loadBrowse(deps, params, viewer, { author: userId, hull: undefined, hullClass: undefined, role: undefined, tags: [], following: false });
   if (data.status !== "ok") return data;
-  return { ...data, authorUserId: userId, authorName: data.cards[0]?.authorName ?? null };
+  const db = databaseOf(deps)!;
+  const profile = await guarded("pilot", async () => ({ found: await getPilotProfile(db, userId, viewer) }));
+  if (!profile) return { status: "unavailable", engine: data.engine };
+  const own = viewer.userId === userId;
+  const pilot = profile.found ?? (own && viewer.name ? freshPilot(userId, viewer.name) : null);
+  if (!pilot) return { status: "not_found", engine: data.engine };
+  return { ...data, pilot };
 }
 
 // ---------------------------------------------------------------------------------------------------

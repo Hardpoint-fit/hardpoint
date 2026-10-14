@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FitCards, MoreLink } from "#/components/fit/browse-view";
+import { PilotHeader } from "#/components/pilot/pilot-header";
 import { EngineBanner, UnavailableState } from "#/components/ui";
 import { loadAuthor } from "#/lib/site/loaders";
 import { pageViewer, siteDeps } from "#/lib/site/server";
@@ -10,7 +11,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 const USER_ID = /^[A-Za-z0-9_-]{1,100}$/;
 
-export const metadata: Metadata = { title: "Pilot fits · hardpoint.fit" };
+export const metadata: Metadata = { title: "Pilot · hardpoint.fit" };
 
 export default async function AuthorPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   // Next hands the segment over decoded; an id is only letters, digits, "_" and "-", so nothing is decoded twice.
@@ -18,6 +19,7 @@ export default async function AuthorPage({ params, searchParams }: { params: Par
   if (!USER_ID.test(userId)) notFound();
   const viewer = await pageViewer();
   const data = await loadAuthor(siteDeps(), userId, await searchParams, viewer);
+  if (data.status === "not_found") notFound();
   const own = viewer.userId === userId;
   return (
     <main className="page">
@@ -26,8 +28,8 @@ export default async function AuthorPage({ params, searchParams }: { params: Par
         <UnavailableState />
       ) : (
         <>
+          <PilotHeader pilot={data.pilot} viewer={viewer} />
           <div className="page-title">
-            <h1>{data.authorName ?? (own ? viewer.name : null) ?? "PILOT"}</h1>
             <span className="eyebrow">{own ? "YOUR FITS AND DRAFTS" : "PUBLISHED FITS"}</span>
           </div>
           <FitCards cards={data.cards} empty={own ? "YOU HAVEN'T SAVED A FIT YET." : "THIS PILOT HASN'T PUBLISHED A FIT."} />

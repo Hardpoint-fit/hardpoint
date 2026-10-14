@@ -6,6 +6,9 @@ import { describeAuthError } from "./auth-core.ts";
 import { SIGN_IN_OUTAGE_MESSAGE, SIGN_IN_UNAVAILABLE_MESSAGE } from "./auth-errors.ts";
 import type { SiteConfig } from "./config.ts";
 import { SignInError, beginSignIn, completeSignIn, safeReturnTo, type OidcClientConfig } from "./oidc.ts";
+
+/** Who just signed in, for the site to record (the pilot's row in the fits database). */
+export type SignedIn = { userId: string; name: string; picture: string | null };
 import {
   SESSION_COOKIE,
   SESSION_LIFETIME_SECONDS,
@@ -73,8 +76,12 @@ export async function handleSignIn(request: Request, config: SiteConfig): Promis
   }
 }
 
-/** GET /auth/callback — Citadel's sign-in redirects here with a code; on success the session cookie is set. */
-export async function handleCallback(request: Request, config: SiteConfig): Promise<Response> {
+/**
+ * GET /auth/callback — Citadel's sign-in redirects here with a code; on success the session cookie is set.
+ * `onSignedIn` records the pilot. It fails open: if it throws, sign-in still completes and the failure is
+ * logged by class and code only, never with the pilot's id, name or picture.
+ */
+export async function handleCallback(request: Request, config: SiteConfig, onSignedIn?: (pilot: SignedIn) => Promise<void>): Promise<Response> {
   const oidc = oidcConfig(config);
   if (!oidc) return notConfigured();
   const secret = config.sessionSecret!;
@@ -82,7 +89,15 @@ export async function handleCallback(request: Request, config: SiteConfig): Prom
   // The transaction is single-use: cleared whatever the outcome.
   const clearSignIn = clearCookieHeader(SIGN_IN_COOKIE);
   try {
-    const { session, returnTo } = await completeSignIn(oidc, new URL(request.url), transaction);
+    const { session, returnTo, profile } = await completeSignIn(oidc, new URL(request.url), transaction);
+    if (onSignedIn) {
+      try {
+        await onSignedIn({ userId: session.userId, name: session.name, picture: profile.picture });
+      } catch (error) {
+        const code = (error as { code?: unknown } | null)?.code;
+        console.error("auth callback: recording the pilot failed:", error instanceof Error ? error.constructor.name : typeof error, code ?? "");
+      }
+    }
     return redirect(`${config.siteUrl}${returnTo}`, 303, [clearSignIn, cookieHeader(SESSION_COOKIE, await sealSession(secret, session), SESSION_LIFETIME_SECONDS)]);
   } catch (error) {
     const kind = error instanceof SignInError ? error.kind : "invalid";

@@ -6,7 +6,8 @@ import { createEngineClient } from "../engine/client.ts";
 import { startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, deleteComment, deleteFit, editComment, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { addComment, deleteComment, deleteFit, editBio, editComment, follow, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { getPilotProfile } from "../fits/pilots.ts";
 import { WRITE_BUDGETS } from "../fits/write-limits.ts";
 import { ADMIN, ALICE, BOB, seedSite } from "./seed.mjs";
 
@@ -22,7 +23,7 @@ after(async () => {
   await db.close();
 });
 beforeEach(async () => {
-  await db.exec("TRUNCATE fits, fit_reports, write_budget_windows CASCADE");
+  await db.exec("TRUNCATE fits, fit_reports, write_budget_windows, pilots CASCADE");
   ids = await seedSite(db);
 });
 
@@ -183,4 +184,56 @@ test("deleting a comment is the author's alone and spends the comment budget", a
   const clocked = { ...deps(authAs(BOB.userId)), now: () => now };
   for (let i = 0; i < 10; i++) await deleteComment(clocked, { id: "9999999" });
   assert.equal((await deleteComment(clocked, { id: "9999999" })).status, 429);
+});
+
+// --- follows and bios ------------------------------------------------------------------------------
+
+test("follow and bio edits need sign-in and a database", async () => {
+  const off = deps(authAs(BOB.userId, { enabled: false }));
+  assert.equal((await follow(off, { userId: ALICE.userId, following: true })).status, 503);
+  assert.equal((await editBio(off, { bio: "hi" })).status, 503);
+  assert.equal((await follow(deps(authAs(null)), { userId: ALICE.userId, following: true })).status, 401);
+  assert.equal((await editBio(deps(authAs(null)), { bio: "hi" })).status, 401);
+  const down = deps(authAs(BOB.userId), { database: { status: "unavailable" } });
+  assert.equal((await follow(down, { userId: ALICE.userId, following: true })).status, 503);
+  assert.equal((await getPilotProfile(db, ALICE.userId, { userId: null, isAdmin: false })).followers, 0);
+});
+
+test("a pilot follows and unfollows another, never themself, and the counts follow", async () => {
+  const bob = deps(authAs(BOB.userId));
+  assert.deepEqual(await follow(bob, { userId: ALICE.userId, following: true }), { ok: true, following: true, followers: 1 });
+  assert.deepEqual(await follow(bob, { userId: ALICE.userId, following: true }), { ok: true, following: true, followers: 1 });
+  const self = await follow(bob, { userId: BOB.userId, following: true });
+  assert.equal(self.ok, false);
+  assert.equal(self.status, 400);
+  assert.equal((await follow(bob, { userId: "user_nobody", following: true })).status, 404);
+  // An admin who never wrote anything has no row until their first write creates it from the session.
+  assert.equal((await follow(deps(authAs(ADMIN.userId)), { userId: ALICE.userId, following: true })).ok, true);
+  assert.equal((await getPilotProfile(db, ADMIN.userId, { userId: null, isAdmin: false })).name, "WARDEN");
+  assert.deepEqual(await follow(bob, { userId: ALICE.userId, following: false }), { ok: true, following: false, followers: 1 });
+});
+
+test("follows and bio edits spend their own budgets", async () => {
+  const now = new Date("2026-10-14T12:00:00Z");
+  const bob = { ...deps(authAs(BOB.userId)), now: () => now };
+  for (let i = 0; i < WRITE_BUDGETS.follow[0].limit; i++) {
+    assert.equal((await follow(bob, { userId: ALICE.userId, following: i % 2 === 0 })).ok, true);
+  }
+  const limited = await follow(bob, { userId: ALICE.userId, following: true });
+  assert.equal(limited.status, 429);
+  assert.equal((await getPilotProfile(db, ALICE.userId, { userId: null, isAdmin: false })).followers, 0, "the refused follow wrote nothing");
+  assert.equal((await vote(bob, { fitId: ids.pending, voted: true })).ok, true, "other budgets are untouched");
+
+  for (let i = 0; i < WRITE_BUDGETS.profile[0].limit; i++) assert.equal((await editBio(bob, { bio: `bio ${i}` })).ok, true);
+  assert.equal((await editBio(bob, { bio: "one too many" })).status, 429);
+  assert.equal((await getPilotProfile(db, BOB.userId, { userId: null, isAdmin: false })).bio, `bio ${WRITE_BUDGETS.profile[0].limit - 1}`);
+});
+
+test("a bio edit changes only the signed-in pilot's bio and refuses what isn't plain text", async () => {
+  const alice = deps(authAs(ALICE.userId));
+  assert.deepEqual(await editBio(alice, { bio: " Frigates only. " }), { ok: true, bio: "Frigates only." });
+  assert.equal((await getPilotProfile(db, BOB.userId, { userId: null, isAdmin: false })).bio, "");
+  const long = await editBio(alice, { bio: "x".repeat(501) });
+  assert.equal(long.status, 400);
+  assert.match(long.message, /500/);
 });

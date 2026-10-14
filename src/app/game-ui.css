@@ -1025,3 +1025,88 @@ a.chip:hover {
   color: var(--text-primary-muted);
   overflow-wrap: anywhere;
 }
+
+/* ---- Pilot page -------------------------------------------------------------------------------- */
+
+/* A chamfered square, cut like the panels; the placeholder carries the pilot's initial. */
+.pilot-avatar {
+  --cut: 8px;
+  display: block;
+  flex-shrink: 0;
+  object-fit: cover;
+  background: var(--panel-bg);
+  clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
+}
+
+.pilot-avatar--none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-muted);
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.pilot-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+}
+
+.pilot-head__text {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.pilot-head__name {
+  margin: 0;
+  font-size: var(--font-size-header);
+  letter-spacing: 0.2em;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pilot-head__bio {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: var(--text-primary-muted);
+  line-height: 1.5;
+}
+
+.pilot-head__actions {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.pilot-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--spacing-md) var(--spacing-lg);
+  margin: 0;
+  border-top: 1px solid var(--rule);
+  padding-top: var(--spacing-md);
+}
+
+.pilot-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pilot-stat dt {
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.2em;
+  color: var(--text-secondary);
+}
+
+.pilot-stat dd {
+  margin: 0;
+  font-size: var(--font-size-small);
+}

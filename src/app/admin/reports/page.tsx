@@ -48,6 +48,14 @@ export default async function ReportsPage({ searchParams }: { searchParams: Sear
                 ) : (
                   <span className="note">NO LONGER EXISTS</span>
                 )}
+                {report.target && (
+                  <span className="note">
+                    BY{" "}
+                    <Link className="link" href={`/u/${encodeURIComponent(report.target.authorUserId)}`}>
+                      {report.target.authorName}
+                    </Link>
+                  </span>
+                )}
                 <p className="report__reason">{report.reason}</p>
                 <ModerationButtons reportId={report.id} targetKind={report.targetKind} targetId={report.targetId} hidden={report.target?.hidden ?? null} />
               </li>

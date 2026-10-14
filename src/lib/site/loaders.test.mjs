@@ -9,7 +9,8 @@ import { deadEngineUrl, startStubEngine } from "../engine/stub-engine.mjs";
 import { ANONYMOUS } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
 import { loadAuthor, loadBrowse, loadBuilder, loadFitPage, loadReports } from "./loaders.ts";
-import { ALICE, CURRENT_SHA, seedSite } from "./seed.mjs";
+import { ALICE, BOB, CURRENT_SHA, seedSite } from "./seed.mjs";
+import { setFollow } from "../fits/pilots.ts";
 
 let db;
 let ids;
@@ -132,7 +133,7 @@ test("an author page lists that author's fits, and their drafts only to them", a
   const deps = depsFor(stub.url);
   const publicView = await loadAuthor(deps, ALICE.userId, {}, ANONYMOUS);
   assert.equal(publicView.status, "ok");
-  assert.equal(publicView.authorName, "ALICE");
+  assert.equal(publicView.pilot.name, "ALICE");
   assert.deepEqual(publicView.cards.map((card) => card.id), [ids.showcase]);
   const own = await loadAuthor(deps, ALICE.userId, {}, { userId: ALICE.userId, isAdmin: false });
   assert.deepEqual(own.cards.map((card) => card.id).sort(), [ids.showcase, ids.draft].sort());
@@ -184,5 +185,36 @@ test("the builder refuses to open a hidden fit", async () => {
     assert.equal((await loadBuilder(deps, { fitId: ids.showcase }, alice)).status, "forbidden");
   } finally {
     await db.query("UPDATE fits SET status = 'published' WHERE id = $1", [ids.showcase]);
+  }
+});
+
+test("a pilot page carries the pilot's header; an unknown pilot is not found, except to themself", async () => {
+  const deps = depsFor(stub.url);
+  const alice = await loadAuthor(deps, ALICE.userId, {}, ANONYMOUS);
+  assert.equal(alice.pilot.name, "ALICE");
+  assert.equal(alice.pilot.publishedFits, 1);
+  assert.equal(alice.pilot.upvotesReceived, 2);
+  assert.equal(alice.pilot.topFit.id, ids.showcase);
+  assert.equal((await loadAuthor(deps, "user_nobody", {}, ANONYMOUS)).status, "not_found");
+  const fresh = await loadAuthor(deps, "user_new", {}, { userId: "user_new", isAdmin: false, name: "NEWBIE" });
+  assert.equal(fresh.status, "ok");
+  assert.equal(fresh.pilot.name, "NEWBIE");
+  assert.deepEqual(fresh.cards, []);
+});
+
+test("browse keeps 'from pilots I follow' only for a signed-in reader", async () => {
+  const deps = depsFor(stub.url);
+  await setFollow(db, { follower: BOB, followeeUserId: ALICE.userId, following: true });
+  try {
+    const signedOut = await loadBrowse(deps, { following: "1" }, ANONYMOUS);
+    assert.equal(signedOut.query.following, false, "dropped, so the form and links don't carry it");
+    assert.equal(signedOut.cards.length, 3);
+    const bob = await loadBrowse(deps, { following: "1" }, { userId: BOB.userId, isAdmin: false });
+    assert.equal(bob.query.following, true);
+    assert.deepEqual(bob.cards.map((card) => card.id), [ids.showcase]);
+    const own = await loadAuthor(deps, BOB.userId, { following: "1" }, { userId: BOB.userId, isAdmin: false });
+    assert.equal(own.query.following, false, "a pilot page lists that pilot's fits whatever the reader follows");
+  } finally {
+    await setFollow(db, { follower: BOB, followeeUserId: ALICE.userId, following: false });
   }
 });

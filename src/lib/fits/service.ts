@@ -74,6 +74,7 @@ export type SaveDraftResult =
 export type SaveDraftInput = {
   /** The authenticated user. */
   authorUserId: string;
+  /** The session's name: only creates the author's pilot row when it is missing; never stored on the fit. */
   authorName: string;
   /** Absent: create a new draft. Present: edit this fit (which must be the author's). */
   fitId?: string;

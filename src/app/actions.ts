@@ -14,6 +14,7 @@ type Refusal = core.ActionRefusal;
 const BAD_INPUT: Refusal = { ok: false, reason: "invalid", status: 400, message: "That request isn't valid." };
 const text = (value: unknown, max: number): value is string => typeof value === "string" && value.length <= max;
 const isId = (value: unknown): value is string => text(value, 40) && /^[A-Za-z0-9]+$/.test(value);
+const isUserId = (value: unknown): value is string => text(value, 100) && /^[A-Za-z0-9_-]+$/.test(value);
 const isKind = (value: unknown): value is "fit" | "comment" => value === "fit" || value === "comment";
 
 export async function voteAction(fitId: unknown, voted: unknown): Promise<core.ActionResult<{ voted: boolean; votes: number }>> {
@@ -117,5 +118,19 @@ export async function deleteFitAction(fitId: unknown): Promise<core.ActionResult
     revalidatePath(`/fits/${fitId}`);
     revalidatePath("/");
   }
+  return result;
+}
+
+export async function followAction(userId: unknown, following: unknown): Promise<core.ActionResult<{ following: boolean; followers: number }>> {
+  if (!isUserId(userId) || typeof following !== "boolean") return BAD_INPUT;
+  const result = await core.follow(actionDeps(), { userId, following });
+  if (result.ok) revalidatePath(`/u/${userId}`);
+  return result;
+}
+
+export async function editBioAction(bio: unknown): Promise<core.ActionResult<{ bio: string }>> {
+  if (!text(bio, 5_000)) return BAD_INPUT;
+  const result = await core.editBio(actionDeps(), { bio });
+  if (result.ok) revalidatePath("/u/[userId]", "page");
   return result;
 }

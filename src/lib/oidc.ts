@@ -121,6 +121,12 @@ function isOutage(error: unknown): boolean {
   return error instanceof TypeError && error.message === "fetch failed";
 }
 
+/**
+ * What sign-in learns about the pilot beyond the session. `picture` is Clerk's image URL (the `profile`
+ * scope's standard claim) as sent, unchecked; whoever stores it accepts only https (pilots.ts).
+ */
+export type SignInProfile = { picture: string | null };
+
 /** Clerk user ids look like `user_2abc...`; fits, comments and votes are stored under them. */
 const CLERK_USER_ID = /^user_[A-Za-z0-9]+$/;
 
@@ -138,7 +144,7 @@ export async function completeSignIn(
   callbackUrl: URL,
   transaction: SignInTransaction | null,
   at = Math.floor(Date.now() / 1000),
-): Promise<{ session: Session; returnTo: string }> {
+): Promise<{ session: Session; returnTo: string; profile: SignInProfile }> {
   if (!transaction) throw new SignInError("expired", "no sign-in in progress (cookie missing or expired)");
   let provided: Provider;
   try {
@@ -176,6 +182,7 @@ export async function completeSignIn(
   }
 
   let sub: string;
+  let idPicture: string | null;
   try {
     const { payload } = await jwtVerify(tokens.id_token!, jwks, {
       issuer: as.issuer,
@@ -187,6 +194,7 @@ export async function completeSignIn(
     });
     if (payload.nonce !== transaction.nonce) throw new Error("nonce mismatch");
     sub = payload.sub!;
+    idPicture = optionalText(payload.picture);
   } catch (error) {
     throw new SignInError("invalid", `ID token refused: ${(error as Error).message}`);
   }
@@ -217,5 +225,7 @@ export async function completeSignIn(
       issuedAt: at,
     },
     returnTo: safeReturnTo(transaction.returnTo),
+    // Userinfo describes the same subject as the ID token (checked above); either may carry the picture.
+    profile: { picture: optionalText(claims.picture) ?? idPicture },
   };
 }

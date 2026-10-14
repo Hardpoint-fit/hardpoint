@@ -21,6 +21,8 @@ export type BrowseQuery = {
   author?: string;
   /** Only fits with a valid evaluation on the current build. */
   currentBuild: boolean;
+  /** Only fits by pilots the viewer follows. Ignored for a signed-out viewer. */
+  following: boolean;
   sort: SortKey;
 };
 
@@ -70,6 +72,7 @@ export function parseBrowseParams(input: SearchParamsInput): BrowseQuery {
     sort: SORT_KEYS.find((key) => key === sort) ?? DEFAULT_SORT,
     tags: normalizeTags(all(input, "tag")),
     currentBuild: first(input, "current") === "1",
+    following: first(input, "following") === "1",
   };
   const hull = matching(first(input, "hull"), GUID);
   const hullClass = matching(first(input, "class"), NAME);
@@ -91,6 +94,7 @@ export function toBrowseSearch(query: BrowseQuery): string {
   for (const tag of query.tags) params.append("tag", tag);
   if (query.author) params.set("author", query.author);
   if (query.currentBuild) params.set("current", "1");
+  if (query.following) params.set("following", "1");
   if (query.sort !== DEFAULT_SORT) params.set("sort", query.sort);
   return params.toString();
 }

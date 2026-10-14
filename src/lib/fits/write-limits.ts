@@ -11,11 +11,14 @@ const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-export type WriteAction = "vote" | "comment" | "report" | "fit";
+export type WriteAction = "vote" | "comment" | "report" | "fit" | "follow" | "profile";
 
 export type WriteWindow = { readonly limit: number; readonly windowMs: number };
 
-/** Comments and edits share "comment"; fit saves and publishes share "fit". Moderation has no budget. */
+/**
+ * Comments and edits share "comment"; fit saves and publishes share "fit"; follows and unfollows share
+ * "follow"; "profile" is bio edits. Moderation has no budget.
+ */
 export const WRITE_BUDGETS: Readonly<Record<WriteAction, readonly WriteWindow[]>> = {
   vote: [{ limit: 60, windowMs: MINUTE }],
   comment: [
@@ -24,6 +27,11 @@ export const WRITE_BUDGETS: Readonly<Record<WriteAction, readonly WriteWindow[]>
   ],
   report: [{ limit: 10, windowMs: HOUR }],
   fit: [{ limit: 30, windowMs: MINUTE }],
+  follow: [
+    { limit: 30, windowMs: MINUTE },
+    { limit: 300, windowMs: DAY },
+  ],
+  profile: [{ limit: 10, windowMs: HOUR }],
 };
 
 export type WriteBudgetResult = { ok: true } | { ok: false; retryAfterMs: number };

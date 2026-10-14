@@ -4,12 +4,12 @@ import { decodeCursor, encodeCursor, parseBrowseParams, toBrowseSearch } from ".
 
 test("no params gives the defaults", () => {
   const query = parseBrowseParams({});
-  assert.deepEqual(query, { sort: "top-week", tags: [], currentBuild: false });
+  assert.deepEqual(query, { sort: "top-week", tags: [], currentBuild: false, following: false });
 });
 
 test("all filters parse from a URLSearchParams", () => {
   const query = parseBrowseParams(
-    new URLSearchParams("hull=123456&class=Frigate&role=Support&tag=pvp&tag=Budget&author=user_2abc&current=1&sort=new"),
+    new URLSearchParams("hull=123456&class=Frigate&role=Support&tag=pvp&tag=Budget&author=user_2abc&current=1&following=1&sort=new"),
   );
   assert.deepEqual(query, {
     hull: "123456",
@@ -18,6 +18,7 @@ test("all filters parse from a URLSearchParams", () => {
     tags: ["pvp", "budget"],
     author: "user_2abc",
     currentBuild: true,
+    following: true,
     sort: "new",
   });
 });
@@ -36,6 +37,7 @@ test("bad values are dropped, not trusted", () => {
     tag: ["ok", "bad tag!", "x".repeat(50), "UPPER"],
     author: "a".repeat(300),
     current: "yes",
+    following: "true",
     sort: "hottest",
   });
   assert.equal(query.hull, undefined);
@@ -44,6 +46,7 @@ test("bad values are dropped, not trusted", () => {
   assert.deepEqual(query.tags, ["ok", "upper"]);
   assert.equal(query.author, undefined);
   assert.equal(query.currentBuild, false);
+  assert.equal(query.following, false);
   assert.equal(query.sort, "top-week");
 });
 
@@ -54,7 +57,7 @@ test("tags are deduplicated and capped", () => {
 });
 
 test("toBrowseSearch round-trips and omits defaults", () => {
-  assert.equal(toBrowseSearch({ sort: "top-week", tags: [], currentBuild: false }), "");
+  assert.equal(toBrowseSearch({ sort: "top-week", tags: [], currentBuild: false, following: false }), "");
   const query = {
     hull: "99",
     hullClass: "Cruiser",
@@ -62,9 +65,14 @@ test("toBrowseSearch round-trips and omits defaults", () => {
     tags: ["pvp", "budget"],
     author: "user_1",
     currentBuild: true,
+    following: true,
     sort: "top-all",
   };
   assert.deepEqual(parseBrowseParams(new URLSearchParams(toBrowseSearch(query))), query);
+  assert.match(toBrowseSearch(query), /(^|&)following=1(&|$)/);
+  const followingOnly = { sort: "top-week", tags: [], currentBuild: false, following: true };
+  assert.equal(toBrowseSearch(followingOnly), "following=1");
+  assert.deepEqual(parseBrowseParams(new URLSearchParams(toBrowseSearch(followingOnly))), followingOnly);
 });
 
 test("cursors round-trip and bind to the sort they were made for", () => {

@@ -5,6 +5,8 @@
 //  - hidden fits and comments never come back from a public read; an admin viewer sees them, and an
 //    author also sees their own drafts;
 //  - a vote is one row per (fit, user): counts are computed by query, nothing is stored;
+//  - a pilot's name lives only in `pilots` (pilots.ts); fits and comments join it, and every write by a
+//    pilot first makes sure their row exists (ensurePilot);
 //  - fit_evaluations is a cache of the engine's verdict on the stored JSON for one build; changing a
 //    fit's content drops its cached rows, and a published fit can't hold content the engine rejected.
 import { randomBytes } from "node:crypto";
@@ -50,6 +52,7 @@ export type EvaluationInput = {
 export type FitSummary = {
   id: string;
   authorUserId: string;
+  /** The author's current name, from `pilots`. */
   authorName: string;
   title: string;
   hullItem: string;
@@ -105,7 +108,7 @@ export type Report = {
   createdAt: string;
   resolvedAt: string | null;
   /** What was reported, for the queue; null when it no longer exists. */
-  target: { fitId: string; preview: string; hidden: boolean } | null;
+  target: { fitId: string; preview: string; hidden: boolean; authorUserId: string; authorName: string } | null;
 };
 
 export type FitNeedingEvaluation = {
@@ -241,6 +244,23 @@ function pageSize(limit: number | undefined): number {
 }
 
 // ---------------------------------------------------------------------------------------------------
+// Pilots
+
+/** The signed-in pilot a write is made for: their id, and the session's name for a row they lack. */
+export type PilotIdentity = { userId: string; name: string };
+
+/**
+ * Makes sure the pilot has a `pilots` row before something of theirs is written, creating it from the
+ * session's name when it is missing (a session issued before pilot rows existed). Never changes an
+ * existing row: sign-in owns the name. Call it inside the write's own transaction.
+ */
+export async function ensurePilot(db: Queryable, pilot: PilotIdentity): Promise<void> {
+  const name = pilot.name.trim();
+  if (!pilot.userId || !name) invalid("The author is not valid.");
+  await db.query(`INSERT INTO pilots (user_id, name) VALUES ($1, $2) ON CONFLICT (user_id) DO NOTHING`, [pilot.userId, name]);
+}
+
+// ---------------------------------------------------------------------------------------------------
 // Fit reads
 
 const EVALUATION_JSON = `jsonb_build_object('buildSha', e.build_sha, 'valid', e.valid, 'rating', e.rating,
@@ -252,7 +272,7 @@ const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id =
   AND NOT EXISTS (SELECT 1 FROM fit_comments p WHERE p.id = c.parent_id AND p.hidden))`;
 
 function summaryColumns(shaRef: string, viewerRef: string): string {
-  return `f.id, f.author_user_id, f.author_name, f.title, f.hull_item, f.tags, f.status,
+  return `f.id, f.author_user_id, p.name AS author_name, f.title, f.hull_item, f.tags, f.status,
     f.created_at, f.updated_at, f.published_at,
     ${VOTES_SQL} AS votes,
     ${COMMENTS_SQL} AS comments,
@@ -306,7 +326,7 @@ export async function getFit(db: Queryable, id: string, options: GetFitOptions =
   const viewer = options.viewer ?? ANONYMOUS;
   const { rows } = await db.query<Row>(
     `SELECT ${summaryColumns("$2", "$3")}, f.description, f.fit, f.created_build_sha
-     FROM fits f
+     FROM fits f JOIN pilots p ON p.user_id = f.author_user_id
      WHERE f.id = $1
        AND (f.status = 'published' OR $4::boolean OR (f.status IN ('draft', 'hidden') AND f.author_user_id = $3::text))`,
     [id, options.buildSha ?? null, viewer.userId, viewer.isAdmin],
@@ -351,6 +371,10 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
   if (query.author) where.push(`f.author_user_id = ${p.add(query.author)}`);
   if (query.hull) where.push(`f.hull_item = ${p.add(query.hull)}`);
   if (query.tags.length > 0) where.push(`f.tags @> ${p.add(query.tags)}::text[]`);
+  // Only a signed-in viewer follows anyone; signed out, the filter is ignored.
+  if (query.following && viewer.userId !== null) {
+    where.push(`f.author_user_id IN (SELECT followee_user_id FROM pilot_follows WHERE follower_user_id = ${viewerRef}::text)`);
+  }
 
   if (query.hullClass || query.role) {
     const hulls = [...(options.hulls ?? [])]
@@ -390,7 +414,7 @@ export async function browseFits(db: Queryable, options: BrowseOptions): Promise
          ${scoreSql} AS score,
          COALESCE(f.published_at, f.updated_at) AS sort_at,
          COALESCE(f.published_at, f.updated_at)::text AS sort_at_text
-       FROM fits f
+       FROM fits f JOIN pilots p ON p.user_id = f.author_user_id
        WHERE ${where.join(" AND ")}
      )
      SELECT * FROM base ${after}
@@ -421,6 +445,7 @@ export type FitContent = { hullItem: string; fit: unknown };
 
 export type CreateFitInput = {
   authorUserId: string;
+  /** The session's name: only creates the author's pilot row when it is missing (ensurePilot); never stored on the fit. */
   authorName: string;
   title: string;
   description?: string;
@@ -457,10 +482,11 @@ export async function createFit(db: Db, input: CreateFitInput): Promise<FitDetai
     const id = generateFitId();
     try {
       return await db.transaction(async (tx) => {
+        await ensurePilot(tx, { userId: input.authorUserId, name: input.authorName });
         await tx.query(
-          `INSERT INTO fits (id, author_user_id, author_name, title, description, hull_item, tags, fit, created_build_sha)
-           VALUES ($1, $2, $3, $4, $5, $6, $7::text[], $8::jsonb, $9)`,
-          [id, input.authorUserId, input.authorName.trim(), title, description, hullItem, tags, json, input.buildSha],
+          `INSERT INTO fits (id, author_user_id, title, description, hull_item, tags, fit, created_build_sha)
+           VALUES ($1, $2, $3, $4, $5, $6::text[], $7::jsonb, $8)`,
+          [id, input.authorUserId, title, description, hullItem, tags, json, input.buildSha],
         );
         if (input.evaluation) await insertEvaluation(tx, id, input.evaluation);
         const fit = await getFit(tx, id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha });
@@ -669,7 +695,9 @@ function mapComment(row: Row): Comment {
   };
 }
 
-const COMMENT_COLUMNS = `id::text AS id, fit_id, parent_id::text AS parent_id, author_user_id, author_name, body,
+// Unqualified so it also serves as a RETURNING list; the author's name is read from `pilots`.
+const COMMENT_COLUMNS = `id::text AS id, fit_id, parent_id::text AS parent_id, author_user_id,
+  (SELECT p.name FROM pilots p WHERE p.user_id = fit_comments.author_user_id) AS author_name, body,
   created_at, edited_at, hidden, deleted_at`;
 
 export type CreateCommentInput = {
@@ -677,6 +705,7 @@ export type CreateCommentInput = {
   /** A top-level comment of the same fit, or omitted for a new top-level comment. */
   parentId?: string | null;
   authorUserId: string;
+  /** The session's name: only creates the author's pilot row when it is missing (ensurePilot). */
   authorName: string;
   body: string;
 };
@@ -697,10 +726,11 @@ export async function createComment(db: Db, input: CreateCommentInput): Promise<
         invalid("That comment can't be replied to.");
       }
     }
+    await ensurePilot(tx, { userId: input.authorUserId, name: input.authorName });
     const { rows } = await tx.query<Row>(
-      `INSERT INTO fit_comments (fit_id, parent_id, author_user_id, author_name, body)
-       VALUES ($1, $2::bigint, $3, $4, $5) RETURNING ${COMMENT_COLUMNS}`,
-      [input.fitId, parentId, input.authorUserId, input.authorName.trim(), body],
+      `INSERT INTO fit_comments (fit_id, parent_id, author_user_id, body)
+       VALUES ($1, $2::bigint, $3, $4) RETURNING ${COMMENT_COLUMNS}`,
+      [input.fitId, parentId, input.authorUserId, body],
     );
     return mapComment(rows[0]!);
   });
@@ -870,11 +900,13 @@ export async function listOpenReports(
     `SELECT r.id::text AS id, r.target_kind, r.target_id, r.reporter_user_id, r.reason, r.created_at, r.resolved_at,
        CASE r.target_kind WHEN 'fit' THEN f.id ELSE cf.id END AS target_fit_id,
        CASE r.target_kind WHEN 'fit' THEN f.title ELSE left(c.body, 200) END AS preview,
-       CASE r.target_kind WHEN 'fit' THEN f.status = 'hidden' ELSE c.hidden END AS target_hidden
+       CASE r.target_kind WHEN 'fit' THEN f.status = 'hidden' ELSE c.hidden END AS target_hidden,
+       ap.user_id AS target_author_user_id, ap.name AS target_author_name
      FROM fit_reports r
      LEFT JOIN fits f ON r.target_kind = 'fit' AND f.id = r.target_id
      LEFT JOIN fit_comments c ON r.target_kind = 'comment' AND r.target_id ~ '^[0-9]{1,15}$' AND c.id = (CASE WHEN r.target_id ~ '^[0-9]{1,15}$' THEN r.target_id::bigint END)
      LEFT JOIN fits cf ON cf.id = c.fit_id
+     LEFT JOIN pilots ap ON ap.user_id = (CASE r.target_kind WHEN 'fit' THEN f.author_user_id ELSE c.author_user_id END)
      WHERE r.resolved_at IS NULL AND r.id > $1::bigint
      ORDER BY r.id
      LIMIT ${size + 1}`,
@@ -890,7 +922,15 @@ export async function listOpenReports(
       reason: row.reason,
       createdAt: iso(row.created_at),
       resolvedAt: isoOrNull(row.resolved_at),
-      target: row.target_fit_id ? { fitId: row.target_fit_id, preview: row.preview, hidden: row.target_hidden === true } : null,
+      target: row.target_fit_id
+        ? {
+            fitId: row.target_fit_id,
+            preview: row.preview,
+            hidden: row.target_hidden === true,
+            authorUserId: row.target_author_user_id,
+            authorName: row.target_author_name,
+          }
+        : null,
     }),
   );
   return { reports, nextAfterId: rows.length > size ? page[page.length - 1]!.id : null };

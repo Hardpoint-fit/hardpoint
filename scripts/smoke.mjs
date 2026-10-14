@@ -163,8 +163,8 @@ try {
   await check(up, `/fits/${ids.showcase}/opengraph-image`, { type: "image/png" });
   await check(up, `/fits/${ids.draft}`, { status: 404 });
   await check(up, "/fits/nosuchfit0", { status: 404, has: ["NOTHING HERE"] });
-  await check(up, `/u/${ALICE_ID}`, { has: ["ALICE", "Scarab cipher brawler"], lacks: ["Unfinished idea"] });
-  await check(up, "/u/user_nobody", { has: ["HASN&#x27;T PUBLISHED"] });
+  await check(up, `/u/${ALICE_ID}`, { has: ["ALICE", "Scarab cipher brawler", "UPVOTES RECEIVED", "pilot-avatar--none"], lacks: ["Unfinished idea"] });
+  await check(up, "/u/user_nobody", { status: 404, has: ["NOTHING HERE"] });
   await check(up, "/admin/reports", { status: 404 });
   // The builder: its page renders and loads the catalog from the server, which keeps serving the copy
   // it holds when the engine stops answering (Review Focus #4).

@@ -51,7 +51,7 @@ function setCookies(response) {
 }
 
 /** /auth/signin -> the provider -> /auth/callback. Returns the callback's response. */
-async function signIn({ returnTo = "/fits/abc?x=1", tamper } = {}) {
+async function signIn({ returnTo = "/fits/abc?x=1", tamper, onSignedIn } = {}) {
   const start = await handleSignIn(get(`/auth/signin?returnTo=${encodeURIComponent(returnTo)}`), config);
   assert.equal(start.status, 302);
   const transaction = setCookies(start)[SIGN_IN_COOKIE];
@@ -59,7 +59,7 @@ async function signIn({ returnTo = "/fits/abc?x=1", tamper } = {}) {
   let back = idp.authorize(start.headers.get("location"));
   let cookie = `${SIGN_IN_COOKIE}=${transaction.value}`;
   ({ back, cookie } = tamper?.({ back, cookie }) ?? { back, cookie });
-  return handleCallback(get(`${back.pathname}${back.search}`, { cookie }), config);
+  return handleCallback(get(`${back.pathname}${back.search}`, { cookie }), config, onSignedIn);
 }
 
 async function sessionOf(response) {
@@ -382,4 +382,39 @@ test("www.<canonical host> redirects to the canonical origin with path and query
   assert.equal(at("hardpoint.fit", "/x"), null);
   assert.equal(at("fits.alpha.thecitadel.com", "/x"), null);
   assert.equal(at("site-production-ed67.up.railway.app", "/x"), null);
+});
+
+test("sign-in hands the pilot's id, name and picture to the site to record", async () => {
+  idp.user = { ...idp.user, picture: "https://img.clerk.com/ahab.png" };
+  const recorded = [];
+  const response = await signIn({ onSignedIn: async (pilot) => void recorded.push(pilot) });
+  assert.equal(response.status, 303);
+  assert.deepEqual(recorded, [{ userId: "user_2fakePilot", name: "ahab", picture: "https://img.clerk.com/ahab.png" }]);
+  const { picture, ...withoutPicture } = idp.user;
+  idp.user = withoutPicture;
+  recorded.length = 0;
+  await signIn({ onSignedIn: async (pilot) => void recorded.push(pilot) });
+  assert.equal(recorded[0].picture, null);
+});
+
+test("recording the pilot fails open: sign-in still completes, and the log names no one", async () => {
+  idp.user = { ...idp.user, picture: "https://img.clerk.com/ahab.png" };
+  const errors = [];
+  const original = console.error;
+  console.error = (...args) => errors.push(args.join(" "));
+  let response;
+  try {
+    response = await signIn({
+      onSignedIn: async () => {
+        throw Object.assign(new Error("insert into pilots failed for user_2fakePilot ahab"), { code: "23514" });
+      },
+    });
+  } finally {
+    console.error = original;
+  }
+  assert.equal(response.status, 303);
+  assert.ok((await sessionOf(response))?.session.userId, "the session is set");
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /23514/);
+  for (const secret of ["user_2fakePilot", "ahab", "img.clerk.com"]) assert.ok(!errors[0].includes(secret), secret);
 });
