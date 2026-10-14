@@ -605,7 +605,7 @@
 
 .modifier__slot {
   color: var(--text-secondary);
-  font-size: 9px;
+  font-size: var(--font-size-tiny);
   letter-spacing: 0.2em;
 }
 

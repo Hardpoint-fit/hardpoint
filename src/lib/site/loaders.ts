@@ -32,7 +32,7 @@ import { moduleInfos, type ModuleInfo } from "./module-search";
 import { alignSections, countModules, diffModules, type CompareSection, type ModuleDiff } from "../fits/compare";
 import { UNKNOWN_ITEM_NAME } from "#/components/grid/model";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
-import { baseIcon } from "../art/item-icon";
+import { baseIcon, itemIcon } from "../art/item-icon";
 
 export type SiteDeps = {
   database: () => DatabaseState;
@@ -104,7 +104,45 @@ export type FitCard = {
   standing: Standing;
   /** The engine's rating on the current build, or the last valid one for an outdated fit. */
   rating: number | null;
+  /** The fit's modules, one per item kind in mount order, with how many it fits and the icon its roll shows. */
+  modules: CardModule[];
 };
+
+export type CardModule = { def: string; name: string; icon: string | null; count: number };
+
+/** Catalog lookups for cards, built once per catalog (the catalog object is replaced on a new build). */
+const cardLookups = new WeakMap<Catalog, { items: Map<string, Catalog["items"][number]>; artifacts: Map<string, string> }>();
+
+function lookupsFor(catalog: Catalog) {
+  let lookups = cardLookups.get(catalog);
+  if (!lookups) {
+    lookups = { items: new Map(catalog.items.map((item) => [item.def, item])), artifacts: new Map(catalog.artifacts.map((artifact) => [artifact.def, artifact.path])) };
+    cardLookups.set(catalog, lookups);
+  }
+  return lookups;
+}
+
+/** The card's module icons, by the grid's own icon rule (itemIcon); an item the build lacks is UNKNOWN ITEM. */
+export function cardModules(fit: Pick<FitSummary, "moduleItems">, catalog: Catalog | null): CardModule[] {
+  const lookups = catalog ? lookupsFor(catalog) : null;
+  const byDef = new Map<string, CardModule>();
+  for (const ref of fit.moduleItems) {
+    const seen = byDef.get(ref.def);
+    if (seen) {
+      seen.count += 1;
+      continue;
+    }
+    const item = lookups?.items.get(ref.def);
+    const artifactPath = ref.artifact ? (lookups?.artifacts.get(ref.artifact) ?? null) : null;
+    byDef.set(ref.def, {
+      def: ref.def,
+      name: item?.name ?? UNKNOWN_ITEM_NAME,
+      icon: item ? itemIcon({ path: item.path, category: item.category }, ref, artifactPath) : null,
+      count: 1,
+    });
+  }
+  return [...byDef.values()];
+}
 
 export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: string | null): FitCard {
   const standing = standingOf(fit, currentSha);
@@ -124,6 +162,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
     status: fit.status,
     standing,
     rating,
+    modules: cardModules(fit, catalog),
   };
 }
 

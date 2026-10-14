@@ -6,16 +6,22 @@ import { art2x } from "#/lib/art/art-manifest";
 
 /**
  * An item's image at `size` px, or the no-art placeholder: the tile's own frame with the font's "?",
- * so an item without art still reads as an item (Review Focus #1).
+ * so an item without art still reads as an item (Review Focus #1). `fill`: the box it sits in sizes it
+ * (the fitting grid's scaled icons); `size` is then the largest it is drawn, which picks the 1x or 2x image.
  */
-export function ItemIcon({ src, size, mirrored = false, className }: { src: string | null; size: number; mirrored?: boolean; className?: string }) {
+export function ItemIcon({ src, size, mirrored = false, fill = false, className }: { src: string | null; size: number; mirrored?: boolean; fill?: boolean; className?: string }) {
+  const filled = fill ? { width: "100%", height: "100%" } : undefined;
   const classes = ["item-icon", src ? "" : "item-icon--none", mirrored ? "item-icon--mirrored" : "", className].filter(Boolean).join(" ");
   if (!src) {
     return (
-      <span className={classes} style={{ width: size, height: size }} aria-hidden="true">
+      <span className={classes} style={filled ?? { width: size, height: size }} aria-hidden="true">
         ?
       </span>
     );
+  }
+  if (fill) {
+    // The art is 128px (1x) and 256px (2x) wide; the browser picks by the drawn size and the screen's density.
+    return <img className={classes} style={filled} src={src} srcSet={`${src} 128w, ${art2x(src)} 256w`} sizes={`${Math.ceil(size)}px`} alt="" aria-hidden="true" loading="lazy" decoding="async" />;
   }
   return <img className={classes} src={src} srcSet={`${src} 1x, ${art2x(src)} 2x`} width={size} height={size} alt="" aria-hidden="true" loading="lazy" decoding="async" />;
 }

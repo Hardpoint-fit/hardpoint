@@ -225,6 +225,30 @@ export function iconArea(cells: readonly Cell[]): Bounds | null {
   return { minRow: elbow.row, minCol: elbow.col, rows: 1, cols: 1 };
 }
 
+/** InventoryGridItemElement's DefaultIconInset and MinIconSize, in the game's pixels at its 48px cell. */
+export const ICON_INSET = 6;
+const MIN_ICON = 16;
+
+/**
+ * Where a module's icon sits, from its shape's bounds, for cells `cell` px wide whose slot box is inset
+ * `inset` px: a square as large as its icon area's short side less the icon inset, centred on it. Callers
+ * pass the game's 48px and 3px and scale the result to their own cell.
+ */
+export function iconBox(cells: readonly Cell[], cell: number, inset: number): { left: number; top: number; size: number } | null {
+  const box = boundsOf(cells);
+  const area = iconArea(cells);
+  if (!box || !area) return null;
+  const extent = (n: number) => n * cell - 2 * inset;
+  const width = extent(area.cols);
+  const height = extent(area.rows);
+  const size = Math.max(MIN_ICON, Math.min(width, height) - 2 * ICON_INSET);
+  return {
+    left: (area.minCol - box.minCol) * cell + inset + Math.round((width - size) / 2),
+    top: (area.minRow - box.minRow) * cell + inset + Math.round((height - size) / 2),
+    size,
+  };
+}
+
 /**
  * The part of a hull's grid worth drawing: every enabled cell and every `extra` cell (items that
  * stick out), with a one-cell margin, clamped to the grid (the prototype's fittingVisibleBounds).
@@ -248,4 +272,80 @@ export function applySlotOverrides(slots: readonly string[], overrides: readonly
   const result = [...slots];
   for (const { cell, slotType } of overrides) if (cell >= 0 && cell < result.length) result[cell] = slotType;
   return result;
+}
+
+export type Point = { x: number; y: number };
+
+/**
+ * A footprint's outline: one closed loop per boundary of the cells' union, in cell units (x = col,
+ * y = row), corners only. The loops are built from the same outer edges as `outerEdges`, each walked
+ * with the footprint on its right (clockwise on screen); a hole's loop runs the other way.
+ */
+export function footprintOutline(cells: readonly Cell[]): Point[][] {
+  const edges = outerEdges(cells);
+  const key = (point: Point) => `${point.x},${point.y}`;
+  const next = new Map<string, Point[]>();
+  const add = (from: Point, to: Point) => {
+    const list = next.get(key(from)) ?? [];
+    list.push(to);
+    next.set(key(from), list);
+  };
+  for (const cell of cells) {
+    const sides = edges.get(cellKey(cell))!;
+    const { row: y, col: x } = cell;
+    if (sides.top) add({ x, y }, { x: x + 1, y });
+    if (sides.right) add({ x: x + 1, y }, { x: x + 1, y: y + 1 });
+    if (sides.bottom) add({ x: x + 1, y: y + 1 }, { x, y: y + 1 });
+    if (sides.left) add({ x, y: y + 1 }, { x, y });
+  }
+  const loops: Point[][] = [];
+  // Start each loop at its top-left-most free corner, so the result doesn't depend on map order.
+  const starts = () => [...next.entries()].filter(([, to]) => to.length > 0).map(([at]) => at.split(",").map(Number) as [number, number]);
+  for (let open = starts(); open.length > 0; open = starts()) {
+    const [sx, sy] = open.reduce((best, at) => (at[1] < best[1] || (at[1] === best[1] && at[0] < best[0]) ? at : best));
+    const loop: Point[] = [];
+    let at: Point = { x: sx, y: sy };
+    let heading: Point | null = null;
+    while (true) {
+      const options = next.get(key(at));
+      if (!options || options.length === 0) break;
+      // Where two cells touch only at a corner, two edges leave it: take the right-hand turn, which keeps
+      // the loops apart.
+      const pick: number = heading === null ? 0 : turnIndex(options, at, heading);
+      const to: Point = options.splice(pick, 1)[0]!;
+      const direction: Point = { x: to.x - at.x, y: to.y - at.y };
+      if (!heading || heading.x !== direction.x || heading.y !== direction.y) loop.push(at);
+      heading = direction;
+      at = to;
+    }
+    if (loop.length >= 4) loops.push(loop);
+  }
+  return loops;
+}
+
+function turnIndex(options: readonly Point[], at: Point, heading: Point): number {
+  // Right of (x, y) on screen (y down) is (-y, x).
+  const right = { x: -heading.y, y: heading.x };
+  const index = options.findIndex((to) => to.x - at.x === right.x && to.y - at.y === right.y);
+  return index >= 0 ? index : 0;
+}
+
+/**
+ * A loop from `footprintOutline`, scaled to `cell` pixels and moved `inset` pixels inward on every side,
+ * as the site grid insets a footprint inside its slot boxes. Each corner moves along both of its edges'
+ * inward normals, which holds for the outer and the inner (concave) corners of a cell outline.
+ */
+export function insetLoop(loop: readonly Point[], cell: number, inset: number): Point[] {
+  const inward = (from: Point, to: Point): Point => {
+    const dx = Math.sign(to.x - from.x);
+    const dy = Math.sign(to.y - from.y);
+    return { x: -dy, y: dx };
+  };
+  return loop.map((corner, i) => {
+    const before = loop[(i + loop.length - 1) % loop.length]!;
+    const after = loop[(i + 1) % loop.length]!;
+    const a = inward(before, corner);
+    const b = inward(corner, after);
+    return { x: corner.x * cell + inset * (a.x + b.x), y: corner.y * cell + inset * (a.y + b.y) };
+  });
 }

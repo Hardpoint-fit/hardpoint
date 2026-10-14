@@ -2,7 +2,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import art from "#/components/grid/fitting-art.generated.json";
-import { boundsOf, iconArea } from "#/components/grid/geometry";
+import { boundsOf, footprintOutline, iconBox, insetLoop, type Cell, type Point } from "#/components/grid/geometry";
+import { cellSizeFor, SITE_GRID } from "#/components/grid/scale";
 import { moduleCells, type GridModel } from "#/components/grid/model";
 import { art2x } from "#/lib/art/art-manifest";
 import { logoDataUri } from "#/lib/brand/logo";
@@ -21,46 +22,57 @@ const FONT = join(process.cwd(), "src/app/fonts/VCROSDNEUE.ttf");
 const T = art.tokens;
 const TIERS = art.tiers as Record<string, { bg: string; border: string; base: string }>;
 
+/** The card's grid panel: 440px each way inside the 470px column. */
+const GRID_SPACE = { width: 440, height: 440 };
+
+/** A loop of corners as an SVG path. */
+const pathOf = (loops: readonly Point[][]) => loops.map((loop) => `M${loop.map((p) => `${p.x} ${p.y}`).join("L")}Z`).join("");
+
+/**
+ * The fit's grid as the site draws it, small: the hull's enabled slot boxes, then each module as one
+ * shape, its whole footprint filled in its tier colour with a single outline around its outer edges
+ * (footprintOutline, from the same outer edges as the site's tiles), each Tek Cipher cell filled as the
+ * site fills it, and the module's art on top where the game puts it (iconBox). One inline SVG draws the shapes.
+ */
 function MiniGrid({ model, icons }: { model: GridModel; icons: ReadonlyMap<string, string> }) {
   const cells = model.modules.flatMap(moduleCells);
   const enabled = model.slots.flatMap((slot, index) => (slot === "None" ? [] : [{ row: Math.floor(index / model.cols), col: index % model.cols }]));
   const box = boundsOf([...enabled, ...cells]);
   if (!box) return null;
-  const cell = Math.floor(Math.min(440 / box.rows, 440 / box.cols));
-  const at = (row: number, col: number) => ({ left: (col - box.minCol) * cell, top: (row - box.minRow) * cell });
+  const cell = cellSizeFor(GRID_SPACE, box, { min: 0, max: SITE_GRID.max });
+  // The game's art space (48px cells, 3px slot inset) scaled to this card's cell.
+  const scale = cell / art.cellSize;
+  const inset = art.slotInset * scale;
+  const line = Math.max(2, Math.round(scale * 2));
+  const shift = (cellsOf: readonly Cell[]) => cellsOf.map(({ row, col }) => ({ row: row - box.minRow, col: col - box.minCol }));
+  const width = box.cols * cell;
+  const height = box.rows * cell;
   return (
-    <div style={{ display: "flex", position: "relative", width: box.cols * cell, height: box.rows * cell }}>
-      {enabled.map(({ row, col }) => (
-        <div
-          key={`s${row},${col}`}
-          style={{ position: "absolute", ...at(row, col), width: cell - 4, height: cell - 4, margin: 2, border: "1px solid rgba(107, 122, 122, 0.72)", background: "rgba(83, 96, 96, 0.12)" }}
-        />
-      ))}
-      {model.modules.flatMap((module) => {
-        const tier = TIERS[module.tier]!;
-        const unknown = !module.known;
-        return moduleCells(module).map(({ row, col }) => (
-          <div
-            key={`m${module.index}-${row},${col}`}
-            style={{
-              position: "absolute",
-              ...at(row, col),
-              width: cell - 2,
-              height: cell - 2,
-              margin: 1,
-              background: unknown ? art.colors.HazardTapeRed : tier.bg,
-              border: `2px solid ${module.issues.length ? art.colors.InvalidRed : tier.base}`,
-            }}
-          />
-        ));
-      })}
+    <div style={{ display: "flex", position: "relative", width, height }}>
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ position: "absolute", left: 0, top: 0 }}>
+        {shift(enabled).map(({ row, col }) => (
+          <rect key={`s${row},${col}`} x={col * cell + inset} y={row * cell + inset} width={cell - 2 * inset} height={cell - 2 * inset} fill="rgba(83, 96, 96, 0.12)" stroke="rgba(107, 122, 122, 0.72)" strokeWidth={1} />
+        ))}
+        {model.modules.map((module) => {
+          const tier = TIERS[module.tier]!;
+          const fill = module.known ? tier.bg : art.colors.HazardTapeRed;
+          const edge = module.issues.length || !module.known ? art.colors.InvalidRed : tier.base;
+          const shape = pathOf(footprintOutline(shift(module.cells)).map((loop) => insetLoop(loop, cell, inset)));
+          const ciphers = pathOf(shift(module.expansions).flatMap((one) => footprintOutline([one]).map((loop) => insetLoop(loop, cell, inset))));
+          return (
+            <g key={`m${module.index}`}>
+              <path d={shape} fill={fill} fillRule="evenodd" stroke={edge} strokeWidth={line} strokeLinejoin="miter" />
+              {ciphers && <path d={ciphers} fill={fill} />}
+            </g>
+          );
+        })}
+      </svg>
       {model.modules.map((module) => {
         const icon = module.icon ? icons.get(module.icon) : undefined;
-        const area = iconArea(moduleCells(module));
-        if (!icon || !area) return null;
-        // As in the builder: a square on the icon area's short side, less an inset, centred on it.
-        const size = Math.min(area.rows, area.cols) * cell - Math.round(cell * 0.3);
-        const { left, top } = at(area.minRow, area.minCol);
+        const place = iconBox(module.cells, art.cellSize, art.slotInset);
+        const bounds = boundsOf(module.cells);
+        if (!icon || !place || !bounds) return null;
+        const size = Math.round(place.size * scale);
         return (
           <img
             key={`i${module.index}`}
@@ -68,7 +80,7 @@ function MiniGrid({ model, icons }: { model: GridModel; icons: ReadonlyMap<strin
             width={size}
             height={size}
             alt=""
-            style={{ position: "absolute", left: left + (area.cols * cell - size) / 2, top: top + (area.rows * cell - size) / 2, objectFit: "contain" }}
+            style={{ position: "absolute", left: (bounds.minCol - box.minCol) * cell + place.left * scale, top: (bounds.minRow - box.minRow) * cell + place.top * scale, objectFit: "contain" }}
           />
         );
       })}

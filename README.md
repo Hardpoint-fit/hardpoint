@@ -27,7 +27,7 @@ SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates tha
 | `/admin/reports` | Open reports with hide and resolve. A 404 for anyone but a moderator; a moderator whose role has expired gets a RE-VERIFY TO MODERATE link and no data. |
 | `/admin/pilots` | Pilots, searched by name or user id: ban state, BAN (a reason, a confirm step, optionally hiding all their fits and comments) and UNBAN. Same access as `/admin/reports`. |
 
-Pages read through `src/lib/site/loaders.ts` and write through the server actions in `src/app/actions.ts` (work in `src/lib/site/actions-core.ts`). With the engine down they render the stored verdicts under a banner; without a database they show an unavailable state. The grid is `src/components/grid/` (see its `geometry.ts` and `model.ts`).
+Pages read through `src/lib/site/loaders.ts` and write through the server actions in `src/app/actions.ts` (work in `src/lib/site/actions-core.ts`). With the engine down they render the stored verdicts under a banner; without a database they show an unavailable state. The grid is `src/components/grid/` (see its `geometry.ts` and `model.ts`); `scale.ts` owns its cell size, from the game's 48px up to 88px as its panel allows.
 
 ## Game tokens, font, grid art and stat wording
 

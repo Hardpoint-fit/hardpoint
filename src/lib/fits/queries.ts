@@ -72,7 +72,12 @@ export type FitSummary = {
   evaluation: Evaluation | null;
   /** The newest valid verdict on any build: what an outdated fit still shows for reference. */
   lastValidEvaluation: Evaluation | null;
+  /** Each fitted module's item, in mount order: what a fit card shows the icons of. Read from `fits.fit`. */
+  moduleItems: ModuleItemRef[];
 };
+
+/** The parts of a fitted module's item that pick its icon (art/item-icon.ts). */
+export type ModuleItemRef = { def: string; rarity: string; isIdentified: boolean; artifact: string | null };
 
 export type FitDetail = FitSummary & {
   /** Markdown source; render with renderMarkdown. */
@@ -284,6 +289,13 @@ const VOTES_SQL = `(SELECT count(*)::int FROM fit_votes v WHERE v.fit_id = f.id)
 const COMMENTS_SQL = `(SELECT count(*)::int FROM fit_comments c WHERE c.fit_id = f.id AND NOT c.hidden AND c.deleted_at IS NULL
   AND NOT EXISTS (SELECT 1 FROM fit_comments p WHERE p.id = c.parent_id AND p.hidden))`;
 
+// The icon-picking parts of each module's item, in the fit's mount order. Lax JSON path: a fit without a
+// modules array gives none rather than an error.
+const MODULE_ITEMS_SQL = `COALESCE((SELECT jsonb_agg(jsonb_build_object(
+      'def', m.value #>> '{item,def}', 'rarity', m.value #>> '{item,roll,rarity}',
+      'isIdentified', m.value #> '{item,roll,isIdentified}', 'artifact', m.value #>> '{item,roll,artifact}') ORDER BY m.n)
+    FROM jsonb_path_query(f.fit, 'lax $.modules[*]') WITH ORDINALITY AS m(value, n)), '[]'::jsonb)`;
+
 export function summaryColumns(shaRef: string, viewerRef: string): string {
   return `f.id, f.author_user_id, p.name AS author_name, f.title, f.hull_item, f.tags, f.status,
     f.created_at, f.updated_at, f.published_at,
@@ -293,7 +305,17 @@ export function summaryColumns(shaRef: string, viewerRef: string): string {
     EXISTS (SELECT 1 FROM fit_bookmarks bm WHERE bm.fit_id = f.id AND bm.user_id = ${viewerRef}::text) AS viewer_bookmarked,
     (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = ${shaRef}::text) AS evaluation,
     (SELECT ${EVALUATION_JSON} FROM fit_evaluations e WHERE e.fit_id = f.id AND e.valid
-       ORDER BY e.evaluated_at DESC, e.build_sha DESC LIMIT 1) AS last_valid_evaluation`;
+       ORDER BY e.evaluated_at DESC, e.build_sha DESC LIMIT 1) AS last_valid_evaluation,
+    ${MODULE_ITEMS_SQL} AS module_items`;
+}
+
+function mapModuleItems(value: unknown): ModuleItemRef[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry: Row) =>
+    typeof entry?.def === "string"
+      ? [{ def: entry.def, rarity: typeof entry.rarity === "string" ? entry.rarity : "Normal", isIdentified: entry.isIdentified === true, artifact: typeof entry.artifact === "string" ? entry.artifact : null }]
+      : [],
+  );
 }
 
 function mapEvaluation(value: unknown): Evaluation | null {
@@ -327,6 +349,7 @@ export function mapSummary(row: Row): FitSummary {
     viewerBookmarked: row.viewer_bookmarked,
     evaluation: mapEvaluation(row.evaluation),
     lastValidEvaluation: mapEvaluation(row.last_valid_evaluation),
+    moduleItems: mapModuleItems(row.module_items),
   };
 }
 

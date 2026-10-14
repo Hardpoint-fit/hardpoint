@@ -4,7 +4,9 @@ import test from "node:test";
 import { FIXTURES } from "../../lib/engine/stub-engine.mjs";
 import {
   applySlotOverrides,
+  footprintOutline,
   iconArea,
+  insetLoop,
   occupiedCells,
   outerEdges,
   overlappingItems,
@@ -145,4 +147,32 @@ test("a module's icon centres on a rectangle's bounds and on the elbow of an L o
   const tee = [{ row: 0, col: 0 }, { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 1, col: 1 }];
   assert.deepEqual(iconArea(tee), { minRow: 0, minCol: 1, rows: 1, cols: 1 });
   assert.equal(iconArea([]), null);
+});
+
+test("footprintOutline traces one loop of corners around a footprint, clockwise", () => {
+  assert.deepEqual(footprintOutline([{ row: 0, col: 0 }]), [[{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }]]);
+  // An L: three cells, six corners, the concave one included.
+  const l = [{ row: 0, col: 0 }, { row: 1, col: 0 }, { row: 1, col: 1 }];
+  assert.deepEqual(footprintOutline(l), [
+    [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 0, y: 2 }],
+  ]);
+  // A 1x3 bar has no corners along its length.
+  assert.equal(footprintOutline([{ row: 2, col: 1 }, { row: 2, col: 2 }, { row: 2, col: 3 }])[0].length, 4);
+  // A ring: an outer loop and a hole.
+  const ring = [];
+  for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++) if (row !== 1 || col !== 1) ring.push({ row, col });
+  assert.equal(footprintOutline(ring).length, 2);
+  assert.deepEqual(footprintOutline([]), []);
+});
+
+test("insetLoop moves every side inward, at outer and inner corners alike", () => {
+  const [l] = footprintOutline([{ row: 0, col: 0 }, { row: 1, col: 0 }, { row: 1, col: 1 }]);
+  assert.deepEqual(insetLoop(l, 48, 3), [
+    { x: 3, y: 3 },
+    { x: 45, y: 3 },
+    { x: 45, y: 51 },
+    { x: 93, y: 51 },
+    { x: 93, y: 93 },
+    { x: 3, y: 93 },
+  ]);
 });

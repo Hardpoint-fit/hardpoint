@@ -3,6 +3,15 @@
    action buttons, tier and state colours. Hard edges only. */
 
 :root {
+  /* Type sizes: the game's tokens (game-tokens.generated.css) are set for a 1080p screen viewed from a
+     desk chair at the game's own scale, where 10px VCR reads. On a web page read at arm's length they
+     were too small (2026-10-14: hull-spec and stat rows 10px). Each size moves up one step here, so the
+     smallest text, rows, meta and panel headers, is 13px and the hierarchy keeps its order:
+     tiny 10 → 13, normal 12 → 14, small 14 → 16 (section headers, card titles), header 18 → 20. */
+  --font-size-tiny: 13px;
+  --font-size-normal: 14px;
+  --font-size-small: 16px;
+  --font-size-header: 20px;
   --page-bg: rgb(12, 14, 15);
   --plate-bg: rgba(10, 12, 14, 0.95);
   --plate-border: rgba(255, 255, 255, 0.06);
@@ -595,7 +604,8 @@ a.chip:hover {
 
 .fit-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  /* The side column gives up to 60px on a laptop-width screen, so the grid keeps the game's 48px cell. */
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 28vw, 360px);
   align-items: start;
   gap: var(--spacing-xl);
 }
@@ -984,7 +994,7 @@ a.chip:hover {
 
 .fit-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
   gap: var(--spacing-lg);
   margin: 0;
   padding: 0;
@@ -1067,6 +1077,42 @@ a.chip:hover {
 .fit-card__link:hover .fit-card__title,
 .fit-card__link:focus-visible .fit-card__title {
   color: var(--accent-orange);
+}
+
+/* The fit's module icons under its head: a strip of the game's 40px icons, a count on stacked kinds. */
+.fit-card__modules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid var(--rule);
+  padding-top: var(--spacing-sm);
+}
+
+.fit-card__module {
+  position: relative;
+  display: flex;
+  background: var(--surface-default);
+}
+
+.fit-card__module-count {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 0 2px;
+  color: var(--text-primary);
+  font-size: var(--font-size-tiny);
+  line-height: 1.1;
+  text-transform: lowercase;
+}
+
+.fit-card__module-more {
+  padding: 0 var(--spacing-xs);
+  color: var(--text-primary-muted);
+  font-size: var(--font-size-tiny);
+  letter-spacing: var(--track);
 }
 
 .fit-card__meta {

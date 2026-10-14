@@ -1,41 +1,61 @@
-/* The fitting grid, after the game's FittingGridPanel.uss cells and ModuleOverlay tiles: 48px cells
-   whose slot box is inset 3px, typed cells outlined, modules filled in their tier's surface palette
-   (--tier-*-surface-*) with one outline around the whole footprint. Colours that are not tokens
-   (conduit, invalid, regalia weld, hazard tape) come from the exported fixture as --fg-* properties. */
+/* The fitting grid, after the game's FittingGridPanel.uss cells and ModuleOverlay tiles: the game's
+   48px cells whose slot box is inset 3px, drawn larger when the panel has room; typed cells outlined,
+   modules filled in their tier's surface palette (--tier-*-surface-*) with one outline around the
+   whole footprint. Colours that are not tokens (conduit, invalid, regalia weld, hazard tape) come from
+   the exported fixture as --fg-* properties.
+
+   Scale: fitting-grid.tsx sets --fg-cell to scale.ts's expression (container width, viewport height,
+   48px to 88px) and --fg-u to one art pixel (--fg-cell / 48). Every length below and inline is a
+   multiple of --fg-u. They are registered lengths, so each is worked out once on .fg and inherited as
+   pixels; a browser that can't evaluate the expression falls back to the game's 48px. */
+
+@property --fg-cell {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 48px;
+}
+
+@property --fg-u {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 1px;
+}
+
+@property --fg-line {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 1px;
+}
 
 .fg {
-  --cell: 48px;
-  --inset: 3px;
+  /* Outlines: the game's 1px, scaled and kept whole. */
+  --fg-line: max(1px, round(var(--fg-u), 1px));
   position: relative;
   flex-shrink: 0;
   user-select: none;
 }
 
-/* No scroll container: one would clip the module tooltips. Narrow screens draw the grid smaller. */
+/* The grid's size container: --fg-cell reads its width (100cqw). No scroll container: one would clip
+   the module tooltips, so a narrow panel draws the grid smaller instead (scale.ts). */
 .fg-scroll {
   display: flex;
+  container-type: inline-size;
   justify-content: center;
   padding: var(--spacing-md) 0;
-}
-
-@media (max-width: 640px) {
-  .fg-scroll .fg {
-    zoom: 0.62;
-  }
 }
 
 /* ---- Cells ---------------------------------------------------------------------------------- */
 
 .fg-cell {
   position: absolute;
-  width: var(--cell);
-  height: var(--cell);
+  width: var(--fg-cell);
+  height: var(--fg-cell);
 }
 
 .fg-cell__slot {
   position: absolute;
-  inset: var(--inset);
-  border: 1px solid rgba(107, 122, 122, 0.72);
+  inset: var(--fg-inset);
+  border: var(--fg-line) solid rgba(107, 122, 122, 0.72);
   background: rgba(83, 96, 96, 0.12);
 }
 
@@ -47,9 +67,9 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 24px;
-  height: 24px;
-  translate: -12px -12px;
+  width: calc(var(--fg-u) * 24);
+  height: calc(var(--fg-u) * 24);
+  translate: -50% -50%;
   fill: var(--text-primary);
   opacity: 0.4;
 }
@@ -83,7 +103,7 @@
   border: 1px solid var(--fg-invalid-border);
   background: var(--fg-hazard-base);
   color: var(--fg-invalid);
-  font-size: 10px;
+  font-size: var(--font-size-tiny);
   line-height: 1.3;
   pointer-events: none;
   translate: -50% 0;
@@ -163,7 +183,7 @@
 
 /* An item the current build doesn't have: hazard tape over its one known cell. */
 .fg-module--unknown {
-  --tile-bg: repeating-linear-gradient(-45deg, var(--fg-hazard-base) 0 5px, var(--fg-hazard-red) 5px 10px);
+  --tile-bg: repeating-linear-gradient(-45deg, var(--fg-hazard-base) 0 calc(var(--fg-u) * 5), var(--fg-hazard-red) calc(var(--fg-u) * 5) calc(var(--fg-u) * 10));
   --tile-edge: var(--fg-invalid);
   --tile-edge-hover: var(--fg-invalid);
 }
@@ -174,9 +194,10 @@
   overflow: hidden;
   align-items: center;
   justify-content: center;
-  padding: 2px;
+  padding: calc(var(--fg-u) * 2);
   color: var(--tile-text);
-  font-size: 7px;
+  /* Never under 11px: a footprint too small for a legible name drops it (showsName in fitting-grid.tsx). */
+  font-size: clamp(11px, calc(var(--fg-u) * 11), 14px);
   letter-spacing: 0;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -200,15 +221,22 @@
   pointer-events: none;
 }
 
-.fg-module__icon .item-icon {
-  width: 100%;
-  height: 100%;
-}
-
 .fg-module--unknown .fg-module__label {
   background: var(--fg-hazard-base);
   color: var(--fg-invalid);
-  inset: calc(var(--inset) + 6px);
+  inset: calc(var(--fg-u) * 9);
+}
+
+/* At phone width the cells can be smaller than the game's: the grid takes the panel's padding too, and
+   names over art give way to the icon (the tooltip and the MODULES list name them). */
+@media (max-width: 640px) {
+  .fg-scroll {
+    margin-inline: calc(-1 * var(--spacing-lg));
+  }
+
+  .fg-module__label--name {
+    display: none;
+  }
 }
 
 .fg-module__ports {
@@ -220,22 +248,22 @@
 .fg-module__marker {
   position: absolute;
   display: flex;
-  width: 12px;
-  height: 12px;
   align-items: center;
   justify-content: center;
   background: var(--fg-invalid);
   color: #000;
-  font-size: 9px;
+  font-size: calc(var(--fg-u) * 9);
   pointer-events: none;
 }
 
 .fg-module__count {
   position: absolute;
-  padding: 0 2px;
+  display: flex;
+  align-items: center;
+  padding: 0 calc(var(--fg-u) * 2);
   background: var(--fg-conduit);
   color: #000;
-  font-size: 8px;
+  font-size: calc(var(--fg-u) * 9);
   letter-spacing: 0;
   text-transform: lowercase;
   pointer-events: none;

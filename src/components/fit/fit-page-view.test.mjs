@@ -13,7 +13,7 @@ import { createTestDb } from "../../lib/fits/test-db.mjs";
 import { createFit, deleteFit, publishFit, unpublishFit, updateFit } from "../../lib/fits/queries.ts";
 import { setBookmark } from "../../lib/fits/bookmarks.ts";
 import { toEvaluationInput } from "../../lib/fits/service.ts";
-import { loadBrowse, loadCompare, loadFitPage } from "../../lib/site/loaders.ts";
+import { cardModules, loadBrowse, loadCompare, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
 import { FitCards } from "./browse-view.tsx";
 import { FitPageView } from "./fit-page-view.tsx";
@@ -71,7 +71,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
   const html = await renderFit(stub.url, ids.showcase, anonymous(false));
   assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
   assert.equal(count(html, 'class="fg-module__icon"'), 13 + 1, "each module's art, and the cipher's in its cell");
-  assert.match(html, /item-icon item-icon--mirrored" src="\/art\//, "the cipher's art faces the other way, as in the game");
+  assert.match(html, /item-icon item-icon--mirrored"[^>]* src="\/art\//, "the cipher's art faces the other way, as in the game");
   // AUTO VENTING's tooltip: its description and its catalog fact rows.
   assert.match(html, /<p class="item-desc">AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY\.<\/p>/);
   assert.match(html, /<span class="facts__label">DEACTIVATION COOLDOWN<\/span>/);
@@ -157,8 +157,20 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.match(html, /ALICE/);
   assert.match(html, /2 UPVOTES/);
   assert.match(html, /1 UPVOTE</);
-  assert.equal(html.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
+  assert.equal(html.match(/class="item-icon fit-card__hull-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
   assert.equal(count(html, "badge--outdated"), 1);
+  // Each card's modules: one icon per item kind (def), in mount order, by the grid's icon rule.
+  const showcase = data.cards.find((card) => card.title === "Scarab cipher brawler");
+  assert.equal(showcase.modules.reduce((sum, module) => sum + module.count, 0), 13);
+  assert.equal(showcase.modules[0].name, "OMNI REPAIRER TURRET");
+  assert.ok(showcase.modules.every((module) => module.icon?.startsWith("/art/")));
+  const shown = data.cards.reduce((sum, card) => sum + Math.min(10, card.modules.length), 0);
+  assert.equal(count(html, 'class="fit-card__module"'), shown, "ten kinds a card at most");
+  assert.match(html, /<span class="fit-card__module-more">\+3<\/span>/, "the showcase's other three summed up");
+  // A kind fitted twice is one icon with its count; an item the build lacks is UNKNOWN ITEM with no art.
+  const twice = cardModules({ moduleItems: [showcase, showcase].map(() => ({ def: FIXTURES.catalog.items[0].def, rarity: "Normal", isIdentified: true, artifact: null })).concat([{ def: "gone", rarity: "Normal", isIdentified: true, artifact: null }]) }, FIXTURES.catalog);
+  assert.deepEqual(twice.map((module) => [module.name, module.count, module.icon === null]), [[FIXTURES.catalog.items[0].name, 2, false], ["UNKNOWN ITEM", 1, true]]);
+  assert.match(renderToStaticMarkup(h(FitCards, { cards: [{ ...showcase, modules: twice }], empty: "" })), /<span class="fit-card__module-count">x2<\/span>/);
 });
 
 test("the author sees delete (and unpublish when published) on their fit; others do not; a tombstone hides its text", async () => {

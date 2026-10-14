@@ -16,18 +16,40 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "discussed", label: "MOST DISCUSSED" },
 ];
 
+/** How many module kinds a card shows before it sums up the rest. */
+const CARD_MODULES = 10;
+
+/** The fit's modules as their icons, each kind once with its count (the game's lowercase "x"). */
+function CardModules({ modules }: { modules: FitCard["modules"] }) {
+  if (modules.length === 0) return null;
+  const shown = modules.slice(0, CARD_MODULES);
+  const rest = modules.slice(CARD_MODULES).reduce((sum, module) => sum + module.count, 0);
+  return (
+    <span className="fit-card__modules" aria-label={`Modules: ${modules.map((module) => (module.count > 1 ? `${module.name} x${module.count}` : module.name)).join(", ")}`}>
+      {shown.map((module) => (
+        <span key={module.def} className="fit-card__module" title={module.name}>
+          <ItemIcon src={module.icon} size={40} />
+          {module.count > 1 && <span className="fit-card__module-count">x{module.count}</span>}
+        </span>
+      ))}
+      {rest > 0 && <span className="fit-card__module-more">+{rest}</span>}
+    </span>
+  );
+}
+
 /** `canBookmark`: the viewer is signed in, so a published card carries the bookmark toggle. */
 export function FitCardView({ card, canBookmark = false }: { card: FitCard; canBookmark?: boolean }) {
   return (
     <li className="fit-card">
       <Link className="fit-card__link" href={`/fits/${card.id}`}>
         <span className="fit-card__head">
-          <ItemIcon src={card.hullIcon} size={40} />
+          <ItemIcon src={card.hullIcon} size={72} className="fit-card__hull-icon" />
           <span className="fit-card__head-text">
             <span className="fit-card__hull">{card.hullName}</span>
             <span className="fit-card__title">{card.title}</span>
           </span>
         </span>
+        <CardModules modules={card.modules} />
       </Link>
       <span className="fit-card__meta">
         <Link className="link" href={`/u/${encodeURIComponent(card.authorUserId)}`}>
