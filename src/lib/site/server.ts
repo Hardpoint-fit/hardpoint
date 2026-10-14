@@ -1,5 +1,5 @@
 import "server-only";
-import { currentAuthor, isAdmin, requireAdmin, requireAuthor } from "../auth";
+import { currentAuthor, isAdmin, moderationState, requireAdmin, requireAuthor, type ModerationState } from "../auth";
 import { getEngine, getEngineMonitor, getServerCatalog } from "../engine/server";
 import { getDatabase } from "../fits/db";
 import type { Viewer } from "../fits/queries";
@@ -14,19 +14,18 @@ export function siteDeps(): SiteDeps {
 
 /** The real dependencies of the server actions. */
 export function actionDeps(): ActionDeps {
-  return { database: getDatabase, auth: { requireAuthor, requireAdmin }, engine: getEngine(), currentBuild: () => getServerCatalog().peek()?.buildSha ?? null };
+  return { database: getDatabase, auth: { requireAuthor, requireAdmin, isAdmin }, engine: getEngine(), currentBuild: () => getServerCatalog().peek()?.buildSha ?? null };
 }
 
-/** Who is reading this page. Never throws: an unreadable session reads as signed out. */
-export type PageViewer = Viewer & { name: string | null; authEnabled: boolean };
+/**
+ * Who is reading this page. Never throws: an unreadable session reads as signed out. `isAdmin` is
+ * `moderation === "active"`: what the page may read and offer; "reverify" offers only the re-verify link.
+ */
+export type PageViewer = Viewer & { name: string | null; authEnabled: boolean; moderation: ModerationState };
 
 export async function pageViewer(): Promise<PageViewer> {
   const { authEnabled } = getConfig();
   const author = await currentAuthor();
-  return {
-    userId: author?.userId ?? null,
-    name: author?.name ?? null,
-    isAdmin: author ? await isAdmin(author.userId) : false,
-    authEnabled,
-  };
+  const moderation = author ? await moderationState() : "none";
+  return { userId: author?.userId ?? null, name: author?.name ?? null, isAdmin: moderation === "active", authEnabled, moderation };
 }

@@ -64,7 +64,11 @@ export async function reportAction(targetKind: unknown, targetId: unknown, reaso
 export async function moderateAction(targetKind: unknown, targetId: unknown, hidden: unknown): Promise<core.ActionResult<{ changed: boolean; resolved: number }>> {
   if (!isKind(targetKind) || !isId(targetId) || typeof hidden !== "boolean") return BAD_INPUT;
   const result = await core.moderate(actionDeps(), { targetKind, targetId, hidden });
-  if (result.ok) revalidatePath("/admin/reports");
+  if (result.ok) {
+    revalidatePath("/admin/reports");
+    // Moderation now also happens on the fit page itself; a comment's id doesn't say which fit it is on.
+    revalidatePath(targetKind === "fit" ? `/fits/${targetId}` : "/fits/[id]", "page");
+  }
   return result;
 }
 
@@ -72,6 +76,32 @@ export async function resolveReportAction(reportId: unknown): Promise<core.Actio
   if (!isId(reportId)) return BAD_INPUT;
   const result = await core.resolveReport(actionDeps(), { reportId });
   if (result.ok) revalidatePath("/admin/reports");
+  return result;
+}
+
+export async function banPilotAction(
+  userId: unknown,
+  reason: unknown,
+  hideAll: unknown,
+): Promise<core.ActionResult<{ created: boolean; hidden: { fits: number; comments: number; reports: number } | null }>> {
+  if (!isUserId(userId) || !text(reason, 5_000) || typeof hideAll !== "boolean") return BAD_INPUT;
+  const result = await core.banPilot(actionDeps(), { userId, reason, hideAll });
+  if (result.ok) {
+    revalidatePath("/admin/pilots");
+    revalidatePath(`/u/${userId}`);
+    // Hiding everything they published touches browse, fit pages and the report queue.
+    if (hideAll) revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function unbanPilotAction(userId: unknown): Promise<core.ActionResult<{ unbanned: boolean }>> {
+  if (!isUserId(userId)) return BAD_INPUT;
+  const result = await core.unbanPilot(actionDeps(), { userId });
+  if (result.ok) {
+    revalidatePath("/admin/pilots");
+    revalidatePath(`/u/${userId}`);
+  }
   return result;
 }
 

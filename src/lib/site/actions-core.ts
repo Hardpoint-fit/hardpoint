@@ -1,7 +1,8 @@
 // The work behind the site's server actions, over injected dependencies so tests can run it on pglite
 // with any auth state. Every write authenticates first (requireAuthor / requireAdmin), so a site
-// without sign-in refuses with 503 before touching the database. Results are values, never throws:
-// the UI shows `message`. Nothing here logs a body, a comment or a token.
+// without sign-in refuses with 503 before touching the database, and then refuses a banned pilot
+// (bans.ts assertNotBanned, in withAuthor, the one path every write takes). Results are values, never
+// throws: the UI shows `message`. Nothing here logs a body, a comment or a token.
 import { AuthError, toAuthRefusal, type AuthErrorReason } from "../auth-errors";
 import type { Author } from "../auth-core";
 import type { EngineClient } from "../engine/client";
@@ -15,6 +16,7 @@ import { parseBrowseParams } from "../fits/filters";
 import { DESCRIPTION_MAX } from "../fits/limits";
 import { renderMarkdown } from "../fits/markdown";
 import { setBio, setFollow } from "../fits/pilots";
+import { assertNotBanned, banPilot as banPilotRow, unbanPilot as unbanPilotRow, PilotBannedError, BANNED_MESSAGE, type HiddenContent } from "../fits/bans";
 import { markAllRead, openNotification as openNotificationRow, type OpenedNotification } from "../fits/notifications";
 import {
   FitDataError,
@@ -36,7 +38,12 @@ import {
   type ReportTargetKind,
 } from "../fits/queries";
 
-export type ActionAuth = { requireAuthor(): Promise<Author>; requireAdmin(): Promise<Author> };
+export type ActionAuth = {
+  requireAuthor(): Promise<Author>;
+  requireAdmin(): Promise<Author>;
+  /** Listed in SITE_ADMIN_USER_IDS, or the signed-in pilot with the admin role now (auth-core isAdmin). */
+  isAdmin(userId: string): Promise<boolean>;
+};
 
 export type ActionDeps = {
   database: () => DatabaseState;
@@ -50,7 +57,7 @@ export type ActionDeps = {
 
 export type ActionRefusal = {
   ok: false;
-  reason: AuthErrorReason | FitDataError["code"] | "unavailable" | "engine" | "invalid_fit" | "rate_limited" | "error";
+  reason: AuthErrorReason | FitDataError["code"] | "banned" | "unavailable" | "engine" | "invalid_fit" | "rate_limited" | "error";
   status: number;
   message: string;
   /** Why the engine says the fit isn't valid, when that is the refusal. */
@@ -80,6 +87,7 @@ async function run<T extends object>(what: string, work: () => Promise<ActionRes
     return await work();
   } catch (error) {
     if (error instanceof AuthError) return toAuthRefusal(error);
+    if (error instanceof PilotBannedError) return refuse("banned", 403, BANNED_MESSAGE);
     if (error instanceof FitDataError) return refuse(error.code, DATA_STATUS[error.code], error.message);
     const code = (error as { code?: unknown }).code;
     console.error(`${what} failed:`, code ?? (error as Error).message);
@@ -88,21 +96,23 @@ async function run<T extends object>(what: string, work: () => Promise<ActionRes
 }
 
 /**
- * Runs a signed-in write: authenticates, then spends one from the author's `budget` (write-limits.ts)
- * before the work, so a refused write changes nothing. Moderation passes `admin` and no budget. `own` is for
- * a pilot's marker on their own rows (reading a notification): signed in, no budget, and the work's SQL
- * is scoped to the viewer.
+ * Runs a signed-in call. Every write (`budget`, `admin`, `own`) authenticates, then refuses a banned pilot
+ * (assertNotBanned: this is the one place it is called, so no write path can miss it), then spends one from the
+ * author's `budget` (write-limits.ts) before the work, so a refused write changes nothing. Moderation passes
+ * `admin` and no budget. `own` is for a pilot's marker on their own rows (reading a notification): no budget, and
+ * the work's SQL is scoped to the viewer. `read` is a signed-in read that writes nothing; a ban doesn't stop it.
  */
 async function withAuthor<T extends object>(
   deps: ActionDeps,
   what: string,
-  access: { budget: WriteAction } | { admin: true } | { own: true },
+  access: { budget: WriteAction } | { admin: true } | { own: true } | { read: true },
   work: (db: Db, author: Author) => Promise<ActionResult<T>>,
 ): Promise<ActionResult<T>> {
   return run(what, async () => {
     const author = "admin" in access ? await deps.auth.requireAdmin() : await deps.auth.requireAuthor();
     const db = databaseOf(deps);
     if (!db) return refuse("unavailable", 503, DATABASE_DOWN_MESSAGE);
+    if (!("read" in access)) await assertNotBanned(db, author.userId);
     if ("budget" in access) {
       const spent = await spendWriteBudget(db, author.userId, access.budget, deps.now?.());
       if (!spent.ok) return { ...refuse("rate_limited", 429, slowDownMessage(spent.retryAfterMs)), retryAfterMs: spent.retryAfterMs };
@@ -184,6 +194,26 @@ export function moderate(
 /** Admin: closes a report without acting on what it reported. */
 export function resolveReport(deps: ActionDeps, input: { reportId: string }): Promise<ActionResult<{ resolved: boolean }>> {
   return withAuthor(deps, "report resolve", { admin: true }, async (db) => ({ ok: true, resolved: await resolveReportRow(db, input.reportId) }));
+}
+
+/**
+ * Admin: bans a pilot, optionally hiding all their fits and comments in the same transaction. A moderator can't
+ * ban themself or anyone listed in SITE_ADMIN_USER_IDS. No budget, like all moderation.
+ */
+export function banPilot(
+  deps: ActionDeps,
+  input: { userId: string; reason: string; hideAll: boolean },
+): Promise<ActionResult<{ created: boolean; hidden: HiddenContent | null }>> {
+  return withAuthor(deps, "ban", { admin: true }, async (db, admin) => {
+    if (input.userId === admin.userId) return refuse("invalid", 400, "You can't ban yourself.");
+    if (await deps.auth.isAdmin(input.userId)) return refuse("forbidden", 403, "Site admins can't be banned.");
+    return { ok: true, ...(await banPilotRow(db, { userId: input.userId, reason: input.reason, bannedBy: admin.userId, hideAll: input.hideAll })) };
+  });
+}
+
+/** Admin: lifts a ban. What the ban hid stays hidden. */
+export function unbanPilot(deps: ActionDeps, input: { userId: string }): Promise<ActionResult<{ unbanned: boolean }>> {
+  return withAuthor(deps, "unban", { admin: true }, async (db) => ({ ok: true, unbanned: await unbanPilotRow(db, input.userId) }));
 }
 
 /** A fit service refusal as an action result. */
@@ -292,7 +322,7 @@ export type CompareChoice = { id: string; title: string; status: FitStatus };
 /** For the compare picker: the pilot's newest bookmarks and own fits (any status, they may see them all), up to `limit` each. */
 export function compareChoices(deps: ActionDeps, input: { limit?: number } = {}): Promise<ActionResult<{ bookmarks: CompareChoice[]; mine: CompareChoice[] }>> {
   const limit = input.limit ?? 20;
-  return withAuthor(deps, "compare choices", { own: true }, async (db, author) => {
+  return withAuthor(deps, "compare choices", { read: true }, async (db, author) => {
     const pick = (fit: { id: string; title: string; status: FitStatus }): CompareChoice => ({ id: fit.id, title: fit.title, status: fit.status });
     const bookmarks = await listBookmarks(db, { userId: author.userId, limit });
     const mine = await browseFits(db, { query: { ...parseBrowseParams({}), author: author.userId }, limit, viewer: { userId: author.userId, isAdmin: false } });

@@ -166,6 +166,7 @@ try {
   await check(up, `/u/${ALICE_ID}`, { has: ["ALICE", "Scarab cipher brawler", "UPVOTES RECEIVED", "pilot-avatar--none"], lacks: ["Unfinished idea"] });
   await check(up, "/u/user_nobody", { status: 404, has: ["NOTHING HERE"] });
   await check(up, "/admin/reports", { status: 404 });
+  await check(up, "/admin/pilots", { status: 404 });
   // The builder: its page renders and loads the catalog from the server, which keeps serving the copy
   // it holds when the engine stops answering (Review Focus #4).
   await check(up, "/fits/new", { has: ["LOADING THE CATALOG"] });
@@ -254,6 +255,7 @@ try {
   await check(noDb, `/fits/${ids.showcase}`, { has: ["UNAVAILABLE RIGHT NOW"] });
   await check(noDb, `/u/${ALICE_ID}`, { has: ["UNAVAILABLE RIGHT NOW"] });
   await check(noDb, "/admin/reports", { status: 404 });
+  await check(noDb, "/admin/pilots", { status: 404 });
   await check(noDb, "/fits/new", { has: ["LOADING THE CATALOG"] });
   await check(noDb, `/fits/new?from=${ids.showcase}`, { has: ["LOADING THE CATALOG"] });
   await check(noDb, `/fits/${ids.showcase}/edit`, { has: ["UNAVAILABLE RIGHT NOW"] });

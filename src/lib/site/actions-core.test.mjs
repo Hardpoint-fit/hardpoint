@@ -6,7 +6,9 @@ import { createEngineClient } from "../engine/client.ts";
 import { startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, bookmark, compareChoices, previewMarkdown, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import * as core from "./actions-core.ts";
+import { getBan } from "../fits/bans.ts";
+import { addComment, banPilot, unbanPilot, bookmark, compareChoices, previewMarkdown, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { listRevisions } from "../fits/revisions.ts";
 import { listBookmarks } from "../fits/bookmarks.ts";
@@ -34,10 +36,10 @@ beforeEach(async () => {
 });
 
 const profiles = { [ALICE.userId]: ALICE, [BOB.userId]: BOB, [ADMIN.userId]: ADMIN };
-function authAs(userId, { enabled = true } = {}) {
+function authAs(userId, { enabled = true, adminRole = "none" } = {}) {
   return createAuth(
     { authEnabled: enabled, adminUserIds: [ADMIN.userId] },
-    { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", isAdminRole: false } : null) },
+    { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", adminRole } : null) },
   );
 }
 const deps = (auth, { database = { status: "ready", db }, engine = createEngineClient({ baseUrl: stub.url }) } = {}) => ({
@@ -362,4 +364,112 @@ test("compare choices are the pilot's own bookmarks and fits only, capped", asyn
   assert.ok(alice.mine.some((c) => c.id === ids.draft && c.status === "draft"), "own drafts are offered");
   assert.ok(!alice.mine.some((c) => c.id === ids.removed), "never another pilot's fit");
   assert.equal((await compareChoices(deps(authAs(ALICE.userId)), { limit: 1 })).mine.length, 1);
+});
+
+// ---------------------------------------------------------------------------------------------------
+// Bans
+
+const BANNED = { ok: false, reason: "banned", status: 403, message: "Your account is suspended from posting." };
+/** A pilot with the Clerk admin role now (not in SITE_ADMIN_USER_IDS). */
+const MOD = { userId: "user_mod", name: "MOD" };
+
+/**
+ * Every function actions-core exports that a pilot calls, with arguments that would succeed for BOB. A new
+ * export missing here fails the coverage test below, so no write can be added without its ban check tested.
+ */
+function everyCall() {
+  const fit = FIXTURES.fit;
+  return {
+    vote: (d) => vote(d, { fitId: ids.showcase, voted: true }),
+    bookmark: (d) => bookmark(d, { fitId: ids.showcase, bookmarked: true }),
+    addComment: (d) => addComment(d, { fitId: ids.showcase, parentId: null, body: "hello" }),
+    editComment: (d) => editComment(d, { id: ids.comment, body: "edited" }),
+    deleteComment: (d) => deleteComment(d, { id: ids.comment }),
+    report: (d) => report(d, { targetKind: "fit", targetId: ids.showcase, reason: "bad" }),
+    saveFit: (d) => saveFit(d, { fitId: null, title: "New", description: "", tags: [], fit }),
+    publishFit: (d) => publishFit(d, { fitId: ids.pending }),
+    unpublishFit: (d) => unpublishFit(d, { fitId: ids.pending }),
+    deleteFit: (d) => deleteFit(d, { fitId: ids.pending }),
+    follow: (d) => follow(d, { userId: ALICE.userId, following: true }),
+    editBio: (d) => editBio(d, { bio: "hi" }),
+    previewMarkdown: (d) => previewMarkdown(d, { text: "**hi**" }),
+    openNotification: (d) => core.openNotification(d, { id: "1" }),
+    markAllNotificationsRead: (d) => core.markAllNotificationsRead(d),
+    compareChoices: (d) => compareChoices(d),
+    moderate: (d) => moderate(d, { targetKind: "fit", targetId: ids.showcase, hidden: true }),
+    resolveReport: (d) => resolveReport(d, { reportId: ids.fitReport }),
+    banPilot: (d) => banPilot(d, { userId: ALICE.userId, reason: "x", hideAll: false }),
+    unbanPilot: (d) => unbanPilot(d, { userId: ALICE.userId }),
+  };
+}
+const ADMIN_CALLS = ["moderate", "resolveReport", "banPilot", "unbanPilot"];
+/** Signed-in reads: a ban doesn't stop them. */
+const READS = ["compareChoices"];
+
+test("the ban coverage list names every function actions-core exports", () => {
+  const exported = Object.entries(core).filter(([, value]) => typeof value === "function").map(([name]) => name).sort();
+  assert.deepEqual(exported, Object.keys(everyCall()).sort());
+});
+
+test("a banned pilot is refused on every write with a clear message, writes nothing and spends no budget; reads go on", async () => {
+  const admin = deps(authAs(ADMIN.userId));
+  assert.deepEqual(await banPilot(admin, { userId: BOB.userId, reason: "Spam", hideAll: false }), { ok: true, created: true, hidden: null });
+  const bob = deps(authAs(BOB.userId));
+  for (const [name, call] of Object.entries(everyCall())) {
+    if (ADMIN_CALLS.includes(name)) continue;
+    const result = await call(bob);
+    if (READS.includes(name)) assert.equal(result.ok, true, name);
+    else assert.deepEqual(result, BANNED, name);
+  }
+  assert.equal((await getFit(db, ids.showcase)).votes, 2, "the vote wasn't counted");
+  assert.equal((await getFit(db, ids.pending)).status, "published", "nor the unpublish or delete");
+  assert.equal((await listComments(db, ids.showcase))[0].body.includes("edited"), false);
+  assert.equal((await getPilotProfile(db, ALICE.userId, { userId: BOB.userId, isAdmin: false })).followers, 0);
+  const { rows } = await db.query(`SELECT count(*)::int AS n FROM write_budget_windows WHERE user_id = $1`, [BOB.userId]);
+  assert.equal(rows[0].n, 0, "the check runs before any budget is spent");
+  // Another pilot writes as before, and an unban restores Bob's writes.
+  assert.equal((await vote(deps(authAs(ALICE.userId)), { fitId: ids.pending, voted: true })).ok, true);
+  assert.deepEqual(await unbanPilot(admin, { userId: BOB.userId }), { ok: true, unbanned: true });
+  assert.equal((await vote(bob, { fitId: ids.showcase, voted: true })).ok, true);
+});
+
+test("a banned moderator (Clerk role, not a site admin) can't moderate either", async () => {
+  await db.query(`INSERT INTO pilots (user_id, name) VALUES ($1, $2)`, [MOD.userId, MOD.name]);
+  const mod = deps(authAs(MOD.userId, { adminRole: "active" }));
+  assert.equal((await moderate(mod, { targetKind: "fit", targetId: ids.showcase, hidden: true })).ok, true);
+  await moderate(mod, { targetKind: "fit", targetId: ids.showcase, hidden: false });
+  assert.equal((await banPilot(deps(authAs(ADMIN.userId)), { userId: MOD.userId, reason: "Abuse", hideAll: false })).ok, true, "a Clerk-role admin can be banned");
+  for (const name of ADMIN_CALLS) assert.deepEqual(await everyCall()[name](mod), BANNED, name);
+  assert.equal((await getFit(db, ids.showcase)).status, "published");
+});
+
+test("ban and unban: admins only, never yourself or a site admin, a pilot that exists, a reason of 1 to 500", async () => {
+  const admin = deps(authAs(ADMIN.userId));
+  for (const call of [everyCall().banPilot, everyCall().unbanPilot]) {
+    assert.equal((await call(deps(authAs(null)))).status, 401);
+    assert.equal((await call(deps(authAs(BOB.userId)))).status, 403);
+    assert.equal((await call(deps(authAs(BOB.userId, { adminRole: "expired" })))).status, 403, "an expired role must re-verify first");
+    assert.equal((await call(deps(authAs(ADMIN.userId, { enabled: false })))).status, 503);
+  }
+  assert.deepEqual(await banPilot(admin, { userId: ADMIN.userId, reason: "x", hideAll: false }), { ok: false, reason: "invalid", status: 400, message: "You can't ban yourself." });
+  await db.query(`INSERT INTO pilots (user_id, name) VALUES ($1, $2)`, [MOD.userId, MOD.name]);
+  const mod = deps(authAs(MOD.userId, { adminRole: "active" }));
+  assert.deepEqual(await banPilot(mod, { userId: ADMIN.userId, reason: "x", hideAll: false }), { ok: false, reason: "forbidden", status: 403, message: "Site admins can't be banned." });
+  assert.deepEqual(await banPilot(mod, { userId: MOD.userId, reason: "x", hideAll: false }), { ok: false, reason: "invalid", status: 400, message: "You can't ban yourself." });
+  assert.equal((await banPilot(admin, { userId: "user_nobody", reason: "x", hideAll: false })).status, 404);
+  assert.equal((await banPilot(admin, { userId: BOB.userId, reason: " ", hideAll: false })).status, 400);
+  assert.equal((await banPilot(admin, { userId: BOB.userId, reason: "x".repeat(501), hideAll: false })).status, 400);
+  assert.equal(await getBan(db, BOB.userId), null, "nothing was written");
+  assert.deepEqual(await unbanPilot(admin, { userId: BOB.userId }), { ok: true, unbanned: false });
+});
+
+test("a ban that hides everything hides the pilot's published fits and comments and resolves their reports", async () => {
+  const admin = deps(authAs(ADMIN.userId));
+  // Seed: Bob has two published fits (one reported) and a comment; Alice's reply under his comment was reported.
+  const result = await banPilot(admin, { userId: BOB.userId, reason: "Spam", hideAll: true });
+  assert.deepEqual(result, { ok: true, created: true, hidden: { fits: 2, comments: 1, reports: 1 } });
+  assert.equal(await getFit(db, ids.removed), null);
+  assert.equal(await getFit(db, ids.pending), null);
+  assert.equal((await getFit(db, ids.showcase)).status, "published", "other pilots' fits are untouched");
+  assert.deepEqual((await listOpenReports(db)).reports.map((r) => r.id), [ids.commentReport], "the report on Alice's reply stays open");
 });

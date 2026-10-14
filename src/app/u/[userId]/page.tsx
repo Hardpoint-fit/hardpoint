@@ -28,7 +28,7 @@ export default async function AuthorPage({ params, searchParams }: { params: Par
         <UnavailableState />
       ) : (
         <>
-          <PilotHeader pilot={data.pilot} viewer={viewer} />
+          <PilotHeader pilot={data.pilot} viewer={viewer} ban={data.ban} />
           <div className="page-title">
             <span className="eyebrow">{own ? "YOUR FITS AND DRAFTS" : "PUBLISHED FITS"}</span>
           </div>

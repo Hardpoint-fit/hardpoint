@@ -23,6 +23,7 @@ import { listBookmarks } from "../fits/bookmarks";
 import { countUnread, listNotifications, UNREAD_DISPLAY_CAP, type Notification } from "../fits/notifications";
 import { getForkInfo, type ForkInfo } from "../fits/forks";
 import { getPilotProfile, type PilotProfile } from "../fits/pilots";
+import { getBan, listPilots, type AdminPilot, type PilotBan } from "../fits/bans";
 import { getRevision, listRevisions, parseRevisionParam, type Revision, type RevisionSummary } from "../fits/revisions";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
@@ -206,7 +207,11 @@ export function unreadLabel(count: number): string {
 export type AuthorData =
   | Unavailable
   | { status: "not_found"; engine: PageEngine }
-  | (Extract<BrowseData, { status: "ok" }> & { pilot: PilotProfile });
+  | (Extract<BrowseData, { status: "ok" }> & {
+      pilot: PilotProfile;
+      /** The pilot's ban, read only for an admin viewer (null for everyone else, banned or not). */
+      ban: PilotBan | null;
+    });
 
 /** An empty profile for a signed-in pilot whose row sign-in hasn't written yet (their first write creates it). */
 function freshPilot(userId: string, name: string): PilotProfile {
@@ -231,7 +236,9 @@ export async function loadAuthor(
   const own = viewer.userId === userId;
   const pilot = profile.found ?? (own && viewer.name ? freshPilot(userId, viewer.name) : null);
   if (!pilot) return { status: "not_found", engine: data.engine };
-  return { ...data, pilot };
+  // Bans are moderators' business: nobody else's page read asks.
+  const ban = viewer.isAdmin ? await guarded("ban", () => getBan(db, userId)) : null;
+  return { ...data, pilot, ban };
 }
 
 // ---------------------------------------------------------------------------------------------------
@@ -532,4 +539,20 @@ export async function loadReports(deps: SiteDeps, afterId?: string): Promise<Rep
   if (!db) return { status: "unavailable", engine };
   const page = await guarded("reports", () => listOpenReports(db, { afterId }));
   return page ? { status: "ok", engine, ...page } : { status: "unavailable", engine };
+}
+
+export type PilotsData = { status: "unavailable" } | { status: "ok"; q: string; banned: boolean; pilots: AdminPilot[]; nextCursor: string | null };
+
+/** /admin/pilots: pilots newest first, searched by name or id, optionally banned only. The caller has checked the viewer is an admin. */
+export async function loadPilots(deps: Pick<SiteDeps, "database">, params: SearchParamsInput): Promise<PilotsData> {
+  const db = databaseOf(deps);
+  if (!db) return { status: "unavailable" };
+  const read = (name: string) => {
+    const value = params instanceof URLSearchParams ? params.get(name) : params[name];
+    return typeof value === "string" ? value : undefined;
+  };
+  const q = (read("q") ?? "").trim();
+  const banned = read("banned") === "1";
+  const page = await guarded("pilots", () => listPilots(db, { q, banned, cursor: read("cursor") }));
+  return page ? { status: "ok", q, banned, ...page } : { status: "unavailable" };
 }

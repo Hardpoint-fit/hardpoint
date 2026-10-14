@@ -263,6 +263,23 @@ CREATE INDEX IF NOT EXISTS notifications_page_idx ON notifications (user_id, cre
 CREATE INDEX IF NOT EXISTS notifications_comment_idx ON notifications (comment_id) WHERE comment_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS notifications_fit_idx ON notifications (fit_id);
 
+-- Bans (bans.ts): a row means the pilot may not write anything (every signed-in write checks it in actions-core);
+-- reads stay open. Deleting the row is the unban. `banned_by` is the moderator's user id, kept as written (a site
+-- admin may never have written a pilot row). A ban never changes the pilot's content by itself: "hide all their
+-- fits and comments" is a separate step of the same transaction.
+CREATE TABLE IF NOT EXISTS pilot_bans (
+  user_id text PRIMARY KEY REFERENCES pilots (user_id) ON DELETE CASCADE,
+  reason text NOT NULL CHECK (char_length(reason) BETWEEN 1 AND 500),
+  banned_by text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Hiding all of a banned pilot's comments finds them by author.
+CREATE INDEX IF NOT EXISTS fit_comments_author_idx ON fit_comments (author_user_id);
+
+-- The admin pilot list pages newest first.
+CREATE INDEX IF NOT EXISTS pilots_recent_idx ON pilots (created_at DESC, user_id DESC);
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;
@@ -271,3 +288,4 @@ INSERT INTO schema_version (version) VALUES (5) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (6) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (7) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (8) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (9) ON CONFLICT DO NOTHING;

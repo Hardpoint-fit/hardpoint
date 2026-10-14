@@ -26,11 +26,27 @@ export type Session = {
   /** The OIDC `sub`: the Clerk user id (`user_...`), the id fits, comments and votes are stored under. */
   userId: string;
   name: string;
-  /** Clerk public metadata `role === "admin"` when the pilot signed in; read back as false once the sign-in is a day old. */
-  isAdminRole: boolean;
+  /**
+   * Clerk public metadata `role === "admin"` when the pilot signed in (the `adm` claim). Kept unchanged across
+   * refreshes for the session's whole life; whether the role still counts is `adminRole`, derived from it and the
+   * sign-in's age, never sealed.
+   */
+  wasAdminAtSignIn: boolean;
   /** When the pilot signed in (seconds since the epoch). Kept across refreshes. */
   issuedAt: number;
 };
+
+/**
+ * The admin role a session carries now. "active": signed in with the role less than ADMIN_ROLE_MAX_AGE_SECONDS
+ * ago, so it may moderate. "expired": signed in with the role longer ago than that; a fresh sign-in (re-verify)
+ * reads the role again. "none": signed in without it.
+ */
+export type AdminRole = "active" | "expired" | "none";
+
+export function adminRoleOf(session: Pick<Session, "wasAdminAtSignIn" | "issuedAt">, at = now()): AdminRole {
+  if (!session.wasAdminAtSignIn) return "none";
+  return at - session.issuedAt < ADMIN_ROLE_MAX_AGE_SECONDS ? "active" : "expired";
+}
 
 /** One sign-in in flight: what the callback must see again, and where to go afterwards. */
 export type SignInTransaction = { state: string; nonce: string; codeVerifier: string; returnTo: string };
@@ -90,18 +106,22 @@ export async function sealSession(secret: Uint8Array, session: Session, at = now
   return seal(
     secret,
     "session",
-    { sub: session.userId, name: session.name, adm: session.isAdminRole, sia: session.issuedAt },
+    // `adm` is the role read at sign-in, never the derived "admin now": a refresh re-seals it unchanged.
+    { sub: session.userId, name: session.name, adm: session.wasAdminAtSignIn, sia: session.issuedAt },
     sessionCookieLifetime(session.issuedAt, at),
     at,
   );
 }
 
-export type OpenedSession = { session: Session; /** When this cookie was (re)issued. */ refreshedAt: number };
+export type OpenedSession = {
+  session: Session;
+  /** When this cookie was (re)issued. */
+  refreshedAt: number;
+  /** The admin role as of `at`: it counts only within a day of sign-in. */
+  adminRole: AdminRole;
+};
 
-/**
- * The session in a cookie, or null when it is missing, invalid, or its sign-in is 30 days old or more.
- * The admin role counts only within a day of sign-in.
- */
+/** The session in a cookie, or null when it is missing, invalid, or its sign-in is 30 days old or more. */
 export async function openSession(secret: Uint8Array, value: string | undefined | null, at = now()): Promise<OpenedSession | null> {
   const payload = await unseal(secret, "session", value);
   if (!payload) return null;
@@ -109,7 +129,8 @@ export async function openSession(secret: Uint8Array, value: string | undefined 
   if (typeof sub !== "string" || !sub || typeof name !== "string" || typeof adm !== "boolean" || typeof sia !== "number" || typeof iat !== "number") return null;
   const age = at - sia;
   if (age >= SESSION_MAX_AGE_SECONDS || age < -60) return null;
-  return { session: { userId: sub, name, isAdminRole: adm && age < ADMIN_ROLE_MAX_AGE_SECONDS, issuedAt: sia }, refreshedAt: iat };
+  const session: Session = { userId: sub, name, wasAdminAtSignIn: adm, issuedAt: sia };
+  return { session, refreshedAt: iat, adminRole: adminRoleOf(session, at) };
 }
 
 export async function sealSignIn(secret: Uint8Array, transaction: SignInTransaction): Promise<string> {

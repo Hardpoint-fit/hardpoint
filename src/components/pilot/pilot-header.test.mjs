@@ -66,3 +66,17 @@ test("browse offers 'from pilots I follow' only to a signed-in reader", () => {
   const signedOutForm = renderToStaticMarkup(h(BrowseFilters, { query: { ...query, following: false }, hulls: [] }));
   assert.doesNotMatch(signedOutForm, /FROM PILOTS I FOLLOW/);
 });
+
+test("BANNED shows on a pilot's header to an admin only, with the reason and a way to manage it", async () => {
+  const pilot = await getPilotProfile(db, BOB.userId, anonymous());
+  const ban = { reason: "Spam links", bannedBy: "user_admin", bannedByName: "WARDEN", createdAt: "2026-10-14T00:00:00.000Z" };
+  const admin = { userId: "user_admin", isAdmin: true, name: "WARDEN", authEnabled: true, moderation: "active" };
+  const html = renderToStaticMarkup(h(PilotHeader, { pilot, viewer: admin, ban }));
+  assert.match(html, />BANNED</);
+  assert.match(html, /Spam links/);
+  assert.match(html, /href="\/admin\/pilots\?q=user_bob"/);
+  assert.doesNotMatch(renderToStaticMarkup(h(PilotHeader, { pilot, viewer: admin, ban: null })), /BANNED/);
+  for (const viewer of [anonymous(), signedIn(BOB), signedIn(ALICE), { ...admin, isAdmin: false, moderation: "reverify" }]) {
+    assert.doesNotMatch(renderToStaticMarkup(h(PilotHeader, { pilot, viewer, ban })), /BANNED|Spam links/);
+  }
+});

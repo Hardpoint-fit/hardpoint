@@ -5,6 +5,7 @@
 import { describeAuthError } from "./auth-core.ts";
 import { SIGN_IN_OUTAGE_MESSAGE, SIGN_IN_UNAVAILABLE_MESSAGE } from "./auth-errors.ts";
 import type { SiteConfig } from "./config.ts";
+import { REVERIFY_PARAM, reverifyHref } from "./reverify.ts";
 import { SignInError, beginSignIn, completeSignIn, safeReturnTo, type OidcClientConfig } from "./oidc.ts";
 
 /** How long sign-in waits for the pilot to be recorded before it goes on without. */
@@ -60,7 +61,11 @@ function redirect(location: string, status: 302 | 303 | 307 | 308, cookies: stri
 
 const notConfigured = () => page(503, SIGN_IN_UNAVAILABLE_MESSAGE, "Browsing and building work; saving, publishing, commenting and voting need sign-in.");
 
-/** GET /auth/signin?returnTo=/path — sends the browser to Citadel's sign-in, always from the canonical host. */
+/**
+ * GET /auth/signin?returnTo=/path — sends the browser to Citadel's sign-in, always from the canonical host. It
+ * runs whether or not the pilot is signed in already, so `&reverify=1` (reverify.ts) is a sign-in like any other:
+ * the callback reads the admin role fresh and replaces the session.
+ */
 export async function handleSignIn(request: Request, config: SiteConfig): Promise<Response> {
   const oidc = oidcConfig(config);
   if (!oidc) return notConfigured();
@@ -68,7 +73,8 @@ export async function handleSignIn(request: Request, config: SiteConfig): Promis
   const returnTo = safeReturnTo(url.searchParams.get("returnTo"));
   // One redirect URI is registered with Clerk; a sign-in begun on www, fits.alpha or the Railway domain restarts on it.
   if (requestHost(request) !== new URL(config.siteUrl).host) {
-    return redirect(`${config.siteUrl}/auth/signin?${new URLSearchParams({ returnTo })}`, 307);
+    const reverify = url.searchParams.get(REVERIFY_PARAM) === "1";
+    return redirect(`${config.siteUrl}${reverify ? reverifyHref(returnTo) : `/auth/signin?${new URLSearchParams({ returnTo })}`}`, 307);
   }
   try {
     const { url: authorize, transaction } = await beginSignIn(oidc, returnTo);

@@ -11,7 +11,8 @@ import { setBookmark } from "../fits/bookmarks.ts";
 import { toEvaluationInput } from "../fits/service.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { createTestDb } from "../fits/test-db.mjs";
-import { brokenOnBuild, loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadCompare, loadFitPage, loadReports } from "./loaders.ts";
+import { brokenOnBuild, loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadCompare, loadFitPage, loadPilots, loadReports } from "./loaders.ts";
+import { banPilot, unbanPilot } from "../fits/bans.ts";
 import { ALICE, BOB, CURRENT_SHA, seedSite } from "./seed.mjs";
 import { setFollow } from "../fits/pilots.ts";
 
@@ -483,4 +484,29 @@ test("compare reads each side through the viewer's visibility; a fit they can't 
 test("a fit compared with itself differs in nothing", async () => {
   const data = await loadCompare(depsFor(stub.url), { a: ids.showcase, b: ids.showcase }, ANONYMOUS);
   assert.deepEqual(data.sections.flatMap((s) => s.rows.filter((r) => r.differs)), [], "a fit against itself differs in nothing");
+});
+
+test("a pilot's ban is read for admins only; the admin pilot list searches, filters banned and fails soft", async () => {
+  const deps = depsFor(stub.url);
+  await banPilot(db, { userId: BOB.userId, reason: "Spam", bannedBy: ALICE.userId, hideAll: false });
+  try {
+    assert.equal((await loadAuthor(deps, BOB.userId, {}, ANONYMOUS)).ban, null);
+    assert.equal((await loadAuthor(deps, BOB.userId, {}, { userId: BOB.userId, isAdmin: false })).ban, null, "not even to themself");
+    const asAdmin = await loadAuthor(deps, BOB.userId, {}, { userId: "user_admin", isAdmin: true });
+    assert.equal(asAdmin.ban.reason, "Spam");
+    assert.equal(asAdmin.ban.bannedByName, ALICE.name);
+    assert.equal((await loadAuthor(deps, ALICE.userId, {}, { userId: "user_admin", isAdmin: true })).ban, null);
+
+    const all = await loadPilots(deps, {});
+    assert.equal(all.status, "ok");
+    assert.deepEqual(all.pilots.map((p) => p.userId).sort(), [ALICE.userId, BOB.userId].sort());
+    const found = await loadPilots(deps, { q: " bob " });
+    assert.equal(found.q, "bob");
+    assert.deepEqual(found.pilots.map((p) => [p.userId, p.ban?.reason ?? null]), [[BOB.userId, "Spam"]]);
+    assert.deepEqual((await loadPilots(deps, new URLSearchParams("banned=1"))).pilots.map((p) => p.userId), [BOB.userId]);
+    assert.deepEqual((await loadPilots(deps, { q: ["a", "b"] })).q, "", "a repeated q is ignored");
+    assert.deepEqual(await loadPilots(depsFor(stub.url, () => ({ status: "unavailable" })), {}), { status: "unavailable" });
+  } finally {
+    await unbanPilot(db, BOB.userId);
+  }
 });

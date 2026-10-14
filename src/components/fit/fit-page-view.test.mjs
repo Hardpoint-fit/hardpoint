@@ -337,3 +337,36 @@ test("the markdown editor offers WRITE and PREVIEW and starts on the textarea", 
   assert.match(html, /<textarea[^>]*aria-label="Comment"/);
   assert.doesNotMatch(html, /<strong>/, "the browser never renders Markdown itself");
 });
+
+test("moderation on the spot: a live admin hides the fit and each comment where they stand; an expired one gets one RE-VERIFY link; others neither", async () => {
+  const admin = (moderation) => ({ userId: "user_admin", isAdmin: moderation === "active", name: "WARDEN", authEnabled: true, moderation });
+  const live = await renderFit(stub.url, ids.showcase, admin("active"));
+  assert.match(live, />HIDE FIT</);
+  assert.equal(count(live, ">HIDE COMMENT<"), 2, "the comment and its reply");
+  assert.doesNotMatch(live, /RE-VERIFY TO MODERATE/);
+
+  const expired = await renderFit(stub.url, ids.showcase, admin("reverify"));
+  assert.equal(count(expired, "RE-VERIFY TO MODERATE"), 1, "one link for the page, in place of every HIDE");
+  assert.match(expired, new RegExp(`href="/auth/signin\\?returnTo=%2Ffits%2F${ids.showcase}&amp;reverify=1"`));
+  assert.doesNotMatch(expired, /HIDE FIT|HIDE COMMENT/);
+
+  for (const viewer of [signedIn(BOB), anonymous(true), admin("none")]) {
+    const html = await renderFit(stub.url, ids.showcase, viewer);
+    assert.doesNotMatch(html, /HIDE FIT|HIDE COMMENT|RE-VERIFY TO MODERATE/);
+  }
+});
+
+test("a live admin sees a hidden fit with UNHIDE FIT; the re-verify link returns to the revision being read", async () => {
+  const { setFitHidden } = await import("../../lib/fits/queries.ts");
+  await setFitHidden(db, ids.removed, true);
+  try {
+    const html = await renderFit(stub.url, ids.removed, { userId: "user_admin", isAdmin: true, name: "WARDEN", authEnabled: true, moderation: "active" });
+    assert.match(html, />UNHIDE FIT</);
+  } finally {
+    await setFitHidden(db, ids.removed, false);
+  }
+  const { listRevisions } = await import("../../lib/fits/revisions.ts");
+  const [latest] = await listRevisions(db, ids.showcase);
+  const html = await renderFit(stub.url, ids.showcase, { userId: "user_admin", isAdmin: false, name: "WARDEN", authEnabled: true, moderation: "reverify" }, String(latest.revision));
+  assert.match(html, new RegExp(`returnTo=%2Ffits%2F${ids.showcase}%3Frev%3D${latest.revision}&amp;reverify=1`));
+});

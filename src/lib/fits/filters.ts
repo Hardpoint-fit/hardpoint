@@ -262,3 +262,27 @@ export function decodeNotificationCursor(text: string): NotificationCursor | und
     return undefined;
   }
 }
+
+/**
+ * The admin pilot list's cursor: the last row's (pilot row created at, user id) in its newest-first order. `at` is
+ * the database's own timestamp text, as in Cursor; the `pl` marker keeps other cursors from being taken for it.
+ */
+export type PilotCursor = { at: string; id: string };
+
+export function encodePilotCursor(cursor: PilotCursor): string {
+  return toBase64Url(JSON.stringify({ kind: "pl", ...cursor }));
+}
+
+export function decodePilotCursor(text: string): PilotCursor | undefined {
+  if (!text || text.length > 400) return undefined;
+  try {
+    const value: unknown = JSON.parse(fromBase64Url(text));
+    if (typeof value !== "object" || value === null) return undefined;
+    const { kind, at, id } = value as Record<string, unknown>;
+    if (kind !== "pl" || typeof at !== "string" || !isPgTimestamp(at)) return undefined;
+    if (typeof id !== "string" || !USER_ID.test(id)) return undefined;
+    return { at, id };
+  } catch {
+    return undefined;
+  }
+}

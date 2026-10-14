@@ -6,7 +6,7 @@ import { AuthError, authErrorResponse, withAuthRefusal } from "./auth-errors.ts"
 const profile = (over = {}) => ({ username: null, firstName: null, lastName: null, publicMetadata: {}, ...over });
 
 /** An adapter that counts its reads and never touches a cookie. */
-function fakeAdapter(session = { userId: "user_a", name: "ahab", isAdminRole: false }) {
+function fakeAdapter(session = { userId: "user_a", name: "ahab", adminRole: "none" }) {
   const calls = { session: 0 };
   return { calls, session: async () => (calls.session++, session) };
 }
@@ -55,17 +55,17 @@ test("admin role: public metadata role admin only", () => {
 });
 
 test("admin: the session's role, or listed in the env ids", async () => {
-  const mod = createAuth(ON, fakeAdapter({ userId: "mod", name: "m", isAdminRole: true }));
+  const mod = createAuth(ON, fakeAdapter({ userId: "mod", name: "m", adminRole: "active" }));
   assert.equal(await mod.isAdmin("mod"), true);
   assert.equal(await mod.isAdmin("someone_else"), false);
-  const listed = createAuth({ authEnabled: true, adminUserIds: ["listed"] }, fakeAdapter({ userId: "plain", name: "p", isAdminRole: false }));
+  const listed = createAuth({ authEnabled: true, adminUserIds: ["listed"] }, fakeAdapter({ userId: "plain", name: "p", adminRole: "none" }));
   assert.equal(await listed.isAdmin("listed"), true);
   assert.equal(await listed.isAdmin("plain"), false);
 });
 
 test("requireAdmin: 403 for a plain user, the author for an admin", async () => {
   await assert.rejects(createAuth(ON, fakeAdapter()).requireAdmin(), (e) => e.status === 403);
-  const admin = createAuth(ON, fakeAdapter({ userId: "user_a", name: "a", isAdminRole: true }));
+  const admin = createAuth(ON, fakeAdapter({ userId: "user_a", name: "a", adminRole: "active" }));
   assert.equal((await admin.requireAdmin()).userId, "user_a");
   const listed = createAuth({ authEnabled: true, adminUserIds: ["user_a"] }, fakeAdapter());
   assert.equal((await listed.requireAdmin()).userId, "user_a");

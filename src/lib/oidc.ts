@@ -221,7 +221,7 @@ export async function completeSignIn(
       }),
       // The public_metadata scope returns public AND unsafe metadata; only public metadata is
       // writable by Clerk's backend alone, so only it can grant the admin role.
-      isAdminRole: hasAdminRole({ publicMetadata: record(claims.public_metadata) }),
+      wasAdminAtSignIn: hasAdminRole({ publicMetadata: record(claims.public_metadata) }),
       issuedAt: at,
     },
     returnTo: safeReturnTo(transaction.returnTo),

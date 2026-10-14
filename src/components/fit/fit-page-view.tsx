@@ -8,7 +8,8 @@ import type { PageViewer } from "#/lib/site/server";
 import { FittingGrid } from "#/components/grid/fitting-grid";
 import type { GridModule } from "#/components/grid/model";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
-import { BookmarkButton, CommentForm, DeleteComment, DeleteFitButton, EditComment, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
+import { BookmarkButton, CommentForm, DeleteComment, DeleteFitButton, EditComment, HideToggle, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
+import { ReverifyLink } from "#/components/moderation";
 import { StatsTable } from "./stats-table";
 import { HullSpecs, SPECS_PENDING } from "./hull-specs";
 import { ItemIcon } from "#/components/item-text";
@@ -60,6 +61,7 @@ function CommentView({ comment, fitId, viewer, canWrite, hasReplies = false }: {
           {viewer.userId === comment.authorUserId && <EditComment fitId={fitId} id={comment.id} body={comment.body} />}
           {viewer.userId === comment.authorUserId && <DeleteComment fitId={fitId} id={comment.id} hasReplies={hasReplies} />}
           {viewer.userId !== comment.authorUserId && <ReportButton targetKind="comment" targetId={comment.id} />}
+          {viewer.moderation === "active" && <HideToggle targetKind="comment" targetId={comment.id} hidden={comment.hidden} />}
         </div>
       )}
     </article>
@@ -344,6 +346,9 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
             {published && viewer.authEnabled && viewer.userId && viewer.userId !== fit.authorUserId && (
               <ReportButton targetKind="fit" targetId={fit.id} label="REPORT FIT" />
             )}
+            {viewer.moderation === "active" && fit.status !== "draft" && <HideToggle targetKind="fit" targetId={fit.id} hidden={fit.status === "hidden"} />}
+            {/* One link for the whole page, in place of every HIDE control: it signs in again and comes back here. */}
+            {viewer.moderation === "reverify" && fit.status !== "draft" && <ReverifyLink returnTo={`/fits/${encodeURIComponent(fit.id)}${revision ? `?rev=${revision.number}` : ""}`} />}
           </Panel>
           {!statsShown && (
             <Panel title="STATS">

@@ -46,7 +46,7 @@ const profiles = { [ALICE.userId]: ALICE, [BOB.userId]: BOB };
 const authAs = (userId, enabled = true) =>
   createAuth(
     { authEnabled: enabled, adminUserIds: [] },
-    { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", isAdminRole: false } : null) },
+    { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", adminRole: "none" } : null) },
   );
 const HELD_BUILD = "held0build";
 const actionDeps = (auth, engineUrl = stub.url) => ({ database: () => ({ status: "ready", db }), auth, engine: createEngineClient({ baseUrl: engineUrl }), currentBuild: () => HELD_BUILD });

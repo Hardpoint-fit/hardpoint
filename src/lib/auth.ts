@@ -1,19 +1,19 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { createAuth, type Author, type SessionAdapter } from "./auth-core.ts";
+import { createAuth, type Author, type ModerationState, type SessionAdapter } from "./auth-core.ts";
 import { SESSION_COOKIE, openSession } from "./session.ts";
 import { getConfig } from "./site-config";
 
 export { AuthError, authErrorResponse, withAuthRefusal } from "./auth-errors.ts";
-export type { Author } from "./auth-core.ts";
+export type { Author, ModerationState } from "./auth-core.ts";
 
 /** The session cookie set by /auth/callback ("Sign in with Citadel"). No network call: name and role are in it. */
 function cookieAdapter(secret: Uint8Array): SessionAdapter {
   return {
     async session() {
       const opened = await openSession(secret, (await cookies()).get(SESSION_COOKIE)?.value);
-      return opened ? { userId: opened.session.userId, name: opened.session.name, isAdminRole: opened.session.isAdminRole } : null;
+      return opened ? { userId: opened.session.userId, name: opened.session.name, adminRole: opened.adminRole } : null;
     },
   };
 }
@@ -33,3 +33,5 @@ export const requireAuthor = (): Promise<Author> => forRequest().requireAuthor()
 export const isAdmin = (userId: string): Promise<boolean> => forRequest().isAdmin(userId);
 /** requireAuthor plus admin; throws AuthError 403 for other users. */
 export const requireAdmin = (): Promise<Author> => forRequest().requireAdmin();
+/** What moderation controls the current pilot gets: live ones, a re-verify link, or none. */
+export const moderationState = (): Promise<ModerationState> => forRequest().moderationState();

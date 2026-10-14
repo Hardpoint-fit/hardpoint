@@ -6,6 +6,7 @@
 // SITE_ADMIN_USER_IDS is read on every request.
 
 import { AuthError } from "./auth-errors.ts";
+import type { AdminRole } from "./session.ts";
 
 export const FALLBACK_AUTHOR_NAME = "PILOT";
 
@@ -19,8 +20,15 @@ export type ClerkProfile = {
   publicMetadata: Readonly<Record<string, unknown>>;
 };
 
-/** What the session cookie says about the current request. */
-export type SessionState = { userId: string; name: string; isAdminRole: boolean };
+/** What the session cookie says about the current request. `adminRole` is the Clerk role as of now (session.ts adminRoleOf). */
+export type SessionState = { userId: string; name: string; adminRole: AdminRole };
+
+/**
+ * What moderation the signed-in pilot gets. "active": an admin now (listed in SITE_ADMIN_USER_IDS, or signed in
+ * with the Clerk role less than a day ago): live controls. "reverify": signed in with the Clerk role more than a
+ * day ago: a RE-VERIFY TO MODERATE link, and every moderation write still refuses. "none": nothing.
+ */
+export type ModerationState = "active" | "reverify" | "none";
 
 export type SessionAdapter = {
   /** The signed-in pilot of the current request, or null. */
@@ -50,6 +58,7 @@ export type Auth = {
   requireAuthor(): Promise<Author>;
   isAdmin(userId: string): Promise<boolean>;
   requireAdmin(): Promise<Author>;
+  moderationState(): Promise<ModerationState>;
 };
 
 type Outcome<T> = { ok: true; value: T } | { ok: false };
@@ -103,7 +112,15 @@ export function createAuth(settings: AuthSettings, adapter: SessionAdapter): Aut
       if (settings.adminUserIds.includes(userId)) return true;
       // The role is known only for the signed-in pilot, from their session.
       const who = await session();
-      return who.ok && who.value?.userId === userId && who.value.isAdminRole;
+      return who.ok && who.value?.userId === userId && who.value.adminRole === "active";
+    },
+
+    async moderationState() {
+      if (!settings.authEnabled) return "none";
+      const who = await session();
+      if (!who.ok || !who.value) return "none";
+      if (settings.adminUserIds.includes(who.value.userId) || who.value.adminRole === "active") return "active";
+      return who.value.adminRole === "expired" ? "reverify" : "none";
     },
 
     async requireAdmin() {

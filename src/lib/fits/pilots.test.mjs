@@ -46,6 +46,7 @@ test("the schema backfills pilots from the names copied onto fits and comments, 
     ALTER TABLE fits DROP CONSTRAINT fits_author_pilot_fk;
     ALTER TABLE fit_comments DROP CONSTRAINT fit_comments_author_pilot_fk;
     DROP TABLE pilot_follows;
+    DROP TABLE pilot_bans;
     TRUNCATE pilots;
     DELETE FROM schema_version WHERE version = 4;
     ALTER TABLE fits ADD COLUMN author_name text;

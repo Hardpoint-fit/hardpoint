@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ModerationButtons } from "#/components/fit/controls";
+import { AdminNav, ReverifyPanel } from "#/components/moderation";
 import { Panel, UnavailableState, formatDate } from "#/components/ui";
 import { loadReports } from "#/lib/site/loaders";
 import { pageViewer, siteDeps } from "#/lib/site/server";
@@ -12,17 +13,20 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function ReportsPage({ searchParams }: { searchParams: SearchParams }) {
   const viewer = await pageViewer();
-  // The queue doesn't exist for anyone but a moderator.
-  if (!viewer.isAdmin) notFound();
+  // The queue doesn't exist for anyone but a moderator; one whose role expired is offered a fresh sign-in, no data.
+  if (viewer.moderation === "none") notFound();
   const after = (await searchParams).after;
-  const data = await loadReports(siteDeps(), typeof after === "string" ? after : undefined);
+  const data = viewer.isAdmin ? await loadReports(siteDeps(), typeof after === "string" ? after : undefined) : null;
   return (
     <main className="page">
       <div className="page-title">
         <h1>OPEN REPORTS</h1>
         <span className="eyebrow">HIDE WHAT BREAKS THE RULES · RESOLVE THE REST</span>
       </div>
-      {data.status === "unavailable" ? (
+      <AdminNav current="reports" />
+      {data === null ? (
+        <ReverifyPanel returnTo="/admin/reports" />
+      ) : data.status === "unavailable" ? (
         <UnavailableState what="REPORTS" />
       ) : data.reports.length === 0 ? (
         <Panel title="QUEUE">

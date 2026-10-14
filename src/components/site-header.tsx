@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { currentAuthor } from "#/lib/auth";
+import { currentAuthor, moderationState } from "#/lib/auth";
 import { SIGN_IN_UNAVAILABLE_MESSAGE } from "#/lib/auth-errors";
 import { getConfig } from "#/lib/site-config";
 import { loadUnreadCount, unreadLabel } from "#/lib/site/loaders";
@@ -17,6 +17,8 @@ export async function SiteHeader() {
   const author = authEnabled ? await currentAuthor() : null;
   // One indexed count per page view for a signed-in pilot; a database that can't answer reads as none.
   const unread = author ? await loadUnreadCount(siteDeps(), author.userId) : 0;
+  // Moderators, live or due a re-verify (the admin pages offer the re-verify link).
+  const moderation = author ? await moderationState() : "none";
   return (
     // Below sm the links drop to their own row under the logo and sign-in, so the header never scrolls sideways.
     <header className="flex min-h-12 flex-wrap items-center gap-x-6 gap-y-1 border-b border-[color:var(--panel-border)] bg-header px-4 py-1">
@@ -46,6 +48,11 @@ export async function SiteHeader() {
             >
               Notifications{unread > 0 && <span className="bell-count">{unreadLabel(unread)}</span>}
             </Link>
+            {moderation !== "none" && (
+              <Link href="/admin/reports" className="text-secondary hover:text-accent">
+                Admin
+              </Link>
+            )}
           </>
         )}
       </nav>

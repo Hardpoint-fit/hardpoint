@@ -211,7 +211,7 @@ test("the actions need sign-in and only touch the signed-in pilot's rows", async
   await say(fit.id, CAROL, "x");
   const id = (await inbox(ALICE))[0].id;
   const authAs = (userId, enabled = true) =>
-    createAuth({ authEnabled: enabled, adminUserIds: [] }, { session: async () => (userId ? { userId, name: userId, isAdminRole: false } : null) });
+    createAuth({ authEnabled: enabled, adminUserIds: [] }, { session: async () => (userId ? { userId, name: userId, adminRole: "none" } : null) });
   const deps = (auth, database = { status: "ready", db }) => ({ database: () => database, auth, engine: createEngineClient({ baseUrl: stub.url }) });
   assert.equal((await openNotification(deps(authAs(null)), { id })).status, 401);
   assert.equal((await markAllNotificationsRead(deps(authAs(null)))).status, 401);

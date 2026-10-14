@@ -4,7 +4,7 @@
 // in place; the server renders NotConfigured instead of the write controls when sign-in is off.
 import { useState, useTransition, type FormEvent } from "react";
 import { MarkdownEditor } from "#/components/markdown-editor";
-import { COMMENT_MAX } from "#/lib/fits/limits";
+import { BAN_REASON_MAX, COMMENT_MAX } from "#/lib/fits/limits";
 import {
   addCommentAction,
   bookmarkAction,
@@ -13,6 +13,8 @@ import {
   unpublishFitAction,
   editCommentAction,
   moderateAction,
+  banPilotAction,
+  unbanPilotAction,
   reportAction,
   resolveReportAction,
   voteAction,
@@ -310,5 +312,111 @@ export function ModerationButtons({
       </button>
       <Problem message={problem} />
     </span>
+  );
+}
+
+/** Admin, on the fit page: hides or restores a fit or a comment where it stands. Hiding closes its open reports. */
+export function HideToggle({ targetKind, targetId, hidden }: { targetKind: "fit" | "comment"; targetId: string; hidden: boolean }) {
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const toggle = () =>
+    start(async () => {
+      setProblem(null);
+      const result = await moderateAction(targetKind, targetId, !hidden);
+      if (!result.ok) setProblem(result.message);
+    });
+  const what = targetKind === "fit" ? "FIT" : "COMMENT";
+  return (
+    <span className="flex flex-wrap items-center gap-2">
+      <button type="button" className="btn btn--quiet" disabled={pending} onClick={toggle}>
+        {hidden ? `UNHIDE ${what}` : `HIDE ${what}`}
+      </button>
+      <Problem message={problem} />
+    </span>
+  );
+}
+
+/**
+ * Admin, on /admin/pilots: BAN takes a reason and, optionally, hides all the pilot's fits and comments; a second,
+ * explicit click confirms. UNBAN lifts it in one click (it hides or shows nothing).
+ */
+export function BanControls({ userId, name, banned }: { userId: string; name: string; banned: boolean }) {
+  const [step, setStep] = useState<"closed" | "form" | "confirm">("closed");
+  const [reason, setReason] = useState("");
+  const [hideAll, setHideAll] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const act = (work: () => Promise<Result>) =>
+    start(async () => {
+      setProblem(null);
+      const result = await work();
+      if (!result.ok) return setProblem(result.message);
+      setStep("closed");
+      setReason("");
+      setHideAll(false);
+    });
+  if (banned)
+    return (
+      <span className="flex flex-wrap items-center gap-2">
+        <button type="button" className="btn btn--quiet" disabled={pending} onClick={() => act(() => unbanPilotAction(userId))}>
+          UNBAN
+        </button>
+        <Problem message={problem} />
+      </span>
+    );
+  if (step === "closed")
+    return (
+      <button type="button" className="btn btn--quiet" onClick={() => setStep("form")}>
+        BAN
+      </button>
+    );
+  const review = (event: FormEvent) => {
+    event.preventDefault();
+    if (reason.trim() !== "") setStep("confirm");
+  };
+  return (
+    <form className="flex w-full flex-col gap-2" onSubmit={review}>
+      <label className="field">
+        WHY
+        <textarea
+          className="textarea"
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={BAN_REASON_MAX}
+          required
+          disabled={step === "confirm"}
+        />
+      </label>
+      <label className="check">
+        <input type="checkbox" checked={hideAll} onChange={(event) => setHideAll(event.target.checked)} disabled={step === "confirm"} />
+        ALSO HIDE ALL THEIR FITS AND COMMENTS
+      </label>
+      {step === "form" ? (
+        <span className="flex flex-wrap items-center gap-2">
+          <button type="submit" className="btn" disabled={reason.trim() === ""}>
+            BAN
+          </button>
+          <button type="button" className="btn btn--quiet" onClick={() => setStep("closed")}>
+            CANCEL
+          </button>
+          <span className="note">{BAN_REASON_MAX - reason.length} LEFT</span>
+        </span>
+      ) : (
+        <>
+          <span className="note note--error">
+            {name} WILL NOT BE ABLE TO POST, VOTE, COMMENT OR SAVE{hideAll ? ". EVERY FIT AND COMMENT THEY PUBLISHED WILL BE HIDDEN" : ""}.
+          </span>
+          <span className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn" disabled={pending} onClick={() => act(() => banPilotAction(userId, reason, hideAll))}>
+              CONFIRM BAN
+            </button>
+            <button type="button" className="btn btn--quiet" disabled={pending} onClick={() => setStep("form")}>
+              BACK
+            </button>
+            <Problem message={problem} />
+          </span>
+        </>
+      )}
+    </form>
   );
 }

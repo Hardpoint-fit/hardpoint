@@ -24,7 +24,8 @@ SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates tha
 | `/` | Browse. Filters and sort live in the URL (`hull`, `class`, `role`, `tag`, `current=1`, `sort`, `cursor`). |
 | `/fits/[id]` | A fit: the read-only grid, stats with their breakdowns, description, tags, votes, the fit string, comments. `opengraph-image` is its share card. |
 | `/u/[userId]` | An author's published fits (and their drafts, to them). |
-| `/admin/reports` | Open reports with hide and resolve. A 404 for anyone but a moderator. |
+| `/admin/reports` | Open reports with hide and resolve. A 404 for anyone but a moderator; a moderator whose role has expired gets a RE-VERIFY TO MODERATE link and no data. |
+| `/admin/pilots` | Pilots, searched by name or user id: ban state, BAN (a reason, a confirm step, optionally hiding all their fits and comments) and UNBAN. Same access as `/admin/reports`. |
 
 Pages read through `src/lib/site/loaders.ts` and write through the server actions in `src/app/actions.ts` (work in `src/lib/site/actions-core.ts`). With the engine down they render the stored verdicts under a banner; without a database they show an unavailable state. The grid is `src/components/grid/` (see its `geometry.ts` and `model.ts`).
 
@@ -64,9 +65,10 @@ The game's production Clerk instance is the OpenID Connect provider and the site
 
 - `GET /auth/signin?returnTo=/path` (`src/lib/auth-routes.ts`, `src/lib/oidc.ts`) moves to `SITE_URL` if the request came to another host, then redirects to Clerk with PKCE (S256), `state` and `nonce`, which it keeps in a 10-minute encrypted cookie, `__Host-citadel-signin`. `returnTo` must be a path on this site (`safeReturnTo`); anything else becomes `/`.
 - `GET /auth/callback` checks `state` and the `iss` parameter, redeems the code with the client secret and PKCE verifier, verifies the ID token (signature, `iss`, `aud`, `exp`, `nonce`) and reads userinfo for the same `sub`. The session is the `sub` (a Clerk user id, `user_...`, as stored in `author_user_id`), the display name (username, else first and last name, else `PILOT`) and whether public metadata has `role: "admin"`. Unsafe metadata, which the pilot can write, is never read.
-- The session is `__Host-citadel-session`: a JWE (`dir`, A256GCM, key derived from `SESSION_SECRET` with HKDF), HttpOnly, Secure, SameSite=Lax, host-only on `SITE_URL`'s host, re-issued by the proxy once it is a day old but never valid past 30 days from sign-in, after which it is cleared. Name and role are read at sign-in only; a change in Clerk shows at the next sign-in, and the admin role counts only within 24 hours of sign-in (moderators sign in again; `SITE_ADMIN_USER_IDS` is unaffected). No server-side store.
+- The session is `__Host-citadel-session`: a JWE (`dir`, A256GCM, key derived from `SESSION_SECRET` with HKDF), HttpOnly, Secure, SameSite=Lax, host-only on `SITE_URL`'s host, re-issued by the proxy once it is a day old but never valid past 30 days from sign-in, after which it is cleared. Name and role are read at sign-in only; a change in Clerk shows at the next sign-in, and the admin role counts only within 24 hours of sign-in (`SITE_ADMIN_USER_IDS` is unaffected). The cookie keeps the role read at sign-in (`adm`) for its whole life, so past the 24 hours a moderator sees RE-VERIFY TO MODERATE in place of the moderation controls: `/auth/signin?returnTo=<page>&reverify=1` (`reverify.ts`) signs them in again, which reads the role fresh, and returns them to the page. No server-side store.
 - `POST /auth/signout` clears it, and is refused unless `Origin` (or `Sec-Fetch-Site: same-origin`) shows it came from the site.
-- `src/lib/auth.ts` reads the session for `currentAuthor`, `requireAuthor`, `isAdmin` and `requireAdmin` (rules in `auth-core.ts`): reads never throw; writes refuse 401 signed out and 503 when sign-in isn't configured.
+- `src/lib/auth.ts` reads the session for `currentAuthor`, `requireAuthor`, `isAdmin`, `requireAdmin` and `moderationState` ("active", "reverify" or "none"; rules in `auth-core.ts`): reads never throw; writes refuse 401 signed out and 503 when sign-in isn't configured.
+- A banned pilot (`pilot_bans`, `src/lib/fits/bans.ts`) is refused on every write with "Your account is suspended from posting.": actions-core checks it on the one path every write takes. Reads stay open, and site admins can't be banned.
 
 Tests run the whole flow against a local fake provider (`src/lib/fake-idp.mjs`), and `pnpm smoke` signs in through it on the built server.
 

@@ -2,6 +2,7 @@
 // FOLLOW / EDIT BIO controls. A plain render of loadAuthor's profile, so view tests can render it.
 import Link from "next/link";
 import type { PilotProfile } from "#/lib/fits/pilots";
+import type { PilotBan } from "#/lib/fits/bans";
 import type { PageViewer } from "#/lib/site/server";
 import { Panel, count } from "#/components/ui";
 import { PilotAvatar } from "./pilot-avatar";
@@ -16,7 +17,8 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
-export function PilotHeader({ pilot, viewer }: { pilot: PilotProfile; viewer: PageViewer }) {
+/** `ban` is read for admin viewers only (loadAuthor); it is shown to them alone. */
+export function PilotHeader({ pilot, viewer, ban = null }: { pilot: PilotProfile; viewer: PageViewer; ban?: PilotBan | null }) {
   const own = viewer.userId === pilot.userId;
   const signedIn = viewer.authEnabled && viewer.userId !== null;
   return (
@@ -25,6 +27,14 @@ export function PilotHeader({ pilot, viewer }: { pilot: PilotProfile; viewer: Pa
         <PilotAvatar name={pilot.name} url={pilot.avatarUrl} size={72} />
         <div className="pilot-head__text">
           <h1 className="pilot-head__name">{pilot.name}</h1>
+          {viewer.isAdmin && ban && (
+            <p className="note">
+              <span className="badge badge--invalid">BANNED</span> {ban.reason}{" "}
+              <Link className="link" href={`/admin/pilots?${new URLSearchParams({ q: pilot.userId })}`}>
+                MANAGE
+              </Link>
+            </p>
+          )}
           {pilot.bio ? <p className="pilot-head__bio">{pilot.bio}</p> : own ? <p className="note">NO BIO YET.</p> : null}
         </div>
         <div className="pilot-head__actions">

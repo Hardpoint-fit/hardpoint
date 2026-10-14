@@ -8,6 +8,7 @@ import { canonicalRedirect, handleCallback, handleSignIn, handleSignOut, refresh
 import { parseConfig } from "./config.ts";
 import { startFakeIdp } from "./fake-idp.mjs";
 import { forgetProviders, safeReturnTo } from "./oidc.ts";
+import { reverifyHref } from "./reverify.ts";
 import { SESSION_COOKIE, SIGN_IN_COOKIE, openSession, readCookie, sealSession } from "./session.ts";
 
 const DAY = 24 * 3600;
@@ -68,7 +69,7 @@ async function sessionOf(response) {
 }
 
 function authFrom(opened, settings = { authEnabled: true, adminUserIds: [] }) {
-  return createAuth(settings, { session: async () => (opened ? { ...opened.session } : null) });
+  return createAuth(settings, { session: async () => (opened ? { userId: opened.session.userId, name: opened.session.name, adminRole: opened.adminRole } : null) });
 }
 
 test("returnTo: same-site relative paths only", () => {
@@ -139,7 +140,8 @@ test("good sign-in: a 30-day session cookie, then currentAuthor is { userId: sub
   assert.equal(cookies[SIGN_IN_COOKIE].value, "", "the sign-in transaction is cleared");
   const opened = await sessionOf(response);
   assert.equal(opened.session.userId, "user_2fakePilot");
-  assert.equal(opened.session.isAdminRole, false);
+  assert.equal(opened.session.wasAdminAtSignIn, false);
+  assert.equal(opened.adminRole, "none");
   const auth = authFrom(opened);
   assert.deepEqual(await auth.currentAuthor(), { userId: "user_2fakePilot", name: "ahab" });
   assert.deepEqual(await auth.requireAuthor(), { userId: "user_2fakePilot", name: "ahab" });
@@ -156,12 +158,12 @@ test("display name: username, else given and family name, else PILOT", async () 
 test("admin comes from public metadata only; an unsafe-metadata role is ignored", async () => {
   idp.user = { ...idp.user, public_metadata: {}, unsafe_metadata: { role: "admin" } };
   const forged = await sessionOf(await signIn());
-  assert.equal(forged.session.isAdminRole, false);
+  assert.equal(forged.adminRole, "none");
   await assert.rejects(authFrom(forged).requireAdmin(), (e) => e instanceof AuthError && e.status === 403);
 
   idp.user = { ...idp.user, public_metadata: { role: "admin" }, unsafe_metadata: {} };
   const admin = await sessionOf(await signIn());
-  assert.equal(admin.session.isAdminRole, true);
+  assert.equal(admin.adminRole, "active");
   assert.equal((await authFrom(admin).requireAdmin()).userId, "user_2fakePilot");
   assert.equal(await authFrom(admin).isAdmin("user_someoneElse"), false, "the session's role is only its own");
 });
@@ -322,16 +324,95 @@ test("the admin role from sign-in counts for 24 hours; then moderation needs a n
   const now = Math.floor(Date.now() / 1000);
   const recent = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - DAY + 60 }, now - 60);
   const recentOpened = await openSession(config.sessionSecret, recent, now);
-  assert.equal(recentOpened.session.isAdminRole, true);
+  assert.equal(recentOpened.adminRole, "active");
   assert.equal((await authFrom(recentOpened).requireAdmin()).userId, "user_2fakePilot");
 
   const dayOld = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - DAY - 60 }, now - 60);
   const dayOldOpened = await openSession(config.sessionSecret, dayOld, now);
-  assert.equal(dayOldOpened.session.isAdminRole, false);
+  assert.equal(dayOldOpened.adminRole, "expired");
+  assert.equal(dayOldOpened.session.wasAdminAtSignIn, true, "the role read at sign-in is kept");
   assert.equal(dayOldOpened.session.userId, "user_2fakePilot", "still signed in, just not admin");
   await assert.rejects(authFrom(dayOldOpened).requireAdmin(), (e) => e instanceof AuthError && e.status === 403);
   const listed = authFrom(dayOldOpened, { authEnabled: true, adminUserIds: ["user_2fakePilot"] });
   assert.equal((await listed.requireAdmin()).userId, "user_2fakePilot");
+});
+
+test("moderation state: active within a day of an admin sign-in, reverify after it, none without the role; the env list is always active", async () => {
+  idp.user = { ...idp.user, public_metadata: { role: "admin" } };
+  const admin = await sessionOf(await signIn());
+  const now = Math.floor(Date.now() / 1000);
+  const at = async (session, signedInAgo) =>
+    openSession(config.sessionSecret, await sealSession(config.sessionSecret, { ...session, issuedAt: now - signedInAgo }, now - 60), now);
+  assert.equal(await authFrom(await at(admin.session, DAY - 60)).moderationState(), "active");
+  const expired = await at(admin.session, DAY);
+  assert.equal(expired.adminRole, "expired", "exactly a day old is past the limit");
+  assert.equal(await authFrom(expired).moderationState(), "reverify");
+  assert.equal(await authFrom(expired).isAdmin("user_2fakePilot"), false, "reverify grants nothing");
+  assert.equal(await authFrom(expired, { authEnabled: true, adminUserIds: ["user_2fakePilot"] }).moderationState(), "active");
+  assert.equal(await authFrom(expired, { authEnabled: false, adminUserIds: [] }).moderationState(), "none");
+  assert.equal(await authFrom(null).moderationState(), "none");
+
+  idp.user = { ...idp.user, public_metadata: {} };
+  const plain = await sessionOf(await signIn());
+  assert.equal(await authFrom(await at(plain.session, DAY + 60)).moderationState(), "none");
+  assert.equal(await authFrom(plain, { authEnabled: true, adminUserIds: ["user_2fakePilot"] }).moderationState(), "active");
+});
+
+test("a refresh keeps the role read at sign-in, so a week-old admin session still offers re-verify", async () => {
+  idp.user = { ...idp.user, public_metadata: { role: "admin" } };
+  const opened = await sessionOf(await signIn());
+  const now = Math.floor(Date.now() / 1000);
+  // Signed in a week ago, last re-issued two days ago: the proxy re-issues it now, past the admin limit.
+  const old = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - 7 * DAY }, now - 2 * DAY);
+  const refreshed = await refreshedSessionCookie(get("/", { cookie: `${SESSION_COOKIE}=${old}` }), config, now);
+  const reopened = await openSession(config.sessionSecret, readCookie(refreshed.split(";")[0], SESSION_COOKIE), now);
+  assert.equal(reopened.session.wasAdminAtSignIn, true);
+  assert.equal(reopened.adminRole, "expired");
+  // A cookie sealed before this change carries the same `adm` claim and opens the same way.
+  assert.equal((await openSession(config.sessionSecret, old, now)).adminRole, "expired");
+});
+
+/** /auth/signin from `path` (with an optional session cookie) -> the provider -> /auth/callback. */
+async function signInFrom(path, cookie) {
+  const start = await handleSignIn(get(path, { cookie }), config);
+  assert.equal(start.status, 302);
+  const back = idp.authorize(start.headers.get("location"));
+  return handleCallback(get(`${back.pathname}${back.search}`, { cookie: `${SIGN_IN_COOKIE}=${setCookies(start)[SIGN_IN_COOKIE].value}` }), config);
+}
+
+test("re-verify: an expired moderator signs in again from the page and lands back on it with the role read fresh", async () => {
+  idp.user = { ...idp.user, public_metadata: { role: "admin" } };
+  const opened = await sessionOf(await signIn());
+  const now = Math.floor(Date.now() / 1000);
+  const dayOld = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - 2 * DAY }, now - 60);
+  const href = reverifyHref("/fits/abc?rev=2#comment-7");
+  assert.equal(href, "/auth/signin?returnTo=%2Ffits%2Fabc%3Frev%3D2%23comment-7&reverify=1");
+
+  // Signed in already does not short-circuit: the sign-in runs and the session is replaced.
+  const back = await signInFrom(href, `${SESSION_COOKIE}=${dayOld}`);
+  assert.equal(back.status, 303);
+  assert.equal(back.headers.get("location"), `${SITE}/fits/abc?rev=2#comment-7`);
+  const fresh = await sessionOf(back);
+  assert.equal(fresh.adminRole, "active");
+  assert.equal(await authFrom(fresh).moderationState(), "active");
+
+  // The role was taken away in Clerk meanwhile: the fresh read says so, and the re-verify offer goes too.
+  idp.user = { ...idp.user, public_metadata: {} };
+  const demoted = await sessionOf(await signInFrom(href, `${SESSION_COOKIE}=${dayOld}`));
+  assert.equal(demoted.adminRole, "none");
+  assert.equal(await authFrom(demoted).moderationState(), "none");
+});
+
+test("re-verify keeps returnTo same-site and survives the canonical-host restart", async () => {
+  const restarted = await handleSignIn(get(reverifyHref("/admin/pilots?q=bob"), { host: "www.fits.test" }), config);
+  assert.equal(restarted.status, 307);
+  assert.equal(restarted.headers.get("location"), `${SITE}/auth/signin?returnTo=%2Fadmin%2Fpilots%3Fq%3Dbob&reverify=1`);
+  for (const evil of ["https://evil.example/x", "//evil.example", "/\\evil.example", "/auth/signout"]) {
+    const back = await signInFrom(reverifyHref(evil));
+    assert.equal(back.headers.get("location"), `${SITE}/`, evil);
+  }
+  const offHost = await handleSignIn(get(reverifyHref("//evil.example"), { host: "www.fits.test" }), config);
+  assert.equal(offHost.headers.get("location"), `${SITE}/auth/signin?returnTo=%2F&reverify=1`);
 });
 
 const post = (headers, body = new URLSearchParams({ returnTo: "/fits/abc" })) =>
@@ -367,7 +448,7 @@ test("auth disabled: the auth routes answer 503 and writes still refuse with 503
     assert.equal(response.status, 503);
     assert.match(await response.text(), /Sign-in isn&#39;t configured on this site yet/);
   }
-  const auth = createAuth(off, { session: async () => ({ userId: "user_a", name: "a", isAdminRole: true }) });
+  const auth = createAuth(off, { session: async () => ({ userId: "user_a", name: "a", adminRole: "active" }) });
   await assert.rejects(auth.requireAuthor(), (e) => e.status === 503 && e.message === "Sign-in isn't configured on this site yet");
   assert.equal(await auth.currentAuthor(), null);
   assert.equal(await refreshedSessionCookie(get("/"), off), null);
