@@ -13,7 +13,9 @@ before(async () => {
 after(() => stub.close());
 beforeEach(() => {
   stub.fail(null);
-  for (const key of ["POST /v1/fits/evaluate", "GET /v1/qualities", "GET /v1/items"]) stub.route(key, undefined);
+  for (const key of ["POST /v1/fits/evaluate", "GET /v1/qualities", "GET /v1/items", "GET /v1/grid-consumables", "GET /v1/breach-tiers"]) {
+    stub.route(key, undefined);
+  }
   stub.requests.length = 0;
 });
 
@@ -114,6 +116,50 @@ test("a catalog route that answers with something else is unavailable", async ()
     res.end(JSON.stringify({ hello: "world" }));
   });
   assert.equal(err(await client.catalog()).kind, "unavailable");
+});
+
+const notFound = (req, res) => {
+  res.writeHead(404, { "content-type": "application/json" });
+  res.end(JSON.stringify({ error: { code: "not_found", message: "No such route." } }));
+};
+
+test("an older API without grid consumables or breach tiers still gives a catalog, with those parts empty and logged once", async (t) => {
+  const warn = t.mock.method(console, "warn", () => {});
+  stub.route("GET /v1/grid-consumables", notFound);
+  stub.route("GET /v1/breach-tiers", notFound);
+  const first = ok(await client.catalog());
+  assert.equal(first.status, "ok");
+  assert.deepEqual(first.catalog.gridConsumables, [], "no grid consumables: the builder hides MODIFY GRID");
+  assert.deepEqual(first.catalog.breachTiers, [], "no breach tiers: the builder hides rolling");
+  assert.equal(first.catalog.items.length, FIXTURES.parts.items.items.length, "the other parts load as usual");
+  assert.equal(first.parts.breachTiers.body.build, first.catalog.buildSha);
+  assert.ok(first.etag, "the catalog keeps a tag");
+
+  // Revalidating: the missing routes are asked for again without a validator, and still missing is unchanged.
+  stub.requests.length = 0;
+  assert.deepEqual(ok(await client.catalog({ held: first })), { status: "notModified" });
+  const optional = stub.requests.filter((r) => r.path === "/v1/grid-consumables" || r.path === "/v1/breach-tiers");
+  assert.equal(optional.length, 2);
+  assert.ok(optional.every((r) => r.headers["if-none-match"] === undefined));
+  assert.deepEqual(
+    warn.mock.calls.map((call) => call.arguments[0].match(/\/v1\/[a-z-]+/)[0]).sort(),
+    ["/v1/breach-tiers", "/v1/grid-consumables"],
+    "each missing route is logged once, not on every load",
+  );
+
+  // Once the API serves them, they replace the empty parts.
+  stub.route("GET /v1/grid-consumables", undefined);
+  stub.route("GET /v1/breach-tiers", undefined);
+  const upgraded = ok(await client.catalog({ held: first }));
+  assert.equal(upgraded.status, "ok");
+  assert.equal(upgraded.catalog.breachTiers.length, FIXTURES.parts.breachTiers.breachTiers.length);
+  assert.equal(upgraded.catalog.gridConsumables.length, FIXTURES.parts.gridConsumables.gridConsumables.length);
+  assert.notEqual(upgraded.etag, first.etag);
+});
+
+test("a 404 from any other catalog route still fails the catalog", async () => {
+  stub.route("GET /v1/items", notFound);
+  assert.equal(err(await client.catalog()).kind, "rejected");
 });
 
 test("evaluate posts the fit and returns the API's verdict; an invalid fit is still a successful call", async () => {

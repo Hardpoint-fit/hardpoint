@@ -3,10 +3,12 @@
 // EngineResult. It knows nothing about fits or the database; fits/service.ts and the pages build on it.
 
 import {
+  absentPartBody,
   assembleCatalog,
   CATALOG_PARTS,
   CATALOG_ROUTES,
   commonBuild,
+  isOptionalPart,
   isPartBody,
   type CatalogBodies,
   type CatalogPart,
@@ -122,7 +124,25 @@ export type EngineClient = {
 
 const fail = (kind: EngineErrorKind, message: string): { ok: false; error: EngineError } => ({ ok: false, error: { kind, message } });
 
-type Raw<T> = { ok: false; error: EngineError } | { ok: true; notModified: true } | { ok: true; notModified: false; value: T; etag: string | null };
+type Raw<T> =
+  | { ok: false; error: EngineError; status?: number }
+  | { ok: true; notModified: true }
+  | { ok: true; notModified: false; value: T; etag: string | null };
+
+/**
+ * The tag a missing optional part is held under. Never sent to the API: the part is asked for again
+ * without If-None-Match, and another 404 leaves it as held.
+ */
+export const ABSENT_PART_ETAG = "absent";
+
+/** Optional parts already reported missing, so each is logged once per process rather than per load. */
+const reportedAbsent = new Set<CatalogPart>();
+
+function reportAbsent(part: CatalogPart) {
+  if (reportedAbsent.has(part)) return;
+  reportedAbsent.add(part);
+  console.warn(`engine: ${CATALOG_ROUTES[part].path} answered 404 (an older API); the catalog holds no ${part} and the builder hides what needs them.`);
+}
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -209,7 +229,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       }
       if (response.status >= 400 && response.status < 500) {
         const envelope = envelopeOf(await response.json().catch(() => null));
-        return fail("rejected", envelope?.message ?? "The engine rejected the request.");
+        return { ...fail("rejected", envelope?.message ?? "The engine rejected the request."), status: response.status };
       }
       // 502/503/504 are the proxy (or the API saying "busy") while the API is down or restarting.
       if (response.status === 502 || response.status === 503 || response.status === 504) return fail("unavailable", ENGINE_UNREACHABLE_MESSAGE);
@@ -231,7 +251,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
   // A 304 only arises from a request that sent If-None-Match, which only catalog() does.
   const plain = <T>(result: Raw<T>): EngineResult<T> =>
     !result.ok
-      ? result
+      ? { ok: false, error: result.error }
       : result.notModified
         ? fail("unavailable", "The engine sent an unexpected answer.")
         : { ok: true, value: result.value };
@@ -240,20 +260,27 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
   async function fetchCatalog(held: HeldCatalog | null): Promise<EngineResult<CatalogResponse> | "changed"> {
     const results = await Promise.all(
       CATALOG_PARTS.map((part) => {
-        const validator = held?.parts[part].etag;
+        const heldTag = held?.parts[part].etag;
+        const validator = heldTag === ABSENT_PART_ETAG ? null : heldTag;
         return call("GET", CATALOG_ROUTES[part].path, timeouts.catalogMs, (value): value is CatalogBodies[typeof part] => isPartBody(part, value), {
           headers: validator ? { "if-none-match": validator } : undefined,
         });
       }),
     );
-    const failed = results.find((result) => !result.ok);
-    if (failed && !failed.ok) return failed;
-
     const parts: Record<string, { body: unknown; etag: string | null }> = {};
+    const absent: CatalogPart[] = [];
     let anyChanged = false;
     for (const [index, part] of CATALOG_PARTS.entries()) {
       const result = results[index]!;
-      if (!result.ok) return fail("unavailable", "The engine sent an unexpected answer.");
+      if (!result.ok) {
+        if (!(result.status === 404 && isOptionalPart(part))) return { ok: false, error: result.error };
+        // An older API without this route: the part reads as empty (its body is filled in below, once the
+        // catalog's build is known). Unchanged when the held catalog already had it missing.
+        reportAbsent(part);
+        absent.push(part);
+        if (held?.parts[part].etag !== ABSENT_PART_ETAG) anyChanged = true;
+        continue;
+      }
       if (result.notModified) {
         // A 304 answers a request that sent the held tag, so the part is held.
         if (!held) return fail("unavailable", "The engine sent an unexpected answer.");
@@ -264,6 +291,12 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       }
     }
     if (!anyChanged) return { ok: true, value: { status: "notModified" } };
+
+    // A required part is always present, so its build is the catalog's.
+    const build = (parts.items!.body as CatalogBodies["items"]).build;
+    for (const part of absent) {
+      if (isOptionalPart(part)) parts[part] = { body: absentPartBody(part, build), etag: ABSENT_PART_ETAG };
+    }
 
     const assembled = parts as CatalogParts;
     const bodies = Object.fromEntries(CATALOG_PARTS.map((part) => [part, assembled[part].body])) as CatalogBodies;

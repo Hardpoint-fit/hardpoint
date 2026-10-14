@@ -44,6 +44,21 @@ export const CATALOG_ROUTES = {
 export type CatalogPart = keyof typeof CATALOG_ROUTES;
 export const CATALOG_PARTS = Object.keys(CATALOG_ROUTES) as CatalogPart[];
 
+/**
+ * Parts an older API doesn't serve yet. A 404 from one of these routes reads as an empty list, which hides
+ * the builder feature built on it (grid modification, rolling), instead of failing the whole catalog.
+ */
+export const OPTIONAL_CATALOG_PARTS = ["gridConsumables", "breachTiers"] as const satisfies readonly CatalogPart[];
+export type OptionalCatalogPart = (typeof OPTIONAL_CATALOG_PARTS)[number];
+
+export const isOptionalPart = (part: CatalogPart): part is OptionalCatalogPart =>
+  (OPTIONAL_CATALOG_PARTS as readonly CatalogPart[]).includes(part);
+
+/** The body an optional part reads as when its route is missing: no entries, of the catalog's build. */
+export function absentPartBody<P extends OptionalCatalogPart>(part: P, build: string): CatalogBodies[P] {
+  return { build, [CATALOG_ROUTES[part].key]: [] } as unknown as CatalogBodies[P];
+}
+
 /** What each route answered, by part. */
 export type CatalogBodies = {
   items: ItemsBody;
