@@ -13,7 +13,11 @@ export const SESSION_COOKIE = "__Host-citadel-session";
 export const SIGN_IN_COOKIE = "__Host-citadel-signin";
 
 export const SESSION_LIFETIME_SECONDS = 30 * 24 * 60 * 60;
-/** A session older than this is re-issued with a fresh 30 days on the next request (rolling expiry). */
+/** Absolute limit from sign-in: past it the session is over, however recently the cookie was renewed. */
+export const SESSION_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+/** The admin role read at sign-in is trusted this long; after it, moderation needs a fresh sign-in. */
+export const ADMIN_ROLE_MAX_AGE_SECONDS = 24 * 60 * 60;
+/** A cookie older than this is re-issued on the next request (rolling expiry, never past SESSION_MAX_AGE_SECONDS from sign-in). */
 export const SESSION_REFRESH_AFTER_SECONDS = 24 * 60 * 60;
 export const SIGN_IN_LIFETIME_SECONDS = 10 * 60;
 
@@ -22,7 +26,7 @@ export type Session = {
   /** The OIDC `sub`: the Clerk user id (`user_...`), the id fits, comments and votes are stored under. */
   userId: string;
   name: string;
-  /** Clerk public metadata `role === "admin"` when the pilot signed in. */
+  /** Clerk public metadata `role === "admin"` when the pilot signed in; read back as false once the sign-in is a day old. */
   isAdminRole: boolean;
   /** When the pilot signed in (seconds since the epoch). Kept across refreshes. */
   issuedAt: number;
@@ -77,18 +81,35 @@ async function unseal(secret: Uint8Array, purpose: Purpose, value: string | unde
   }
 }
 
+/** Seconds a session cookie issued at `at` may live: 30 days, cut short at 30 days from sign-in. */
+export function sessionCookieLifetime(issuedAt: number, at = now()): number {
+  return Math.max(0, Math.min(SESSION_LIFETIME_SECONDS, issuedAt + SESSION_MAX_AGE_SECONDS - at));
+}
+
 export async function sealSession(secret: Uint8Array, session: Session, at = now()): Promise<string> {
-  return seal(secret, "session", { sub: session.userId, name: session.name, adm: session.isAdminRole, sia: session.issuedAt }, SESSION_LIFETIME_SECONDS, at);
+  return seal(
+    secret,
+    "session",
+    { sub: session.userId, name: session.name, adm: session.isAdminRole, sia: session.issuedAt },
+    sessionCookieLifetime(session.issuedAt, at),
+    at,
+  );
 }
 
 export type OpenedSession = { session: Session; /** When this cookie was (re)issued. */ refreshedAt: number };
 
-export async function openSession(secret: Uint8Array, value: string | undefined | null): Promise<OpenedSession | null> {
+/**
+ * The session in a cookie, or null when it is missing, invalid, or its sign-in is 30 days old or more.
+ * The admin role counts only within a day of sign-in.
+ */
+export async function openSession(secret: Uint8Array, value: string | undefined | null, at = now()): Promise<OpenedSession | null> {
   const payload = await unseal(secret, "session", value);
   if (!payload) return null;
   const { sub, name, adm, sia, iat } = payload;
   if (typeof sub !== "string" || !sub || typeof name !== "string" || typeof adm !== "boolean" || typeof sia !== "number" || typeof iat !== "number") return null;
-  return { session: { userId: sub, name, isAdminRole: adm, issuedAt: sia }, refreshedAt: iat };
+  const age = at - sia;
+  if (age >= SESSION_MAX_AGE_SECONDS || age < -60) return null;
+  return { session: { userId: sub, name, isAdminRole: adm && age < ADMIN_ROLE_MAX_AGE_SECONDS, issuedAt: sia }, refreshedAt: iat };
 }
 
 export async function sealSignIn(secret: Uint8Array, transaction: SignInTransaction): Promise<string> {

@@ -10,6 +10,8 @@ import { startFakeIdp } from "./fake-idp.mjs";
 import { forgetProviders, safeReturnTo } from "./oidc.ts";
 import { SESSION_COOKIE, SIGN_IN_COOKIE, openSession, readCookie, sealSession } from "./session.ts";
 
+const DAY = 24 * 3600;
+
 const SITE = "https://fits.test";
 const SESSION_SECRET = Buffer.alloc(48, 7).toString("base64");
 
@@ -83,6 +85,10 @@ test("returnTo: same-site relative paths only", () => {
     "/\tevil",
     "/x\nSet-Cookie: a=b",
     "http:/evil.example",
+    // Normalising these yields "//evil.com".
+    "/.//evil.com",
+    "/%2e//evil.com",
+    "/a/..//evil.com",
     "/auth/signin?returnTo=//evil",
     "/auth/callback",
     "",
@@ -279,18 +285,53 @@ test("a session cookie can't be forged or altered, and one sealed with another s
   assert.equal(await openSession(config.sessionSecret, transaction), null);
 });
 
-test("rolling expiry: a session older than a day gets a fresh cookie; a fresh one doesn't", async () => {
+test("rolling expiry: a cookie a day old is re-issued, keeping its sign-in time; a fresh one isn't", async () => {
   const opened = await sessionOf(await signIn());
   const now = Math.floor(Date.now() / 1000);
-  const old = await sealSession(config.sessionSecret, opened.session, now - 2 * 24 * 3600);
+  const signedInAt = now - 2 * DAY;
+  const old = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: signedInAt }, now - 2 * DAY);
   const refreshed = await refreshedSessionCookie(get("/", { cookie: `${SESSION_COOKIE}=${old}` }), config, now);
-  assert.match(refreshed, /^__Host-citadel-session=.+; Path=\/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax$/);
-  const reopened = await openSession(config.sessionSecret, readCookie(refreshed.split(";")[0], SESSION_COOKIE));
+  // The cookie lives only until 30 days after sign-in, not 30 days from now.
+  assert.match(refreshed, new RegExp(`^__Host-citadel-session=.+; Path=/; Max-Age=${28 * DAY}; HttpOnly; Secure; SameSite=Lax$`));
+  const reopened = await openSession(config.sessionSecret, readCookie(refreshed.split(";")[0], SESSION_COOKIE), now);
   assert.equal(reopened.refreshedAt, now);
-  assert.equal(reopened.session.issuedAt, opened.session.issuedAt, "the sign-in time is kept");
+  assert.equal(reopened.session.issuedAt, signedInAt, "refreshing never moves the sign-in time");
   const fresh = await sealSession(config.sessionSecret, opened.session, now - 60);
   assert.equal(await refreshedSessionCookie(get("/", { cookie: `${SESSION_COOKIE}=${fresh}` }), config, now), null);
   assert.equal(await refreshedSessionCookie(get("/"), config, now), null);
+});
+
+test("a session ends 30 days after sign-in however often it was renewed, and its cookie is cleared", async () => {
+  const opened = await sessionOf(await signIn());
+  const now = Math.floor(Date.now() / 1000);
+  // Renewed an hour ago, signed in 30 days and a minute ago.
+  const stale = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - 30 * DAY - 60 }, now - 3600);
+  assert.equal(await openSession(config.sessionSecret, stale, now), null, "read as signed out");
+  const cleared = await refreshedSessionCookie(get("/", { cookie: `${SESSION_COOKIE}=${stale}` }), config, now);
+  assert.match(cleared, /^__Host-citadel-session=; Path=\/; Max-Age=0;/);
+  // Just inside the limit it still opens.
+  const inside = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - 30 * DAY + 60 }, now - 3600);
+  assert.ok(await openSession(config.sessionSecret, inside, now));
+  // A tampered cookie is cleared too.
+  assert.match(await refreshedSessionCookie(get("/", { cookie: `${SESSION_COOKIE}=garbage` }), config, now), /Max-Age=0/);
+});
+
+test("the admin role from sign-in counts for 24 hours; then moderation needs a new sign-in (the env list is unaffected)", async () => {
+  idp.user = { ...idp.user, public_metadata: { role: "admin" } };
+  const opened = await sessionOf(await signIn());
+  const now = Math.floor(Date.now() / 1000);
+  const recent = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - DAY + 60 }, now - 60);
+  const recentOpened = await openSession(config.sessionSecret, recent, now);
+  assert.equal(recentOpened.session.isAdminRole, true);
+  assert.equal((await authFrom(recentOpened).requireAdmin()).userId, "user_2fakePilot");
+
+  const dayOld = await sealSession(config.sessionSecret, { ...opened.session, issuedAt: now - DAY - 60 }, now - 60);
+  const dayOldOpened = await openSession(config.sessionSecret, dayOld, now);
+  assert.equal(dayOldOpened.session.isAdminRole, false);
+  assert.equal(dayOldOpened.session.userId, "user_2fakePilot", "still signed in, just not admin");
+  await assert.rejects(authFrom(dayOldOpened).requireAdmin(), (e) => e instanceof AuthError && e.status === 403);
+  const listed = authFrom(dayOldOpened, { authEnabled: true, adminUserIds: ["user_2fakePilot"] });
+  assert.equal((await listed.requireAdmin()).userId, "user_2fakePilot");
 });
 
 const post = (headers, body = new URLSearchParams({ returnTo: "/fits/abc" })) =>
@@ -298,20 +339,22 @@ const post = (headers, body = new URLSearchParams({ returnTo: "/fits/abc" })) =>
 
 test("sign-out from the site clears the session cookie and returns to the page", async () => {
   for (const headers of [{ origin: SITE }, { "sec-fetch-site": "same-origin" }]) {
-    const response = await handleSignOut(post(headers));
+    const response = await handleSignOut(post(headers), config);
     assert.equal(response.status, 303);
-    assert.equal(response.headers.get("location"), "/fits/abc");
+    assert.equal(response.headers.get("location"), `${SITE}/fits/abc`);
     const cleared = setCookies(response)[SESSION_COOKIE];
     assert.equal(cleared.value, "");
     assert.ok(cleared.attributes.includes("Max-Age=0"));
   }
-  const evil = await handleSignOut(post({ origin: SITE }, new URLSearchParams({ returnTo: "//evil.example" })));
-  assert.equal(evil.headers.get("location"), "/");
+  for (const returnTo of ["//evil.example", "/.//evil.com", "/%2e//evil.com", "/a/..//evil.com"]) {
+    const evil = await handleSignOut(post({ origin: SITE }, new URLSearchParams({ returnTo })), config);
+    assert.equal(evil.headers.get("location"), `${SITE}/`, returnTo);
+  }
 });
 
 test("sign-out is CSRF-safe: a cross-site or unlabelled POST is refused and clears nothing", async () => {
   for (const headers of [{ origin: "https://evil.example" }, { origin: "null" }, { "sec-fetch-site": "cross-site" }, {}]) {
-    const response = await handleSignOut(post(headers));
+    const response = await handleSignOut(post(headers), config);
     assert.equal(response.status, 403, JSON.stringify(headers));
     assert.equal(setCookies(response)[SESSION_COOKIE], undefined);
   }

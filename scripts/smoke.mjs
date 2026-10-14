@@ -225,6 +225,7 @@ try {
     assert.equal(forged.status, 403, "cross-site sign-out refused");
     const out = await fetch(`${authed.url}/auth/signout`, { method: "POST", redirect: "manual", headers: { origin: authed.url, "content-type": "application/x-www-form-urlencoded", cookie: `__Host-citadel-session=${session}` }, body: "returnTo=%2F" });
     assert.equal(out.status, 303);
+    assert.equal(out.headers.get("location"), `${authed.url}/`, "sign-out returns to the canonical origin");
     assert.equal(cookiesOf(out)["__Host-citadel-session"], "", "sign-out clears the session");
     results.push("303 POST /auth/signout (cleared); 403 cross-site");
     authed.child.kill();

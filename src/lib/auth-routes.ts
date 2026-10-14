@@ -10,6 +10,7 @@ import {
   SESSION_COOKIE,
   SESSION_LIFETIME_SECONDS,
   SESSION_REFRESH_AFTER_SECONDS,
+  sessionCookieLifetime,
   SIGN_IN_COOKIE,
   SIGN_IN_LIFETIME_SECONDS,
   clearCookieHeader,
@@ -111,14 +112,14 @@ function sameOrigin(request: Request): boolean {
 }
 
 /** POST /auth/signout — clears the session. Refused (403) unless it comes from the site's own form. */
-export async function handleSignOut(request: Request): Promise<Response> {
+export async function handleSignOut(request: Request, config: SiteConfig): Promise<Response> {
   if (!sameOrigin(request)) return page(403, "That sign-out didn't come from this site", "Use the SIGN OUT button in the header.");
   let returnTo = "/";
   try {
     const form = await request.formData();
     returnTo = safeReturnTo(String(form.get("returnTo") ?? "/"));
   } catch {}
-  return redirect(returnTo, 303, [clearCookieHeader(SESSION_COOKIE)]);
+  return redirect(`${config.siteUrl}${returnTo}`, 303, [clearCookieHeader(SESSION_COOKIE)]);
 }
 
 /** www.<canonical host> -> the canonical origin, same path and query (308 keeps the method). */
@@ -129,10 +130,18 @@ export function canonicalRedirect(request: Request, config: SiteConfig): string 
   return `${config.siteUrl}${url.pathname}${url.search}`;
 }
 
-/** Rolling expiry: a valid session older than a day gets a fresh 30-day cookie. Null when nothing changes. */
+/**
+ * The Set-Cookie the proxy adds for the session, or null when nothing changes. A cookie a day old is
+ * re-issued (rolling expiry), keeping its sign-in time, so it never outlives 30 days from sign-in. A
+ * cookie that no longer opens (expired, past the 30-day limit, tampered, or from a rotated secret) is cleared.
+ */
 export async function refreshedSessionCookie(request: Request, config: SiteConfig, at = Math.floor(Date.now() / 1000)): Promise<string | null> {
   if (!config.authEnabled || !config.sessionSecret) return null;
-  const opened = await openSession(config.sessionSecret, readCookie(request.headers.get("cookie"), SESSION_COOKIE));
-  if (!opened || at - opened.refreshedAt < SESSION_REFRESH_AFTER_SECONDS) return null;
-  return cookieHeader(SESSION_COOKIE, await sealSession(config.sessionSecret, opened.session, at), SESSION_LIFETIME_SECONDS);
+  const value = readCookie(request.headers.get("cookie"), SESSION_COOKIE);
+  if (!value) return null;
+  const opened = await openSession(config.sessionSecret, value, at);
+  if (!opened) return clearCookieHeader(SESSION_COOKIE);
+  if (at - opened.refreshedAt < SESSION_REFRESH_AFTER_SECONDS) return null;
+  const lifetime = sessionCookieLifetime(opened.session.issuedAt, at);
+  return cookieHeader(SESSION_COOKIE, await sealSession(config.sessionSecret, opened.session, at), lifetime);
 }

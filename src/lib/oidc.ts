@@ -82,7 +82,9 @@ export function safeReturnTo(value: string | null | undefined): string {
     const parsed = new URL(value, base);
     if (parsed.origin !== base) return "/";
     if (parsed.pathname === "/auth" || parsed.pathname.startsWith("/auth/")) return "/";
-    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    // Normalising can make a scheme-relative path ("/.//evil" -> "//evil"); check the result too.
+    return path.startsWith("//") || path.startsWith("/\\") ? "/" : path;
   } catch {
     return "/";
   }
@@ -179,6 +181,8 @@ export async function completeSignIn(
       issuer: as.issuer,
       audience: config.clientId,
       algorithms: ["RS256"],
+      // As oauth4webapi allows for the same claims.
+      clockTolerance: 30,
       requiredClaims: ["sub", "exp", "iat", "nonce"],
     });
     if (payload.nonce !== transaction.nonce) throw new Error("nonce mismatch");
