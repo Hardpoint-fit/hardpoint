@@ -18,7 +18,7 @@ export async function SiteHeader() {
       <Link href="/" className="flex items-center gap-2 text-[length:var(--font-size-header)] tracking-widest text-primary">
         {/* eslint-disable-next-line @next/next/no-img-element -- a fixed-size SVG gains nothing from next/image */}
         <img src="/logo.svg" width={24} height={24} alt="" />
-        Citadel Fits
+        hardpoint.fit
       </Link>
       <nav className="flex gap-4 text-[length:var(--font-size-small)] tracking-widest">
         {NAV.map(({ href, label }) => (

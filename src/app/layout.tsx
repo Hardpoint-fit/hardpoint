@@ -21,7 +21,7 @@ const vcr = localFont({
 export function generateMetadata(): Metadata {
   return {
     metadataBase: new URL(getConfig().siteUrl),
-    title: "Citadel Theorycrafting",
+    title: "hardpoint.fit",
     description: "Build, share and compare Citadel ship fits.",
     // Listed by hand: an explicit icon list replaces the one Next would build from apple-icon.ts.
     icons: { icon: { url: "/logo.svg", type: "image/svg+xml" }, apple: "/apple-icon" },

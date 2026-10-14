@@ -38,9 +38,9 @@ const escapeHtml = (text: string) => text.replace(/[&<>"']/g, (c) => `&#${c.char
 
 /** A bare page for the auth routes, which render outside the app layout. */
 function page(status: number, title: string, detail: string, action?: { href: string; label: string }, headers: [string, string][] = []): Response {
-  const body = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} | Citadel Fits</title>
+  const body = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)} | hardpoint.fit</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b0d10;color:#d8dde3;font:14px/1.5 ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}main{max-width:32rem;padding:24px;border:1px solid #2a3038;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}h1{font-size:16px;margin:0 0 8px}p{margin:0 0 16px;color:#8a949e}a{color:#d8dde3;margin-right:16px}a:hover{color:#f0a030}</style></head>
-<body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(detail)}</p>${action ? `<a href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>` : ""}<a href="/">Back to Citadel Fits</a></main></body></html>`;
+<body><main><h1>${escapeHtml(title)}</h1><p>${escapeHtml(detail)}</p>${action ? `<a href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>` : ""}<a href="/">Back to hardpoint.fit</a></main></body></html>`;
   const response = new Response(body, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
   for (const [name, value] of headers) response.headers.append(name, value);
   return response;
@@ -92,7 +92,7 @@ export async function handleCallback(request: Request, config: SiteConfig): Prom
       kind === "outage"
         ? "Citadel's sign-in didn't answer. Try again in a minute."
         : kind === "denied"
-          ? "Access wasn't granted to Citadel Fits."
+          ? "Access wasn't granted to hardpoint.fit."
           : "The sign-in expired or couldn't be checked. Start again.";
     return page(kind === "outage" ? 503 : 400, kind === "outage" ? SIGN_IN_OUTAGE_MESSAGE : SIGN_IN_FAILED_MESSAGE, detail, retry, [["Set-Cookie", clearSignIn]]);
   }

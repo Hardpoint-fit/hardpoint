@@ -6,7 +6,7 @@ import { Panel, UnavailableState, formatDate } from "#/components/ui";
 import { loadReports } from "#/lib/site/loaders";
 import { pageViewer, siteDeps } from "#/lib/site/server";
 
-export const metadata: Metadata = { title: "Reports · Citadel Fits", robots: { index: false } };
+export const metadata: Metadata = { title: "Reports · hardpoint.fit", robots: { index: false } };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 

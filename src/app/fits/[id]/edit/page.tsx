@@ -6,7 +6,7 @@ import { Panel, UnavailableState } from "#/components/ui";
 import { loadBuilder } from "#/lib/site/loaders";
 import { pageViewer, siteDeps } from "#/lib/site/server";
 
-export const metadata: Metadata = { title: "Edit fit · Citadel Fits" };
+export const metadata: Metadata = { title: "Edit fit · hardpoint.fit" };
 
 /** The builder on a saved fit, for its author; anyone else reads the fit page instead. */
 export default async function EditFitPage({ params }: { params: Promise<{ id: string }> }) {

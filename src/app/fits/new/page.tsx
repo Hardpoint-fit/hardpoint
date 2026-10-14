@@ -4,7 +4,7 @@ import { UnavailableState } from "#/components/ui";
 import { loadBuilder } from "#/lib/site/loaders";
 import { pageViewer, siteDeps } from "#/lib/site/server";
 
-export const metadata: Metadata = { title: "New fit · Citadel Fits", description: "Build a Citadel ship fit and check it against the live build." };
+export const metadata: Metadata = { title: "New fit · hardpoint.fit", description: "Build a Citadel ship fit and check it against the live build." };
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 

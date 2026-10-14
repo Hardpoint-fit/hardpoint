@@ -10,7 +10,7 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 const USER_ID = /^[A-Za-z0-9_-]{1,100}$/;
 
-export const metadata: Metadata = { title: "Pilot fits · Citadel Fits" };
+export const metadata: Metadata = { title: "Pilot fits · hardpoint.fit" };
 
 export default async function AuthorPage({ params, searchParams }: { params: Params; searchParams: SearchParams }) {
   // Next hands the segment over decoded; an id is only letters, digits, "_" and "-", so nothing is decoded twice.

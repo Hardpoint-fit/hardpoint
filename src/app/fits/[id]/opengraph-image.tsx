@@ -87,7 +87,7 @@ export default async function FitCard({ params }: { params: Params }) {
     return new ImageResponse(
       <div style={{ ...frame, alignItems: "center", justifyContent: "center", gap: 40, fontSize: 72, letterSpacing: 12 }}>
         <img src={logo} width={128} height={128} alt="" />
-        CITADEL FITS
+        HARDPOINT.FIT
       </div>,
       { ...size, fonts },
     );
@@ -116,7 +116,7 @@ export default async function FitCard({ params }: { params: Params }) {
           {standing && <div style={{ display: "flex", color: standing.color, fontSize: 22 }}>{standing.text}</div>}
           <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 20, letterSpacing: 8, color: T["text-secondary"] }}>
             <img src={logo} width={36} height={36} alt="" />
-            CITADEL THEORYCRAFTING
+            HARDPOINT.FIT
           </div>
         </div>
       </div>

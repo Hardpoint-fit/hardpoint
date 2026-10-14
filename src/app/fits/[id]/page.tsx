@@ -17,11 +17,11 @@ const load = cache(async (id: string) => {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { id } = await params;
   const { data } = await load(id);
-  if (data.status !== "ok") return { title: "Fit · Citadel Fits" };
+  if (data.status !== "ok") return { title: "Fit · hardpoint.fit" };
   const hull = data.hull?.name ?? "Ship";
   const description = `${hull} fit by ${data.fit.authorName}: ${data.fit.votes} upvotes.`;
   return {
-    title: `${data.fit.title} · ${hull} · Citadel Fits`,
+    title: `${data.fit.title} · ${hull} · hardpoint.fit`,
     description,
     openGraph: { title: data.fit.title, description, type: "article" },
     twitter: { card: "summary_large_image", title: data.fit.title, description },
