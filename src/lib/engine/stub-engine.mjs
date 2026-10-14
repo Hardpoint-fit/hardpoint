@@ -29,6 +29,11 @@ export const FIXTURES = {
   itemFacts: fixture("item-facts.json"),
   /** The engine's /v1/grid-mods answer for fit.json. */
   gridMods: fixture("grid-mods.json"),
+  /** /v1/roll: fit.json's Augmented module rolled at seed 42, then that roll's line 0 re-rolled at tier 3, seed 7. */
+  rollRequest: fixture("roll-request.json"),
+  roll: fixture("roll.json"),
+  rollLineRequest: fixture("roll-line-request.json"),
+  rollLine: fixture("roll-line.json"),
 };
 
 const MAX_BODY = 262_144;
@@ -80,6 +85,33 @@ function evaluate(fit) {
   return FIXTURES.evaluateValid;
 }
 
+const ROLLED_RARITIES = new Set(["Augmented", "Prototype"]);
+const sameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * The recorded roll for a recorded request. Any other request is checked as the engine checks it and
+ * answered with the recorded lines: all of them, or the line re-roll's new line in place of `line`.
+ */
+function roll(request) {
+  const item = request?.item;
+  if (!item) return [400, { error: "Body must be { item, breachTier?, seed?, line? }." }];
+  if (!knownItems.has(item.def)) return [400, { error: "item: unknown item" }];
+  if (!ROLLED_RARITIES.has(item.roll?.rarity)) return [400, { error: `rarity: ${item.roll?.rarity} rolls no modifiers from a pool here` }];
+  const tiers = FIXTURES.catalog.breachTiers.length;
+  const breachTier = request.breachTier ?? tiers - 1;
+  if (!Number.isInteger(breachTier) || breachTier < 0 || breachTier >= tiers) return [400, { error: `breachTier: 0 to ${tiers - 1}` }];
+  const count = item.roll.modifiers.length;
+  if (request.line !== undefined && (!Number.isInteger(request.line) || request.line < 0 || request.line >= count)) return [400, { error: `line: 0 to ${count - 1}` }];
+  if (sameJson(request, FIXTURES.rollRequest)) return [200, FIXTURES.roll];
+  if (sameJson(request, FIXTURES.rollLineRequest)) return [200, FIXTURES.rollLine];
+  const seed = request.seed ?? 4242;
+  const modifiers =
+    request.line === undefined
+      ? FIXTURES.roll.item.roll.modifiers
+      : item.roll.modifiers.map((modifier, index) => (index === request.line ? FIXTURES.rollLine.item.roll.modifiers[0] : modifier));
+  return [200, { item: { ...item, roll: { ...item.roll, modifiers } }, breachTier, seed }];
+}
+
 /**
  * Starts the stub on a free port. `requests` records every call as `{ method, path, headers, body }`.
  * `overrides["POST /v1/evaluate"] = (req, res, body) => ...` replaces a route; `stub.fail(status)` makes
@@ -123,6 +155,10 @@ export async function startStubEngine(overrides = {}, port = 0) {
       if (!body.json?.fit) return send(res, 400, { error: "Body must be { fit }." });
       if (body.json.fit.version !== 1) return send(res, 400, { error: "version: expected 1" });
       return send(res, 200, FIXTURES.gridMods);
+    }
+    if (req.method === "POST" && path === "/v1/roll") {
+      const [status, answer] = roll(body.json);
+      return send(res, status, answer);
     }
     if (req.method === "POST" && path === "/v1/fits/import") {
       return body.json?.fitString === FIXTURES.exported.fitString

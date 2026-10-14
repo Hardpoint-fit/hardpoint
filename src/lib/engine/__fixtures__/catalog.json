@@ -6119,5 +6119,39 @@
    "behavior": "FixedTarget",
    "fixedTargetSlotType": "Propulsion"
   }
+ ],
+ "breachTiers": [
+  {
+   "index": 0,
+   "name": "Stratum 0"
+  },
+  {
+   "index": 1,
+   "name": "Stratum 1"
+  },
+  {
+   "index": 2,
+   "name": "Stratum 2"
+  },
+  {
+   "index": 3,
+   "name": "Stratum 3"
+  },
+  {
+   "index": 4,
+   "name": "Stratum 4"
+  },
+  {
+   "index": 5,
+   "name": "Abyssal"
+  },
+  {
+   "index": 6,
+   "name": "The Nest"
+  },
+  {
+   "index": 7,
+   "name": "Deep Strata"
+  }
  ]
 }

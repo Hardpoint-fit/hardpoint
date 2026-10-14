@@ -164,7 +164,12 @@ export type Catalog = {
   placement: CatalogSlotPlacement[];
   /** The consumables that modify a fitting grid (GridMods.cs), by GUID. */
   gridConsumables: CatalogGridConsumable[];
+  /** The breach tiers a modifier roll can be made at, by index (ModifierRolls.cs). Absent from an older engine. */
+  breachTiers: CatalogBreachTier[];
 };
+
+/** A breach tier as the game names it; `index` is what POST /v1/roll takes as `breachTier`. */
+export type CatalogBreachTier = { index: number; name: string };
 
 /**
  * A grid consumable (FittingGridConsumableRules.TryResolveSpec). `kind` is "FittingGridExtender" (BROKKR SLOT
@@ -396,3 +401,15 @@ export type GridModTarget = { cell: number; results: GridModResult[] };
 
 /** The cell a use changes and the slot type it leaves there ("None" for a destroyed cell). */
 export type GridModResult = { cell: number; slotType: string };
+
+// ---- Modifier rolls (ModifierRolls.cs: POST /v1/roll) ----------------------------------------------
+
+/**
+ * Rolls an Augmented or Prototype item's modifiers with the game's own roller, as a drop rolls them.
+ * `breachTier` defaults to the highest, `seed` to one the engine picks (its answer echoes it), and `line`
+ * re-rolls only that modifier against the others.
+ */
+export type RollRequest = { item: OpenItem; breachTier?: number; seed?: number; line?: number };
+
+/** The item with its new modifiers, everything else kept, and the tier and seed that reproduce it. */
+export type RollResponse = { item: OpenItem; breachTier: number; seed: number };

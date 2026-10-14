@@ -1,0 +1,43 @@
+{
+  "item": {
+    "def": "1284176030826467319",
+    "roll": {
+      "quality": "Standard",
+      "rarity": "Augmented",
+      "modifiers": [
+        {
+          "stat": "HeatDissipationRate",
+          "operation": "Multiply",
+          "tier": 3,
+          "value": "72149",
+          "slot": 0,
+          "isInverted": false,
+          "isFractured": false
+        },
+        {
+          "stat": "MaxHull",
+          "operation": "Add",
+          "tier": 3,
+          "value": "7868000",
+          "slot": 1,
+          "isInverted": false,
+          "isFractured": false
+        }
+      ],
+      "ports": [],
+      "artifact": null,
+      "regalia": null,
+      "heretical": null,
+      "ascended": null,
+      "moduleTypeOverride": null,
+      "isIdentified": true,
+      "isHarmonized": false,
+      "isMirrored": false,
+      "harmonicSet": null,
+      "scaledStat": null
+    },
+    "patina": 0
+  },
+  "breachTier": 3,
+  "seed": 7
+}

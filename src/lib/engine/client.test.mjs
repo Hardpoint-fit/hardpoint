@@ -97,6 +97,41 @@ test("grid mods post the fit and return what each grid consumable can do; an unr
   }
 });
 
+test("roll posts the item, tier, seed and line, and returns the engine's roll; refusals, limits and cancels map as elsewhere", async () => {
+  const all = ok(await client.roll(FIXTURES.rollRequest));
+  assert.deepEqual(all, FIXTURES.roll);
+  const sent = stub.requests.at(-1);
+  assert.deepEqual([sent.method, sent.path, sent.body], ["POST", "/v1/roll", FIXTURES.rollRequest]);
+  // The highest tier when none is asked for, the seed echoed, and nothing but the modifiers changed.
+  assert.equal(all.breachTier, FIXTURES.catalog.breachTiers.at(-1).index);
+  assert.equal(all.seed, FIXTURES.rollRequest.seed);
+  assert.deepEqual({ ...all.item.roll, modifiers: [] }, { ...FIXTURES.rollRequest.item.roll, modifiers: [] });
+
+  const line = ok(await client.roll(FIXTURES.rollLineRequest));
+  assert.deepEqual(line, FIXTURES.rollLine);
+  assert.deepEqual(line.item.roll.modifiers.slice(1), all.item.roll.modifiers.slice(1));
+
+  const normal = FIXTURES.fit.modules[1].item;
+  assert.equal(err(await client.roll({ item: normal })).kind, "rejected");
+  assert.equal(err(await client.roll({ item: all.item, breachTier: 99 })).kind, "rejected");
+  assert.equal(err(await client.roll({ item: all.item, line: 9 })).kind, "rejected");
+  stub.fail(429);
+  assert.equal(err(await client.roll(FIXTURES.rollRequest)).kind, "rateLimited");
+  stub.fail(null);
+  const controller = new AbortController();
+  controller.abort();
+  assert.equal(err(await client.roll(FIXTURES.rollRequest, { signal: controller.signal })).kind, "cancelled");
+  stub.route("POST /v1/roll", (req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ item: null, seed: "1" }));
+  });
+  try {
+    assert.equal(err(await client.roll(FIXTURES.rollRequest)).kind, "unavailable");
+  } finally {
+    stub.route("POST /v1/roll", undefined);
+  }
+});
+
 test("a 400 is rejected with the engine's message", async () => {
   const e = err(await client.importFitString("nonsense"));
   assert.equal(e.kind, "rejected");
@@ -130,6 +165,7 @@ test("an engine that is down is unavailable, never a throw", async () => {
     await down.importFitString("x"),
     await down.exportFitString(FIXTURES.fit),
     await down.gridMods(FIXTURES.fit),
+    await down.roll(FIXTURES.rollRequest),
   ]) {
     assert.equal(err(result).kind, "unavailable");
   }

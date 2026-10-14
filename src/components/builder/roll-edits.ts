@@ -352,3 +352,18 @@ export function setMirrored(subject: RollSubject, roll: OpenRoll, mirrored: bool
   if (roll.isMirrored === mirrored || (mirrored && !canMirror(subject, roll))) return roll;
   return { ...roll, isMirrored: mirrored };
 }
+
+/** The rarities whose modifiers the game rolls from a pool, and so the engine can roll (POST /v1/roll). */
+export const ROLLED_RARITIES: readonly string[] = ["Augmented", "Prototype"];
+
+const sameRoll = (a: OpenRoll, b: OpenRoll) => a === b || JSON.stringify(a) === JSON.stringify(b);
+
+/**
+ * The engine's roll of this roll's modifiers. Only the modifiers are taken, and only while the roll is still
+ * the one sent: an answer that arrives after another edit, or for another rarity, changes nothing.
+ */
+export function takeRolledModifiers(roll: OpenRoll, sent: OpenRoll, rolled: OpenRoll): OpenRoll {
+  if (!sameRoll(roll, sent) || !ROLLED_RARITIES.includes(roll.rarity) || rolled.rarity !== roll.rarity) return roll;
+  if (JSON.stringify(rolled.modifiers) === JSON.stringify(roll.modifiers)) return roll;
+  return { ...roll, modifiers: rolled.modifiers.map((modifier) => ({ ...modifier })) };
+}

@@ -51,7 +51,12 @@ export type RollEdit =
   | { kind: "scaledStrength"; value: number }
   | { kind: "port"; row: number; col: number; direction: string }
   | { kind: "cipher"; index: number; cipher: string | null }
-  | { kind: "mirrored"; on: boolean };
+  | { kind: "mirrored"; on: boolean }
+  /**
+   * RANDOMIZE ROLL or a line's dice: the engine's roll (POST /v1/roll) of item `def` as it was `sent`. Only
+   * its modifiers are taken, and only while the item still holds the roll that was sent.
+   */
+  | { kind: "rolled"; def: string; sent: OpenRoll; rolled: OpenRoll };
 
 export type BuilderAction =
   /** A new fit on this hull. */
@@ -168,6 +173,8 @@ function applyEdit(cat: BuilderCatalog, subject: RollSubject, roll: OpenRoll, ed
       return edits.setPortCipher(cat, roll, edit.index, edit.cipher);
     case "mirrored":
       return edits.setMirrored(subject, roll, edit.on);
+    case "rolled":
+      return subject.def === edit.def ? edits.takeRolledModifiers(roll, edit.sent, edit.rolled) : roll;
   }
 }
 

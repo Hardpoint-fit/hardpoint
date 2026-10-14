@@ -333,3 +333,41 @@ test("revertCell puts a modified cell back as the hull has it, and leaves an unm
   assert.deepEqual(run(converted, { type: "modifyCell", cell: unmodified, slotType: "Core" }).fit.slotOverrides, FIXTURES.fit.slotOverrides);
   assert.deepEqual(run(converted, { type: "revertCell", cell: unmodified }).fit.slotOverrides, FIXTURES.fit.slotOverrides);
 });
+
+// ---- RANDOMIZE ROLL: the engine's roll arrives as a "rolled" roll edit -------------------------------
+
+const loaded = () => run(initialState(), { type: "load", fit: FIXTURES.fit });
+const rolledEdit = (state, rolled, target = 0) => {
+  const item = state.fit.modules[target].item;
+  return { type: "roll", target, edit: { kind: "rolled", def: item.def, sent: item.roll, rolled } };
+};
+
+test("a rolled edit takes the engine's modifiers and nothing else, as one fit change", () => {
+  const state = loaded();
+  const next = run(state, rolledEdit(state, FIXTURES.roll.item.roll));
+  assert.deepEqual(next.fit.modules[0].item.roll, { ...state.fit.modules[0].item.roll, modifiers: FIXTURES.roll.item.roll.modifiers });
+  assert.equal(next.revision, state.revision + 1, "the engine evaluates the fit again");
+  assert.equal(next.fit.modules[1], state.fit.modules[1], "the other modules are untouched");
+  // Only the modifiers: a quality the answer carries is not taken.
+  const forged = run(state, rolledEdit(state, { ...FIXTURES.roll.item.roll, quality: "Masterwork" }));
+  assert.equal(forged.fit.modules[0].item.roll.quality, state.fit.modules[0].item.roll.quality);
+  // The line re-roll's answer, on the rolled item, changes line 0 alone.
+  const line = run(next, rolledEdit(next, FIXTURES.rollLine.item.roll));
+  assert.deepEqual(line.fit.modules[0].item.roll.modifiers, FIXTURES.rollLine.item.roll.modifiers);
+  assert.deepEqual(line.fit.modules[0].item.roll.modifiers.slice(1), next.fit.modules[0].item.roll.modifiers.slice(1));
+});
+
+test("a rolled edit for a roll that has changed since, another item, or a rarity the game doesn't roll changes nothing", () => {
+  const state = loaded();
+  const stale = rolledEdit(state, FIXTURES.roll.item.roll);
+  const edited = run(state, { type: "roll", target: 0, edit: { kind: "quality", quality: "Masterwork" } });
+  assert.notEqual(edited.fit, state.fit);
+  assert.equal(run(edited, stale).fit, edited.fit, "an answer to an older roll is dropped");
+  const otherItem = { ...stale, edit: { ...stale.edit, def: FIXTURES.fit.modules[1].item.def } };
+  assert.equal(run(state, otherItem).fit, state.fit);
+  const normal = state.fit.modules[1].item;
+  const onNormal = { type: "roll", target: 1, edit: { kind: "rolled", def: normal.def, sent: normal.roll, rolled: { ...normal.roll, modifiers: FIXTURES.roll.item.roll.modifiers } } };
+  assert.equal(run(state, onNormal).fit, state.fit);
+  const sameLines = run(state, rolledEdit(state, state.fit.modules[0].item.roll));
+  assert.equal(sameLines, state, "the same lines are no change");
+});

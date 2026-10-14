@@ -1,7 +1,8 @@
 // The item inspector: the selected module's (or the hull's) roll, every control limited to what the
 // catalog's rules allow (rules.ts). Edits dispatch to the reducer, which applies the same rules again.
-import type { Dispatch, ReactNode } from "react";
-import type { CatalogItem, OpenFit, OpenModifier, OpenRoll } from "#/lib/engine/types";
+import { useEffect, useRef, useState, type Dispatch, type ReactNode } from "react";
+import type { EngineClient } from "#/lib/engine/client";
+import type { CatalogItem, OpenFit, OpenItem, OpenModifier, OpenRoll } from "#/lib/engine/types";
 import { formatStatValue, statLabel, statTone } from "#/lib/fits/stat-format";
 import { Panel } from "#/components/ui";
 import { enumWords, rarityName } from "./labels";
@@ -40,6 +41,7 @@ import {
   type BuilderCatalog,
   type RollSubject,
 } from "./rules";
+import { breachTiers, canRandomize, defaultBreachTier, randomize } from "./randomize";
 import type { BuilderAction, RollEdit, Target } from "./state";
 
 /** A modifier's raw FP as the game shows it: a Multiply as the change from 1. */
@@ -114,6 +116,7 @@ function ModifierRow({
   index,
   removable,
   edit,
+  dice,
 }: {
   cat: BuilderCatalog;
   subject: RollSubject;
@@ -121,6 +124,8 @@ function ModifierRow({
   index: number;
   removable: boolean;
   edit: (edit: RollEdit) => void;
+  /** This line's dice, when the engine can roll the item: re-rolls the line alone. */
+  dice?: { onRoll: () => void; rolling: boolean; disabled: boolean };
 }) {
   const modifier: OpenModifier = roll.modifiers[index]!;
   const range = valueRange(cat, subject, roll, index, modifier.tier);
@@ -164,6 +169,19 @@ function ModifierRow({
         ) : (
           <span className="slider slider--fixed note">FIXED</span>
         )}
+        {dice && (
+          <button
+            type="button"
+            className={`icon-btn dice-btn ${dice.rolling ? "dice-btn--rolling" : ""}`}
+            aria-label={`Re-roll ${label}`}
+            title="RE-ROLL THIS LINE"
+            disabled={dice.disabled}
+            aria-busy={dice.rolling}
+            onClick={dice.onRoll}
+          >
+            <DieFace />
+          </button>
+        )}
         {removable && (
           <button type="button" className="icon-btn" aria-label={`Remove ${label}`} onClick={() => edit({ kind: "removeModifier", index })}>
             ×
@@ -193,6 +211,132 @@ function ModifierRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** A flat, square-cornered die showing five. */
+function DieFace() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true" focusable="false">
+      <rect x="0.5" y="0.5" width="13" height="13" fill="none" stroke="currentColor" />
+      {[
+        [3.5, 3.5],
+        [10.5, 3.5],
+        [7, 7],
+        [3.5, 10.5],
+        [10.5, 10.5],
+      ].map(([x, y]) => (
+        <rect key={`${x},${y}`} x={x! - 1} y={y! - 1} width="2" height="2" fill="currentColor" />
+      ))}
+    </svg>
+  );
+}
+
+type Rolling = {
+  /** The item the state is about: a selection change hides another item's message. */
+  target: Target | null;
+  /** What is being rolled: every line, one line, or nothing. */
+  busy: "all" | number | null;
+  message: string | null;
+  last: { seed: number; breachTier: number } | null;
+};
+
+const NOT_ROLLING: Rolling = { target: null, busy: null, message: null, last: null };
+
+/**
+ * The modifier lines with the engine's dice: RANDOMIZE ROLL re-rolls every line at the chosen breach tier
+ * (the highest by default), a line's die re-rolls that line alone. Each answer is one roll edit.
+ */
+function ModifiersSection({
+  cat,
+  subject,
+  item,
+  target,
+  roller,
+  edit,
+}: {
+  cat: BuilderCatalog;
+  subject: RollSubject;
+  item: OpenItem;
+  target: Target;
+  roller?: Pick<EngineClient, "roll">;
+  edit: (edit: RollEdit) => void;
+}) {
+  const roll = item.roll;
+  const count = modifierCount(cat, subject, roll);
+  const tiers = breachTiers(cat.catalog);
+  const [tier, setTier] = useState<number | null>(() => defaultBreachTier(cat.catalog));
+  const [rolling, setRolling] = useState<Rolling>(NOT_ROLLING);
+  const pending = useRef<AbortController | null>(null);
+  useEffect(() => () => pending.current?.abort(), []);
+
+  const shown = rolling.target === target ? rolling : NOT_ROLLING;
+  const busy = shown.busy !== null;
+  const dice = roller !== undefined && tier !== null && canRandomize(cat, subject, item);
+
+  async function rollLines(line?: number) {
+    if (!roller || tier === null) return;
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    setRolling({ target, busy: line ?? "all", message: null, last: null });
+    const outcome = await randomize(roller, item, { breachTier: tier, line, signal: controller.signal });
+    if (pending.current !== controller) return;
+    pending.current = null;
+    if (outcome.ok) {
+      edit(outcome.edit);
+      setRolling({ target, busy: null, message: null, last: { seed: outcome.seed, breachTier: outcome.breachTier } });
+    } else {
+      setRolling({ target, busy: null, message: outcome.message, last: null });
+    }
+  }
+
+  const lastTier = shown.last ? tiers.find((each) => each.index === shown.last!.breachTier) : undefined;
+  return (
+    <Section title="MODIFIERS" aside={count.min === count.max ? `${roll.modifiers.length}/${count.max}` : `${roll.modifiers.length} · ${count.min} TO ${count.max}`}>
+      {dice && (
+        <div className="roll-dice">
+          <label className="field roll-dice__tier">
+            BREACH TIER
+            <select className="select select--small" value={tier} disabled={busy} onChange={(event) => setTier(Number(event.target.value))}>
+              {tiers.map((each) => (
+                <option key={each.index} value={each.index}>
+                  {each.name.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="btn btn--small roll-dice__all" disabled={busy} aria-busy={shown.busy === "all"} onClick={() => void rollLines()}>
+            {shown.busy === "all" ? "ROLLING…" : "RANDOMIZE ROLL"}
+          </button>
+        </div>
+      )}
+      <ul className="modifiers">
+        {roll.modifiers.map((_, index) => (
+          <ModifierRow
+            key={index}
+            cat={cat}
+            subject={subject}
+            roll={roll}
+            index={index}
+            removable={!isTemplated(roll.rarity) && roll.modifiers.length > count.min}
+            edit={edit}
+            dice={dice ? { onRoll: () => void rollLines(index), rolling: shown.busy === index, disabled: busy } : undefined}
+          />
+        ))}
+      </ul>
+      {shown.message && (
+        <p className="note note--error" role="status">
+          {shown.message}
+        </p>
+      )}
+      {shown.last && (
+        <p className="note" role="status">
+          ROLLED AT {lastTier ? lastTier.name.toUpperCase() : `TIER ${shown.last.breachTier}`} · SEED {shown.last.seed}
+        </p>
+      )}
+      <AddModifier cat={cat} subject={subject} roll={roll} edit={edit} />
+    </Section>
   );
 }
 
@@ -310,7 +454,20 @@ function PortEditor({ cat, item, roll, edit }: { cat: BuilderCatalog; item: Cata
   );
 }
 
-export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog; fit: OpenFit; target: Target | null; dispatch: Dispatch<BuilderAction> }) {
+export function Inspector({
+  cat,
+  fit,
+  target,
+  dispatch,
+  roller,
+}: {
+  cat: BuilderCatalog;
+  fit: OpenFit;
+  target: Target | null;
+  dispatch: Dispatch<BuilderAction>;
+  /** The engine's roller for RANDOMIZE ROLL and the dice; without one the inspector offers none. */
+  roller?: Pick<EngineClient, "roll">;
+}) {
   if (target === null) {
     return (
       <Panel title="INSPECTOR">
@@ -463,16 +620,7 @@ export function Inspector({ cat, fit, target, dispatch }: { cat: BuilderCatalog;
         </Section>
       )}
 
-      {(count.max > 0 || roll.modifiers.length > 0) && (
-        <Section title="MODIFIERS" aside={count.min === count.max ? `${roll.modifiers.length}/${count.max}` : `${roll.modifiers.length} · ${count.min} TO ${count.max}`}>
-          <ul className="modifiers">
-            {roll.modifiers.map((_, index) => (
-              <ModifierRow key={index} cat={cat} subject={subject} roll={roll} index={index} removable={!isTemplated(roll.rarity) && roll.modifiers.length > count.min} edit={edit} />
-            ))}
-          </ul>
-          <AddModifier cat={cat} subject={subject} roll={roll} edit={edit} />
-        </Section>
-      )}
+      {(count.max > 0 || roll.modifiers.length > 0) && <ModifiersSection cat={cat} subject={subject} item={item} target={target} roller={roller} edit={edit} />}
 
       {template?.scaledStat && roll.scaledStat && (
         <Section title="SCALED STAT" aside={enumWords(template.scaledStat.rule)}>

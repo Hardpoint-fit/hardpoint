@@ -56,7 +56,9 @@ function check(value, node, path, errors, seen) {
       for (const key of Object.keys(value)) if (!declared.includes(key)) errors.push(`${path}.${key}: the engine sends it, types.ts doesn't declare it`);
       for (const member of node.members) {
         const key = member.name.text;
-        if (!(key in value)) errors.push(`${path}.${key}: declared in types.ts, missing from the engine's JSON`);
+        if (!(key in value)) {
+          if (!member.questionToken) errors.push(`${path}.${key}: declared in types.ts, missing from the engine's JSON`);
+        }
         else check(value[key], member.type, `${path}.${key}`, errors, seen);
       }
       return;
@@ -89,6 +91,10 @@ const cases = [
   ["item-facts-request.json", "ItemBody"],
   ["item-facts.json", "FactsBody"],
   ["grid-mods.json", "GridModsResponse"],
+  ["roll-request.json", "RollRequest"],
+  ["roll.json", "RollResponse"],
+  ["roll-line-request.json", "RollRequest"],
+  ["roll-line.json", "RollResponse"],
 ];
 const byName = {
   "health.json": FIXTURES.health,
@@ -106,6 +112,10 @@ const byName = {
   "item-facts-request.json": FIXTURES.itemFactsRequest,
   "item-facts.json": FIXTURES.itemFacts,
   "grid-mods.json": FIXTURES.gridMods,
+  "roll-request.json": FIXTURES.rollRequest,
+  "roll.json": FIXTURES.roll,
+  "roll-line-request.json": FIXTURES.rollLineRequest,
+  "roll-line.json": FIXTURES.rollLine,
 };
 
 for (const [file, typeName] of cases) {

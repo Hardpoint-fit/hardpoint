@@ -499,7 +499,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
         </div>
 
         <div className="builder-layout__side">
-          <Inspector cat={cat} fit={fit} target={state.selected} dispatch={dispatch} />
+          <Inspector cat={cat} fit={fit} target={state.selected} dispatch={dispatch} roller={engine} />
           <StatsPanel cat={cat} evaluation={evaluation} result={result} moduleName={moduleName} />
           <FitDetails
             fit={fit}

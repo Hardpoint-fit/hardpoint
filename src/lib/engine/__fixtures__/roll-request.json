@@ -1,0 +1,33 @@
+{
+  "item": {
+    "def": "1284176030826467319",
+    "roll": {
+      "quality": "Standard",
+      "rarity": "Augmented",
+      "modifiers": [
+        {
+          "stat": "MaxHull",
+          "operation": "Multiply",
+          "tier": 1,
+          "value": "67502",
+          "slot": 0,
+          "isInverted": false,
+          "isFractured": false
+        }
+      ],
+      "ports": [],
+      "artifact": null,
+      "regalia": null,
+      "heretical": null,
+      "ascended": null,
+      "moduleTypeOverride": null,
+      "isIdentified": true,
+      "isHarmonized": false,
+      "isMirrored": false,
+      "harmonicSet": null,
+      "scaledStat": null
+    },
+    "patina": 0
+  },
+  "seed": 42
+}

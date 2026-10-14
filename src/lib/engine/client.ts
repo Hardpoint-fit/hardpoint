@@ -2,7 +2,7 @@
 // browser (given the public URL from the public config) and never throws: every outcome is an
 // EngineResult. It knows nothing about fits or the database; fits/service.ts and the pages build on it.
 
-import type { Catalog, EvaluationResponse, ErrorBody, FactsBody, FitBody, FitStringBody, GridModsResponse, HealthResponse, OpenFit, OpenItem } from "./types.ts";
+import type { Catalog, EvaluationResponse, ErrorBody, FactsBody, FitBody, FitStringBody, GridModsResponse, HealthResponse, OpenFit, OpenItem, RollRequest, RollResponse } from "./types.ts";
 
 export type EngineErrorKind =
   /** Unreachable, not configured, a 5xx, or an answer that isn't the engine's. Worth retrying later. */
@@ -64,6 +64,8 @@ export type EngineClient = {
   itemFacts(item: OpenItem, options?: { signal?: AbortSignal }): Promise<EngineResult<FactsBody>>;
   /** What each grid consumable can do to the fit's grid, by the game's rules. `signal` cancels it, as for evaluate. */
   gridMods(fit: OpenFit, options?: { signal?: AbortSignal }): Promise<EngineResult<GridModsResponse>>;
+  /** The item's modifiers rolled by the game's roller, all of them or `line` alone. `signal` cancels it, as for evaluate. */
+  roll(request: RollRequest, options?: { signal?: AbortSignal }): Promise<EngineResult<RollResponse>>;
 };
 
 const fail = (kind: EngineErrorKind, message: string): { ok: false; error: EngineError } => ({ ok: false, error: { kind, message } });
@@ -90,6 +92,13 @@ const isFitBody = (v: unknown): v is FitBody => isObject(v) && isObject(v.fit);
 const isFitStringBody = (v: unknown): v is FitStringBody => isObject(v) && typeof v.fitString === "string";
 const isGridMods = (v: unknown): v is GridModsResponse =>
   isObject(v) && typeof v.buildSha === "string" && isObject(v.budget) && Array.isArray(v.consumables);
+const isRoll = (v: unknown): v is RollResponse =>
+  isObject(v) &&
+  typeof v.seed === "number" &&
+  typeof v.breachTier === "number" &&
+  isObject(v.item) &&
+  isObject(v.item.roll) &&
+  Array.isArray(v.item.roll.modifiers);
 
 export function createEngineClient(options: EngineClientOptions): EngineClient {
   const timeouts = { ...DEFAULT_TIMEOUTS, ...options.timeouts };
@@ -175,6 +184,9 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     },
     async gridMods(fit, opts = {}) {
       return plain(await call("POST", "/v1/grid-mods", timeouts.evaluateMs, isGridMods, { body: { fit }, signal: opts.signal }));
+    },
+    async roll(request, opts = {}) {
+      return plain(await call("POST", "/v1/roll", timeouts.evaluateMs, isRoll, { body: request, signal: opts.signal }));
     },
   };
 }

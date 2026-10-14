@@ -620,6 +620,23 @@
   gap: var(--spacing-sm);
 }
 
+/* RANDOMIZE ROLL: the breach tier the engine rolls at, and the button, above the lines. */
+.roll-dice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--spacing-sm);
+}
+
+.roll-dice__tier {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.dice-btn--rolling {
+  color: var(--accent-orange);
+}
+
 .modifier__flags {
   display: flex;
   flex-wrap: wrap;
