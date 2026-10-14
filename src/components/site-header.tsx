@@ -15,7 +15,9 @@ export async function SiteHeader() {
   const author = authEnabled ? await currentAuthor() : null;
   return (
     <header className="flex h-12 items-center gap-6 border-b border-[color:var(--panel-border)] bg-header px-4">
-      <Link href="/" className="text-[length:var(--font-size-header)] tracking-widest text-primary">
+      <Link href="/" className="flex items-center gap-2 text-[length:var(--font-size-header)] tracking-widest text-primary">
+        {/* eslint-disable-next-line @next/next/no-img-element -- a fixed-size SVG gains nothing from next/image */}
+        <img src="/logo.svg" width={24} height={24} alt="" />
         Citadel Fits
       </Link>
       <nav className="flex gap-4 text-[length:var(--font-size-small)] tracking-widest">

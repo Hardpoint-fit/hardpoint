@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 4 56 56">
+  <defs>
+    <path id="wrench" fill-rule="evenodd" d="M29.5 10h5v44h-5z M24 7l3-3h2v7h6v-7h2l3 3v7l-3 3h-10l-3-3z M26 50h12l3 3v5l-3 3h-12l-3-3v-5z M30.2 52.5h3.6l1.8 3l-1.8 3h-3.6l-1.8-3z"/>
+    <g id="skull" transform="translate(32 32) scale(0.84) translate(-32 -31)">
+      <path d="M22 10h20l7 7v17l-3 3v2l-4 3v9l-3 3h-14l-3-3v-9l-4-3v-2l-3-3v-17z"/>
+    </g>
+    <mask id="gap">
+      <rect width="64" height="64" fill="#fff"/>
+      <use href="#skull" fill="#000" stroke="#000" stroke-width="5"/>
+    </mask>
+    <mask id="face">
+      <rect width="64" height="64" fill="#fff"/>
+      <g transform="translate(32 32) scale(0.84) translate(-32 -31)">
+        <path fill="#000" d="M20 27l10 3v6l-2 2h-6l-2-2z M44 27l-10 3v6l2 2h6l2-2z M32 37l-3 6h6z M26 47h3v6h-3z M30.5 47h3v6h-3z M35 47h3v6h-3z"/>
+      </g>
+    </mask>
+  </defs>
+  <g fill="#FF9900">
+    <g mask="url(#gap)">
+      <use href="#wrench" transform="rotate(-45 32 32)"/>
+      <use href="#wrench" transform="rotate(45 32 32)"/>
+    </g>
+    <use href="#skull" mask="url(#face)"/>
+  </g>
+</svg>

@@ -19,6 +19,7 @@ const vcr = localFont({
 export const metadata: Metadata = {
   title: "Citadel Theorycrafting",
   description: "Build, share and compare Citadel ship fits.",
+  icons: { icon: { url: "/logo.svg", type: "image/svg+xml" } },
 };
 
 // The public config comes from the run-time environment, so no page is prerendered at build time.

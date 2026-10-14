@@ -5,6 +5,7 @@ import art from "#/components/grid/fitting-art.generated.json";
 import { boundsOf } from "#/components/grid/geometry";
 import { moduleCells, type GridModel } from "#/components/grid/model";
 import { art2x } from "#/lib/art/art-manifest";
+import { logoDataUri } from "#/lib/brand/logo";
 import { itemIcon } from "#/lib/art/item-icon";
 import { isOpenFit } from "#/lib/engine/open-fit";
 import { loadFitPage } from "#/lib/site/loaders";
@@ -78,13 +79,16 @@ type Params = Promise<{ id: string }>;
 
 export default async function FitCard({ params }: { params: Params }) {
   const { id } = await params;
-  const [font, data] = await Promise.all([readFile(FONT), loadFitPage(siteDeps(), id, { userId: null, isAdmin: false })]);
+  const [font, data, logo] = await Promise.all([readFile(FONT), loadFitPage(siteDeps(), id, { userId: null, isAdmin: false }), logoDataUri(128)]);
   const fonts = [{ name: "VCR", data: font, weight: 400 as const }];
   const frame = { display: "flex", width: "100%", height: "100%", background: "#0c0e0f", fontFamily: "VCR", color: T["text-primary"] } as const;
 
   if (data.status !== "ok") {
     return new ImageResponse(
-      <div style={{ ...frame, alignItems: "center", justifyContent: "center", fontSize: 72, letterSpacing: 12 }}>CITADEL FITS</div>,
+      <div style={{ ...frame, alignItems: "center", justifyContent: "center", gap: 40, fontSize: 72, letterSpacing: 12 }}>
+        <img src={logo} width={128} height={128} alt="" />
+        CITADEL FITS
+      </div>,
       { ...size, fonts },
     );
   }
@@ -110,7 +114,10 @@ export default async function FitCard({ params }: { params: Params }) {
             {rating !== null && <span style={{ color: T["state-quantity"] }}>{`RATING ${rating}`}</span>}
           </div>
           {standing && <div style={{ display: "flex", color: standing.color, fontSize: 22 }}>{standing.text}</div>}
-          <div style={{ display: "flex", fontSize: 20, letterSpacing: 8, color: T["text-secondary"] }}>CITADEL THEORYCRAFTING</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 20, letterSpacing: 8, color: T["text-secondary"] }}>
+            <img src={logo} width={36} height={36} alt="" />
+            CITADEL THEORYCRAFTING
+          </div>
         </div>
       </div>
       <div style={{ display: "flex", width: 470, alignItems: "center", justifyContent: "center", background: T["panel-bg"], border: `1px solid ${T["accent-muted"]}` }}>
