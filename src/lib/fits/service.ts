@@ -25,12 +25,21 @@ export type FitServiceDeps = {
   engine: Pick<EngineClient, "evaluate">;
 };
 
-/** What is stored in a fit's evaluation `stats` column: everything the engine computed except the verdict. */
-export type StoredStats = Pick<EvaluationResponse, "stats" | "conduits" | "regaliaSets">;
+/**
+ * What is stored in a fit's evaluation `stats` column: everything the engine computed except the verdict,
+ * hull specs included, so a fit page draws them with the engine down. A row stored before the engine sent
+ * `sections` lacks the key; the re-evaluation job asks again for those (queries.ts fitsNeedingEvaluation).
+ */
+export type StoredStats = Pick<EvaluationResponse, "stats" | "conduits" | "regaliaSets" | "sections">;
 
 /** The engine's answer as the database stores it. A fit that fails has no rating. */
 export function toEvaluationInput(response: EvaluationResponse): EvaluationInput {
-  const stats: StoredStats = { stats: response.stats, conduits: response.conduits, regaliaSets: response.regaliaSets };
+  const stats: StoredStats = {
+    stats: response.stats,
+    conduits: response.conduits,
+    regaliaSets: response.regaliaSets,
+    sections: Array.isArray(response.sections) ? response.sections : [],
+  };
   return {
     buildSha: response.buildSha,
     valid: response.valid,

@@ -25,6 +25,14 @@ test("an outdated fit shows its last valid stats and the current build's issues"
 
 test("odd stored rows read as empty, never throw", () => {
   const shown = shownEvaluation({ evaluation: verdict("new", true, { stats: "nonsense", issues: null }), lastValidEvaluation: null }, "new");
-  assert.deepEqual(shown.result, { stats: [], conduits: [], regaliaSets: [] });
+  assert.deepEqual(shown.result, { stats: [], conduits: [], regaliaSets: [], sections: null });
   assert.deepEqual(shown.issues, []);
+});
+
+test("stored hull specs come back; a row from before the engine sent them reads as null, not empty", () => {
+  const sections = [{ id: "defense", label: "DEFENSE", rows: [] }];
+  const withSpecs = shownEvaluation({ evaluation: verdict("new", true, { stats: { stats: [], conduits: [], regaliaSets: [], sections } }), lastValidEvaluation: null }, "new");
+  assert.deepEqual(withSpecs.result.sections, sections);
+  const older = shownEvaluation({ evaluation: verdict("new", true), lastValidEvaluation: null }, "new");
+  assert.equal(older.result.sections, null);
 });

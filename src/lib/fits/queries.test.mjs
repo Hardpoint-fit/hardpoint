@@ -40,7 +40,7 @@ const HULLS = new Map([
   ["3000", { hullClass: "Frigate", role: "Damage" }],
 ]);
 
-const good = { buildSha: SHA, valid: true, rating: 10, stats: { speed: 3 }, issues: [] };
+const good = { buildSha: SHA, valid: true, rating: 10, stats: { speed: 3, sections: [] }, issues: [] };
 const bad = { buildSha: SHA, valid: false, rating: null, stats: {}, issues: [{ code: "removed_item" }] };
 
 let db;
@@ -567,6 +567,19 @@ test("fitsNeedingEvaluation lists published fits without a verdict for the sha, 
   assert.equal((await fitsNeedingEvaluation(db, SHA2, 1)).length, 1);
   await recordEvaluation(db, a.id, { buildSha: SHA2, valid: false, rating: null, stats: {}, issues: [{ code: "removed_item" }] }, { revision: needing.find((f) => f.id === a.id).revision });
   assert.deepEqual((await fitsNeedingEvaluation(db, SHA2)).map((f) => f.id), [b.id]);
+});
+
+test("a valid verdict stored before the engine sent hull specs is asked about again until it has them", async () => {
+  const fit = await published();
+  assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id));
+  await recordEvaluation(db, fit.id, { ...good, stats: { speed: 3 } });
+  const [needing] = (await fitsNeedingEvaluation(db, SHA)).filter((f) => f.id === fit.id);
+  assert.ok(needing, "an old row without sections is re-checked");
+  await recordEvaluation(db, fit.id, good, { revision: needing.revision });
+  assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id), "the re-check filled it in");
+  // An invalid verdict has no specs to fill in: it isn't asked about again.
+  await recordEvaluation(db, fit.id, bad);
+  assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id));
 });
 
 test("recordEvaluation upserts, and ignores a verdict on content edited since", async () => {

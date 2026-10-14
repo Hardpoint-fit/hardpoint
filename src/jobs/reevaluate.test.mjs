@@ -76,6 +76,16 @@ test("a new build re-evaluates every published fit, and only those", async () =>
   assert.match(describe(summary), /evaluated 7/);
 });
 
+test("a fit whose verdict on this build predates hull specs is checked again, and its specs are stored", async () => {
+  engineAt(OLD);
+  const fit = await publishedFit("Before hull specs");
+  const summary = await run();
+  assert.equal(summary.evaluated, 1);
+  const { rows: stored } = await db.query(`SELECT stats FROM fit_evaluations WHERE fit_id = $1 AND build_sha = $2`, [fit.id, OLD]);
+  assert.deepEqual(stored[0].stats.sections, FIXTURES.evaluateValid.sections);
+  assert.equal((await run()).evaluated, 0, "filled in: not asked again");
+});
+
 test("a second run for the same build does nothing", async () => {
   engineAt(NEW);
   await publishedFit();

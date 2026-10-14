@@ -42,11 +42,14 @@ test("toEvaluationInput keeps the verdict and the computed stats, and drops the 
   const valid = toEvaluationInput(FIXTURES.evaluateValid);
   assert.equal(valid.valid, true);
   assert.equal(valid.rating, FIXTURES.evaluateValid.rating);
-  assert.deepEqual(Object.keys(valid.stats).sort(), ["conduits", "regaliaSets", "stats"]);
+  assert.deepEqual(Object.keys(valid.stats).sort(), ["conduits", "regaliaSets", "sections", "stats"]);
+  assert.deepEqual(valid.stats.sections, FIXTURES.evaluateValid.sections, "hull specs are kept for the fit page");
+  assert.ok(valid.stats.sections.length > 0);
   const invalid = toEvaluationInput(FIXTURES.evaluateInvalid);
   assert.equal(invalid.valid, false);
   assert.equal(invalid.rating, null);
   assert.equal(invalid.issues[0].kind, "Overlap");
+  assert.deepEqual(invalid.stats.sections, [], "an invalid fit has none, and still records that it was asked");
 });
 
 test("saveDraft stores the fit with the engine's verdict", async () => {

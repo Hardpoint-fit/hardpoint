@@ -1,6 +1,6 @@
 // Where a fit stands on the engine's current build, from the verdicts stored for it. The engine is the
 // only judge; this only reads what it said. Pure.
-import type { ConduitLink, EvaluationIssue, RegaliaGroup, StatLine } from "../engine/types";
+import type { ConduitLink, EvaluationIssue, RegaliaGroup, SpecSection, StatLine } from "../engine/types";
 import type { Evaluation, FitSummary } from "./queries";
 
 export type Standing =
@@ -23,8 +23,11 @@ export function standingOf(fit: Pick<FitSummary, "evaluation" | "lastValidEvalua
   return fit.lastValidEvaluation ? "outdated" : "invalid";
 }
 
-/** What `fit_evaluations.stats` holds (service.ts StoredStats); older or odd rows read as empty. */
-export type StoredResult = { stats: StatLine[]; conduits: ConduitLink[]; regaliaSets: RegaliaGroup[] };
+/**
+ * What `fit_evaluations.stats` holds (service.ts StoredStats); older or odd rows read as empty. `sections`
+ * is null for a row stored before the engine sent hull specs: the next check fills it in.
+ */
+export type StoredResult = { stats: StatLine[]; conduits: ConduitLink[]; regaliaSets: RegaliaGroup[]; sections: SpecSection[] | null };
 
 export function storedResult(evaluation: Evaluation | null): StoredResult {
   const stats = evaluation?.stats as Partial<StoredResult> | null | undefined;
@@ -32,6 +35,7 @@ export function storedResult(evaluation: Evaluation | null): StoredResult {
     stats: Array.isArray(stats?.stats) ? stats.stats : [],
     conduits: Array.isArray(stats?.conduits) ? stats.conduits : [],
     regaliaSets: Array.isArray(stats?.regaliaSets) ? stats.regaliaSets : [],
+    sections: Array.isArray(stats?.sections) ? stats.sections : null,
   };
 }
 

@@ -13,6 +13,11 @@ export const BOB = { userId: "user_bob", name: "BOB" };
 export const ADMIN = { userId: "user_admin", name: "WARDEN" };
 
 const at = (sha, response) => ({ ...toEvaluationInput(response), buildSha: sha });
+/** A verdict stored before the engine sent hull specs: its stats carry no `sections`. */
+const beforeSpecs = (verdict) => {
+  const { sections, ...stats } = verdict.stats;
+  return { ...verdict, stats };
+};
 
 async function published(db, author, { title, description = "", tags = [], fit, verdicts }) {
   const [first, ...later] = verdicts;
@@ -36,7 +41,8 @@ async function published(db, author, { title, description = "", tags = [], fit, 
  *  - showcase: ALICE's SCARAB, valid on the current build, two votes, a comment with a reply, a report;
  *  - removed: BOB's fit whose module 2 is an item the current build doesn't have: valid on OLD_SHA,
  *    UnknownItem on the current build (outdated);
- *  - pending: BOB's fit checked only on OLD_SHA (the current build hasn't evaluated it yet);
+ *  - pending: BOB's fit checked only on OLD_SHA (the current build hasn't evaluated it yet), by an
+ *    engine that didn't yet send hull specs;
  *  - draft: ALICE's unpublished draft.
  */
 export async function seedSite(db) {
@@ -58,7 +64,7 @@ export async function seedSite(db) {
     title: "Waiting on the new build",
     tags: ["turret"],
     fit: FIXTURES.fit,
-    verdicts: [at(OLD_SHA, FIXTURES.evaluateValid)],
+    verdicts: [beforeSpecs(at(OLD_SHA, FIXTURES.evaluateValid))],
   });
   const draft = await createFit(db, {
     authorUserId: ALICE.userId,
