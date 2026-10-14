@@ -102,7 +102,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
     id: fit.id,
     title: fit.title,
     hullName: hull?.name ?? "UNKNOWN HULL",
-    hullIcon: hull ? baseIcon(hull.path) : null,
+    hullIcon: hull ? baseIcon(hull.art) : null,
     authorUserId: fit.authorUserId,
     authorName: fit.authorName,
     tags: fit.tags,

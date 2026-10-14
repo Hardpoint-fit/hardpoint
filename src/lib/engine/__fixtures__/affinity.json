@@ -1,0 +1,891 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "affinity": {
+  "maxLevel": 30,
+  "maxPointsPerCategory": 20,
+  "maxPointsPerBonus": 15,
+  "levelXp": [
+   0,
+   458,
+   960,
+   1510,
+   2164,
+   2879,
+   3671,
+   4605,
+   5626,
+   6766,
+   8100,
+   9555,
+   11199,
+   13101,
+   15176,
+   17542,
+   20257,
+   23216,
+   26623,
+   30496,
+   34714,
+   39621,
+   45147,
+   51159,
+   58225,
+   66108,
+   74676,
+   84850,
+   96095,
+   108305
+  ],
+  "ratingByPoints": [
+   0,
+   30,
+   62,
+   98,
+   136,
+   179,
+   225,
+   275,
+   329,
+   388,
+   453,
+   523,
+   599,
+   683,
+   773,
+   872,
+   980,
+   1097,
+   1224,
+   1363,
+   1514,
+   1679,
+   1858,
+   2053,
+   2265,
+   2497,
+   2748,
+   3022,
+   3321,
+   3646,
+   4000
+  ],
+  "types": [
+   {
+    "moduleType": "Turret",
+    "name": "TURRET AFFINITY",
+    "optionName": "TURRET",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "TurretDamage",
+      "operation": "Multiply",
+      "valuePerPoint": "52429",
+      "name": "TURRET DAMAGE",
+      "description": "+0.5% TURRET DAMAGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "TurretRange",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "OPTIMAL RANGE",
+      "description": "+0.5% TURRET OPTIMAL RANGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "TurretCycleDuration",
+      "operation": "Multiply",
+      "valuePerPoint": "-39322",
+      "name": "RATE OF FIRE",
+      "description": "+0.25% RATE OF FIRE PER POINT",
+      "invertDisplaySign": true
+     },
+     {
+      "option": 3,
+      "stat": "TurretRotationRate",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "TRACKING SPEED",
+      "description": "+1% TURRET TRACKING PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "EXTENDED MAGAZINES",
+        "description": "+25% MAX AMMO CAPACITY"
+       },
+       {
+        "option": 1,
+        "name": "QUICK RELOAD",
+        "description": "TURRET MAGAZINES RELOAD 20% FASTER"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "SERVO LOCK",
+        "description": "TRACKING SPEED RAMPS UP TO +35% AFTER 10S ON THE SAME TARGET"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE TURRET STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "MARKSMAN",
+        "description": "-25% TURRET DAMAGE AT 25% OF OPTIMAL RANGE OR CLOSER → +50% AT 125% OR FARTHER"
+       },
+       {
+        "option": 1,
+        "name": "BRAWLER",
+        "description": "+50% TURRET DAMAGE AT 35% OF OPTIMAL RANGE OR CLOSER → -25% AT 125% OR FARTHER"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Shield",
+    "name": "SHIELD AFFINITY",
+    "optionName": "SHIELD",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "BarrierMaxHP",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "BARRIER HP",
+      "description": "+0.5% BARRIER MAX HP PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "BarrierRegenRate",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "BARRIER REGENERATION",
+      "description": "+0.5% BARRIER REGEN RATE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "MaxHeat",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "MAX HEAT",
+      "description": "+1.25% MAX HEAT PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "HeatDissipationRate",
+      "operation": "Multiply",
+      "valuePerPoint": "52429",
+      "name": "HEAT DISSIPATION",
+      "description": "+1% HEAT DISSIPATION PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "FORGE FIELD",
+        "description": "BARRIER REGEN RATE SCALES UP TO +100% WITH SHIP HEAT"
+       },
+       {
+        "option": 1,
+        "name": "INNER KEEP",
+        "description": "+50% MAX HULL"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "THERMAL FLOW",
+        "description": "BARRIERS VENT 1 HEAT PER 10 DAMAGE THEY ABSORB"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE SHIELD STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "HELLFIRE BARRIER",
+        "description": "DESTROYED BARRIERS DETONATE OUT TO 20X THEIR RADIUS FOR DAMAGE EQUAL TO HALF THEIR MAX HP"
+       },
+       {
+        "option": 1,
+        "name": "HOLLOW AEGIS",
+        "description": "MAX ARMOR IS ZEROED; +6% MAX BARRIER HP PER 100 MAX ARMOR YOU HAD"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Propulsion",
+    "name": "AGILITY AFFINITY",
+    "optionName": "AGILITY",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "MaxSpeed",
+      "operation": "Multiply",
+      "valuePerPoint": "45875",
+      "name": "MAX SPEED",
+      "description": "+0.5% MAX SPEED PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "Thrust",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "THRUST",
+      "description": "+1.25% THRUST PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "Torque",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "TORQUE",
+      "description": "+1.25% TORQUE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "Mass",
+      "operation": "Multiply",
+      "valuePerPoint": "-32768",
+      "name": "MASS REDUCTION",
+      "description": "-0.5% HULL MASS PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "OVERBURN",
+        "description": "MAX SPEED +18% WHILE BOOSTING"
+       },
+       {
+        "option": 1,
+        "name": "SLIP VECTOR",
+        "description": "+10% TURRET TRACKING PER 2S OF DRIFTING, UP TO +40%. RESETS 5S AFTER YOU STOP DRIFTING"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "COOLFLOW VENTS",
+        "description": "HEAT DISSIPATION SCALES UP TO +50% AT MAX VELOCITY"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE AGILITY STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "SLIPSTREAM FRAME",
+        "description": "KINETIC RESISTANCE WHILE BOOSTING: +5% PER 2S OF BOOSTING, UP TO +25%. LOSES A STACK EACH SECOND YOU'RE NOT BOOSTING"
+       },
+       {
+        "option": 1,
+        "name": "DEAD ANGLE",
+        "description": "+10% TURRET CRIT CHANCE AND -5% PENETRATION COOLDOWN PER SECOND OF DRIFTING, UP TO 10 STACKS. RESETS 5S AFTER YOU STOP DRIFTING"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Drone",
+    "name": "DRONE AFFINITY",
+    "optionName": "DRONE",
+    "description": "SPECIALIZES A HULL AROUND CONTROLLER CAPACITY AND INDEPENDENTLY SIMULATED PHYSICAL DRONES.",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "DroneOutput",
+      "operation": "Multiply",
+      "valuePerPoint": "32768",
+      "name": "DRONE OUTPUT",
+      "description": "+0.5% ATTACK DAMAGE, REPAIR AMOUNT, AND MINING WORK PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "DroneEndurance",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "DRONE ENDURANCE",
+      "description": "+1% DEPLOYMENT TIME FOR EVERY LIVE DRONE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "SignatureRadius",
+      "operation": "Multiply",
+      "valuePerPoint": "-65536",
+      "name": "SIGNATURE RADIUS",
+      "description": "-0.5% SIGNATURE RADIUS PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "DroneSpeed",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "DRONE SPEED",
+      "description": "+1.5% DRONE SPEED, THRUST, AND TORQUE PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "COOLANT LOOP",
+        "description": "HEAT DISSIPATION +30% WHILE DRONES ARE DEPLOYED"
+       },
+       {
+        "option": 1,
+        "name": "ARMORED DRONES",
+        "description": "YOUR DRONES TAKE 30% LESS DAMAGE"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "SWARM DISCIPLINE",
+        "description": "BELOW 60% HEAT, DRONE OUTPUT SCALES UP TO +50%"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE DRONE STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "TITHE PROTOCOL",
+        "description": "PASSIVE ARMOR REGEN: 5/SEC. RISES TO 20/SEC WITH DRONE DEPLOYED. 2X DRONE SPEED."
+       },
+       {
+        "option": 1,
+        "name": "BROOD LORD",
+        "description": "+3 DRONE BANDWIDTH; +25% DRONE ENDURANCE; SIGNATURE RADIUS +50% WHILE DRONES ARE DEPLOYED"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Hull",
+    "name": "HULL AFFINITY",
+    "optionName": "HULL",
+    "description": "",
+    "bonuses": [],
+    "thresholds": []
+   },
+   {
+    "moduleType": "ECM",
+    "name": "ECM AFFINITY",
+    "optionName": "ECM",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "ECMMaxRange",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "ECM RANGE",
+      "description": "+1% ECM MAX RANGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "ECMDuration",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "ECM DURATION",
+      "description": "+1% ECM DURATION PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "MineDamage",
+      "operation": "Multiply",
+      "valuePerPoint": "45875",
+      "name": "MINE DAMAGE",
+      "description": "+0.5% MINE DAMAGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "MineTriggerRadius",
+      "operation": "Multiply",
+      "valuePerPoint": "32768",
+      "name": "MINE TRIGGER RADIUS",
+      "description": "+0.5% MINE TRIGGER RADIUS PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "QUICK LOADER",
+        "description": "MINE MAGAZINE REFILLS 30% FASTER"
+       },
+       {
+        "option": 1,
+        "name": "THERMAL REACH",
+        "description": "ECM RANGE +50% WHILE IN THE OPTIMAL HEAT ZONE"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "REACTOR BLEED",
+        "description": "HEAT DISSIPATION +50% IN THE UNSTABLE HEAT ZONE"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE ECM STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "DEAD AIR",
+        "description": "THE STATUSES YOUR ECM APPLIES LAST TWICE AS LONG"
+       },
+       {
+        "option": 1,
+        "name": "CLUSTER MUNITIONS",
+        "description": "DETONATED MINES SPAWN 3 SECONDARY MINES AT 15% DAMAGE"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Missile",
+    "name": "MISSILE AFFINITY",
+    "optionName": "MISSILE",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "MissileDamage",
+      "operation": "Multiply",
+      "valuePerPoint": "45875",
+      "name": "MISSILE DAMAGE",
+      "description": "+0.5% MISSILE DAMAGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "MissileRange",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "MISSILE RANGE",
+      "description": "+1% MISSILE RANGE PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "MissileHomingStrength",
+      "operation": "Multiply",
+      "valuePerPoint": "52429",
+      "name": "MISSILE HOMING",
+      "description": "+0.8% MISSILE HOMING STRENGTH PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "MissileSpeed",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "MISSILE SPEED",
+      "description": "+1.25% MISSILE SPEED PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "RECOIL",
+        "description": "EACH MISSILE LAUNCHED ADDS +2% MAX SPEED, UP TO +20%; LOST 10S AFTER THE LAST LAUNCH"
+       },
+       {
+        "option": 1,
+        "name": "BULWARK RACKS",
+        "description": "EACH LOADED MISSILE CUTS ARMOR AND HULL DAMAGE TAKEN BY 1%, UP TO 10%"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "SALVO CASCADE",
+        "description": "MISSILE HITS CUT MAGAZINE RECHARGE TIME BY 40% FOR 5S"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE MISSILE STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PENETRATION LOAD",
+        "description": "+5% MISSILE DAMAGE PER HIT ON THE SAME TARGET, UP TO +30%. RESETS 7S AFTER THE LAST HIT"
+       },
+       {
+        "option": 1,
+        "name": "SPLINTER VOLLEY",
+        "description": "MISSILE HITS SPLINTER TO THE NEAREST ENEMY IN MISSILE RANGE, UP TO 3 JUMPS; EACH JUMP DEALS HALF THE LAST HIT'S DAMAGE"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Mining",
+    "name": "MINING AFFINITY",
+    "optionName": "MINING",
+    "description": "",
+    "bonuses": [],
+    "thresholds": []
+   },
+   {
+    "moduleType": "Armor",
+    "name": "ARMOR AFFINITY",
+    "optionName": "ARMOR",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "MaxArmor",
+      "operation": "Multiply",
+      "valuePerPoint": "45875",
+      "name": "MAX ARMOR",
+      "description": "+0.5% MAX ARMOR PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "ArmorResistKinetic",
+      "operation": "DamageReduction",
+      "valuePerPoint": "393",
+      "name": "KINETIC RESISTANCE",
+      "description": "+0.375% KINETIC DAMAGE REDUCTION PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "MaxRepairAmount",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "REPAIR AMOUNT",
+      "description": "+1% MAX REPAIR AMOUNT PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "MaxHeat",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "MAX HEAT",
+      "description": "+1.25% MAX HEAT PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "REINFORCED PLATING",
+        "description": "+15% MAX ARMOR"
+       },
+       {
+        "option": 1,
+        "name": "BRACED",
+        "description": "KINETIC RESISTANCE +15% WHEN STOPPED, FADING OUT BY 25% SPEED"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "DAMAGE CONTROL",
+        "description": "REPAIR AMOUNT SCALES UP TO +50% AS YOUR ARMOR DROPS"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE ARMOR STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "IMPACT THRESHOLD",
+        "description": "PER-HIT DAMAGE CAPPED AT 1.5% OF MAX ARMOR"
+       },
+       {
+        "option": 1,
+        "name": "BATTLE HARDENED",
+        "description": "KILLS ADD 10% OF THE VICTIM'S MAX ARMOR TO YOURS (FOR THE SESSION)"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "moduleType": "Utility",
+    "name": "UTILITY AFFINITY",
+    "optionName": "UTILITY",
+    "description": "",
+    "bonuses": [
+     {
+      "option": 0,
+      "stat": "CargoCapacity",
+      "operation": "Add",
+      "valuePerPoint": "65536",
+      "name": "CARGO SLOTS",
+      "description": "+0.5 CARGO SLOT PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 1,
+      "stat": "SalvageLuck",
+      "operation": "Multiply",
+      "valuePerPoint": "45875",
+      "name": "SALVAGE LUCK",
+      "description": "+0.5% SALVAGE LUCK PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 2,
+      "stat": "MiningSpeed",
+      "operation": "Multiply",
+      "valuePerPoint": "65536",
+      "name": "MINING SPEED",
+      "description": "+1% MINING SPEED PER POINT",
+      "invertDisplaySign": false
+     },
+     {
+      "option": 3,
+      "stat": "WinchSpeed",
+      "operation": "Multiply",
+      "valuePerPoint": "98304",
+      "name": "WINCH SPEED",
+      "description": "+1.5% WINCH SPEED PER POINT",
+      "invertDisplaySign": false
+     }
+    ],
+    "thresholds": [
+     {
+      "tier": 0,
+      "requiredPoints": 5,
+      "choices": [
+       {
+        "option": 0,
+        "name": "POWER WINCH",
+        "description": "+50% WINCH SPEED"
+       },
+       {
+        "option": 1,
+        "name": "CORE CUTTER",
+        "description": "+35% MINING SPEED"
+       }
+      ]
+     },
+     {
+      "tier": 1,
+      "requiredPoints": 10,
+      "choices": [
+       {
+        "option": 0,
+        "name": "SMUGGLER'S PACT",
+        "description": "5 FREE BREACH MERCHANT REFRESHES PER SESSION; REFRESHED STOCK ROLLS AT YOUR SALVAGE LUCK"
+       }
+      ]
+     },
+     {
+      "tier": 2,
+      "requiredPoints": 15,
+      "choices": [
+       {
+        "option": 0,
+        "name": "PRIME AMPLIFIER",
+        "description": "THE UTILITY STAT BONUS WITH THE MOST POINTS IS 50% STRONGER"
+       }
+      ]
+     },
+     {
+      "tier": 3,
+      "requiredPoints": 20,
+      "choices": [
+       {
+        "option": 0,
+        "name": "MOTHER LODE",
+        "description": "DOUBLES MINED ORE"
+       },
+       {
+        "option": 1,
+        "name": "GAMBLER'S WILL",
+        "description": "40% CHANCE A HARPOONED CONTAINER SURVIVES FOR ANOTHER LOOT PULL; RE-ROLLS ITS RARITY WITH YOUR SALVAGE LUCK"
+       }
+      ]
+     }
+    ]
+   }
+  ]
+ }
+}

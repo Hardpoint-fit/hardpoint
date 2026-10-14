@@ -1,6 +1,4 @@
 # Allow-list: the build needs only this app and the Unity files scripts/prepare-game-assets.mjs reads.
-# The item art (tools/game-data-api/art/game-art.mjs) reads the prefabs and assets below through tools/ship-restore/lib/
-# game-assets.js and the images they name (with their .meta files, which carry the GUIDs).
 *
 !js/projects/theorycrafting
 !src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/*.uss
@@ -13,26 +11,9 @@
 !src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn
 !src/Citadel.Unity/Assets/Scripts/Simulation/Effects.qtn
 !src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs
-!tools/ship-restore/lib/game-assets.js
-!tools/ship-restore/lib/rarity-names.js
-!tools/game-data-api/art/game-art.mjs
-!src/Citadel.Unity/Assets/Scripts/Simulation/Items/Items.qtn
-!src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Modules/**/*.prefab
-!src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Ships/**/*.prefab
-!src/Citadel.Unity/Assets/Config/Quantum/Definitions/Artifacts/*.asset
-!src/Citadel.Unity/Assets/Config/Quantum/Definitions/Recipes/*.asset
-!src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/World/EntityOverlayHudConfig.asset
-!src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Modules/Icons/**/*.png
-!src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Modules/Icons/**/*.png.meta
-!src/Citadel.Unity/Assets/UI/Elements/Icons/Module/**/*.png
-!src/Citadel.Unity/Assets/UI/Elements/Icons/Module/**/*.png.meta
-!src/Citadel.Unity/Assets/Art/ShipIndicator/*.png
-!src/Citadel.Unity/Assets/Art/ShipIndicator/*.png.meta
 **/node_modules
 **/.next
 js/projects/theorycrafting/src/app/fonts
 js/projects/theorycrafting/src/app/game-tokens.generated.css
 js/projects/theorycrafting/src/**/*.generated.json
-js/projects/theorycrafting/public/art
-js/projects/theorycrafting/.cache
 js/projects/theorycrafting/Dockerfile*

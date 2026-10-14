@@ -3,6 +3,7 @@
 // builder in the browser. Nothing here decides legality; issues, conduits and regalia groups are the
 // evaluation's, copied onto the modules they name.
 import type {
+  ArtKeys,
   CatalogHull,
   CatalogItem,
   ConduitLink,
@@ -103,9 +104,9 @@ export type GridCatalog = {
   /** Regalia set def to its name and piece count. */
   regaliaSets?: ReadonlyMap<string, { name: string; pieces: number }>;
   /** Artifact def to its name: an identified artifact shows the artifact's own icon. */
-  artifacts?: ReadonlyMap<string, { name: string; path: string }>;
+  artifacts?: ReadonlyMap<string, { name: string; art: ArtKeys | null }>;
   /** Cipher def to its name, which finds its icon. */
-  ciphers?: ReadonlyMap<string, { name: string; path: string }>;
+  ciphers?: ReadonlyMap<string, { name: string; art: ArtKeys | null }>;
 };
 
 export const UNKNOWN_ITEM_NAME = "UNKNOWN ITEM";
@@ -123,7 +124,7 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
     const conduit = evaluation?.conduits?.find((link) => link.moduleIndex === index);
     const group = evaluation?.regaliaSets?.find((set) => set.moduleIndices.includes(index));
     const setInfo = group ? catalog.regaliaSets?.get(group.set) : undefined;
-    const artifactPath = roll.artifact ? (catalog.artifacts?.get(roll.artifact)?.path ?? null) : null;
+    const artifactArt = roll.artifact ? (catalog.artifacts?.get(roll.artifact)?.art ?? null) : null;
     return {
       index,
       def: module.item.def,
@@ -148,13 +149,13 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
       regalia: group
         ? { set: group.set, setName: setInfo?.name ?? "REGALIA SET", fittedCount: group.fittedCount, pieces: setInfo?.pieces ?? group.fittedCount }
         : null,
-      icon: item ? itemIcon({ path: item.path, category: item.category }, roll, artifactPath) : null,
+      icon: item ? itemIcon({ art: item.art, category: item.category }, roll, artifactArt) : null,
       description: item?.description ?? null,
       facts: item ? catalogFacts(item) : { facts: [], rarity: roll.rarity },
       ciphers: footprint.ports.flatMap((port) => {
         if (!port.expansion || !port.cipher) return [];
         const cipher = catalog.ciphers?.get(port.cipher);
-        return [{ cell: port.expansion, name: cipher?.name ?? "UNKNOWN CIPHER", icon: cipher ? itemIcon({ path: cipher.path, category: "Portable" }, { rarity: "Normal", isIdentified: true }) : null }];
+        return [{ cell: port.expansion, name: cipher?.name ?? "UNKNOWN CIPHER", icon: cipher ? itemIcon({ art: cipher.art, category: "Portable" }, { rarity: "Normal", isIdentified: true }) : null }];
       }),
     };
   });
@@ -178,8 +179,8 @@ export function moduleCells(module: GridModule): Cell[] {
 export function catalogLookups(catalog: {
   items: readonly CatalogItem[];
   regaliaSets: readonly { def: string; name: string; pieces: readonly string[] }[];
-  artifacts: readonly { def: string; name: string; path: string }[];
-  ciphers: readonly { def: string; name: string; path: string }[];
+  artifacts: readonly { def: string; name: string; art: ArtKeys | null }[];
+  ciphers: readonly { def: string; name: string; art: ArtKeys | null }[];
 }): Omit<GridCatalog, "hull"> & { items: Map<string, CatalogItem> } {
   return {
     items: new Map(catalog.items.map((item) => [item.def, item])),

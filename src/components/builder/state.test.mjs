@@ -10,7 +10,7 @@ import { SCARAB, SERAPH, itemNamed, richCatalog } from "./test-catalog.mjs";
 const catalog = richCatalog();
 const cat = indexCatalog(catalog);
 const item = (name) => itemNamed(catalog, name);
-const TURRET = item("OMNI REPAIRER TURRET").def;
+const TURRET = item("REPAIR PROJECTOR").def;
 const HEATSINK = item("HEATSINK MAGAZINE").def;
 const COOLANT = item("COOLANT RESERVOIR").def;
 const TRACER = item("TRACER ROUNDS").def;

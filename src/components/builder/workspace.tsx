@@ -300,7 +300,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
             {evaluation.outage === "down" && (
               <div className="banner" role="status">
                 <span>CAN&apos;T EVALUATE RIGHT NOW.</span>
-                <small>THE LOADOUT ENGINE ISN&apos;T ANSWERING. EDITING STILL WORKS AND THIS FIT IS KEPT IN THIS BROWSER.</small>
+                <small>THE GAME DATA API ISN&apos;T ANSWERING. EDITING STILL WORKS AND THIS FIT IS KEPT IN THIS BROWSER.</small>
               </div>
             )}
             {evaluation.outage === "limited" && (
@@ -467,7 +467,7 @@ function StatsPanel({
         ) : undefined
       }
     >
-      {evaluation.outage === "down" && <p className="note note--error">CAN&apos;T EVALUATE RIGHT NOW. STATS RETURN WHEN THE LOADOUT ENGINE DOES.</p>}
+      {evaluation.outage === "down" && <p className="note note--error">CAN&apos;T EVALUATE RIGHT NOW. STATS RETURN WHEN THE GAME DATA API DOES.</p>}
       {evaluation.outage === "limited" && <p className="note">CHECKING PAUSED — TOO MANY CHECKS, RETRYING.</p>}
       {!shown ? (
         <p className="note">{evaluation.outage ? "NO STATS YET." : "CHECKING THE FIT."}</p>

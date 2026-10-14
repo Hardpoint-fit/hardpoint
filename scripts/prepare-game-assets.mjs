@@ -1,14 +1,12 @@
 // Derives the site's design tokens, font, fitting-grid art and stat wording from the Unity tree, which
 // owns all of them. Nothing here is authored: the outputs (listed in .gitignore) are rebuilt before
-// every dev and build run (item art included: tools/game-data-api/art/game-art.mjs). The repo root is found by walking up from this file, so it works in a
-// checkout and in the Docker build (whose context is the repo root).
+// every dev and build run. Item art is not here: the game data API serves it (/v1/art). The repo root is
+// found by walking up from this file, so it works in a checkout and in the Docker build (whose context
+// is the repo root).
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import postcss from "postcss";
-import sharp from "sharp";
-// The extractor belongs to the game data API (tools/game-data-api/art); the site runs it until it reads the API's art.
-import { buildGameArt } from "../../../../tools/game-data-api/art/game-art.mjs";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const unityRoot = resolve(appRoot, "../../../src/Citadel.Unity");
@@ -44,9 +42,6 @@ const OUTPUTS = {
   fittingArt: join(appRoot, "src/components/grid/fitting-art.generated.json"),
   statText: join(appRoot, "src/lib/fits/stat-text.generated.json"),
   progressionLayout: join(appRoot, "src/lib/engine/progression-layout.generated.json"),
-  artManifest: join(appRoot, "src/lib/art/art-manifest.generated.json"),
-  artDir: join(appRoot, "public/art"),
-  artCache: join(appRoot, ".cache/game-art.json"),
 };
 
 /** USS is a CSS subset: keep the custom properties, drop what only Unity understands. */
@@ -184,7 +179,7 @@ function readJson(file) {
   return JSON.parse(readFileSync(file, "utf8"));
 }
 
-export async function prepare() {
+export function prepare() {
   for (const file of SOURCES) {
     if (!existsSync(file)) throw new Error(`Missing game asset ${file}. Build from the repo root checkout (see README).`);
   }
@@ -194,9 +189,6 @@ export async function prepare() {
   writeFileSync(OUTPUTS.fittingArt, `${JSON.stringify(buildFittingArt(), null, 1)}\n`);
   writeFileSync(OUTPUTS.statText, `${JSON.stringify(buildStatText(), null, 1)}\n`);
   writeFileSync(OUTPUTS.progressionLayout, `${JSON.stringify(buildProgressionLayout(), null, 1)}\n`);
-  // Item art: modules, hull items, ciphers, artifacts and ship classes (see tools/game-data-api/art/game-art.mjs).
-  const art = await buildGameArt({ sharp, assetsRoot: assets, outDir: OUTPUTS.artDir, manifestFile: OUTPUTS.artManifest, cacheFile: OUTPUTS.artCache });
-  console.log(`game art: ${art.images} images (${art.rebuilt} rebuilt, ${(art.bytes / 1024 / 1024).toFixed(1)} MB), ${art.modules} module keys, ${art.artifacts} artifacts, ${art.shipClasses} ship classes${art.unresolved.length ? `, ${art.unresolved.length} icon guids without an image` : ""}`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await prepare();
+if (process.argv[1] === fileURLToPath(import.meta.url)) prepare();

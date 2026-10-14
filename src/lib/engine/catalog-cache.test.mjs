@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import test, { after, before, beforeEach } from "node:test";
 import { createCatalogCache } from "./catalog-cache.ts";
+import { CATALOG_ROUTES } from "./catalog-resources.ts";
 import { createEngineClient } from "./client.ts";
 import { FIXTURES, startStubEngine } from "./stub-engine.mjs";
 
 let stub;
 let client;
 let clock;
-const catalogRequests = () => stub.requests.filter((r) => r.path === "/v1/catalog");
+// One catalog fetch is one request to each resource route; the items route stands for the round.
+const catalogRequests = () => stub.requests.filter((r) => r.path === "/v1/items");
 
 before(async () => {
   stub = await startStubEngine();
@@ -16,7 +18,7 @@ before(async () => {
 after(() => stub.close());
 beforeEach(() => {
   stub.fail(null);
-  stub.route("GET /v1/catalog", undefined);
+  for (const route of Object.values(CATALOG_ROUTES)) stub.route(`GET ${route.path}`, undefined);
   stub.requests.length = 0;
   clock = 1_000_000;
 });
@@ -26,11 +28,11 @@ test("the first get fetches; later gets inside the window don't touch the engine
   const cache = make();
   assert.equal(cache.peek(), null);
   const first = await cache.get();
-  assert.equal(first.ok && first.value.buildSha, FIXTURES.catalog.buildSha);
+  assert.equal(first.ok && first.value.buildSha, FIXTURES.status.build);
   clock += 59_000;
   await cache.get();
   assert.equal(catalogRequests().length, 1);
-  assert.equal(cache.peek().buildSha, FIXTURES.catalog.buildSha);
+  assert.equal(cache.peek().buildSha, FIXTURES.status.build);
 });
 
 test("after the window it revalidates with the etag and a 304 keeps the held catalog", async () => {
@@ -39,39 +41,46 @@ test("after the window it revalidates with the etag and a 304 keeps the held cat
   clock += 61_000;
   const second = await cache.get();
   assert.equal(catalogRequests().length, 2);
-  assert.equal(catalogRequests()[1].headers["if-none-match"], `"${FIXTURES.catalog.buildSha}"`);
+  assert.match(catalogRequests()[1].headers["if-none-match"], /^"[^"]+"$/, "the items part is asked for again by its tag");
   assert.equal(second.value, first.value, "same object: nothing was replaced");
 });
+
+/** Every route at `build`, with that build in its tags. */
+function newBuild(build) {
+  for (const [part, route] of Object.entries(CATALOG_ROUTES)) {
+    const body = { ...FIXTURES.parts[part], build };
+    stub.route(`GET ${route.path}`, (req, res) => {
+      res.writeHead(200, { "content-type": "application/json", etag: `"${build}:${part}"` });
+      res.end(JSON.stringify(body));
+    });
+  }
+}
 
 test("a new build replaces the held catalog", async () => {
   const cache = make();
   await cache.get();
-  const next = { ...FIXTURES.catalog, buildSha: "next-build" };
-  stub.route("GET /v1/catalog", (req, res) => {
-    res.writeHead(200, { "content-type": "application/json", etag: '"next-build"' });
-    res.end(JSON.stringify(next));
-  });
+  const first = cache.etag();
+  newBuild("next-build");
   clock += 61_000;
   const result = await cache.get();
   assert.equal(result.value.buildSha, "next-build");
   assert.equal(cache.peek().buildSha, "next-build");
+  assert.notEqual(cache.etag(), first);
 });
 
-test("a new engine etag on the same build replaces the held catalog", async () => {
+test("a changed part on the same build replaces the held catalog", async () => {
   const cache = make();
   await cache.get();
   const first = cache.etag();
   assert.ok(first);
-  const next = { ...FIXTURES.catalog, items: FIXTURES.catalog.items.slice(1) };
-  stub.route("GET /v1/catalog", (req, res) => {
+  stub.route("GET /v1/items", (req, res) => {
     res.writeHead(200, { "content-type": "application/json", etag: '"content-2"' });
-    res.end(JSON.stringify(next));
+    res.end(JSON.stringify({ ...FIXTURES.parts.items, items: FIXTURES.parts.items.items.slice(1) }));
   });
   clock += 61_000;
   const result = await cache.get();
-  assert.equal(result.value.buildSha, FIXTURES.catalog.buildSha);
-  assert.equal(result.value.items.length, next.items.length);
-  assert.equal(cache.etag(), '"content-2"');
+  assert.equal(result.value.buildSha, FIXTURES.status.build);
+  assert.equal(result.value.items.length, FIXTURES.parts.items.items.length - 1);
   assert.notEqual(cache.etag(), first);
 });
 

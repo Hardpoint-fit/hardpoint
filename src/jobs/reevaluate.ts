@@ -1,6 +1,6 @@
-// The re-evaluation job: when the engine's build changes, every published fit needs a fresh verdict.
-// Runs as a Railway cron service from the site's own image (see the README), reads the engine's build from
-// /healthz, and evaluates each published fit that has no verdict for it, or whose valid verdict for it was
+// The re-evaluation job: when the game data API's build changes, every published fit needs a fresh verdict.
+// Runs as a Railway cron service from the site's own image (see the README), reads the API's build from
+// /v1/status, and evaluates each published fit that has no verdict for it, or whose valid verdict for it was
 // stored without hull specs (`sections`), so those fill in. Safe to run any time and to run twice: a fit
 // whose row for the build is complete is never asked about again, a refilled row stores `sections` (an
 // empty list when the engine has none), so it isn't asked again either, and a fit edited while the engine
@@ -28,7 +28,7 @@ const DEFAULT_WAIT_MS = 5_000;
 
 export type JobOptions = {
   db: Db;
-  engine: Pick<EngineClient, "health" | "evaluate">;
+  engine: Pick<EngineClient, "status" | "evaluate">;
   batchSize?: number;
   maxInFlight?: number;
   maxRunMs?: number;
@@ -79,12 +79,12 @@ export async function runReevaluation(options: JobOptions): Promise<JobSummary> 
     return summary;
   };
 
-  const health = await engine.health();
-  if (!health.ok) {
-    log(`reevaluate: engine not ready (${health.error.kind}); nothing done`);
+  const status = await engine.status();
+  if (!status.ok) {
+    log(`reevaluate: game data API not ready (${status.error.kind}); nothing done`);
     return stop("engine");
   }
-  const buildSha = health.value.buildSha;
+  const buildSha = status.value.build;
   summary.buildSha = buildSha;
 
   // Set when a worker meets a failure that should end the run; the others finish their current fit.
@@ -200,9 +200,9 @@ export function describe(summary: JobSummary): string {
 
 async function main(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL?.trim();
-  const engineUrl = (process.env.LOADOUT_ENGINE_INTERNAL_URL?.trim() || process.env.LOADOUT_ENGINE_URL?.trim() || "").replace(/\/+$/, "");
-  if (!databaseUrl || !engineUrl) {
-    console.error("reevaluate: DATABASE_URL and LOADOUT_ENGINE_INTERNAL_URL must both be set");
+  const apiUrl = (process.env.GAME_DATA_API_INTERNAL_URL?.trim() || process.env.GAME_DATA_API_URL?.trim() || "").replace(/\/+$/, "");
+  if (!databaseUrl || !apiUrl) {
+    console.error("reevaluate: DATABASE_URL and GAME_DATA_API_INTERNAL_URL must both be set");
     process.exitCode = 1;
     return;
   }
@@ -210,7 +210,7 @@ async function main(): Promise<void> {
   try {
     const summary = await runReevaluation({
       db: dbFromPool(pool),
-      engine: createEngineClient({ baseUrl: engineUrl }),
+      engine: createEngineClient({ baseUrl: apiUrl }),
     });
     console.log(describe(summary));
   } finally {

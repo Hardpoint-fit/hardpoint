@@ -1,4 +1,4 @@
-// The item tooltip's facts for rolled items, asked of the engine (/v1/item-facts) one at a time.
+// The item tooltip's facts for rolled items, asked of the game data API (/v1/items/facts) one at a time.
 //
 // The catalog already carries each item's facts for its plainest roll (Standard quality, the item's
 // lowest rarity, nothing rolled), so only other rolls are asked about, and the caller shows the catalog's

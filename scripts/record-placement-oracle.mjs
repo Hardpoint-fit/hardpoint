@@ -1,24 +1,26 @@
-// Records the engine's verdicts for single drops into src/lib/engine/__fixtures__/placement-oracle.json,
+// Records the game data API's verdicts for single drops into src/lib/engine/__fixtures__/placement-oracle.json,
 // so placement.test.mjs can check that the builder refuses exactly the drops the engine would. Each case
 // is one item (with its ports) at one rotation over a block of anchors on a base fit, either dropped from
 // the palette (appended) or a fitted module moved there (`moving`); `verdicts` holds one letter per
 // anchor, row by row: "." the engine took the fit, otherwise the placement issue it named (see LETTERS).
 // The bases are empty hulls (the recorded catalog's two and the extra hulls this file carries from the
-// engine's catalog), fit.json (which has a slot override) and fits with ported modules to move.
+// API's /v1/hulls), fit.json (which has a slot override) and fits with ported modules to move.
 //
 //   node --import ./scripts/node-hooks.mjs scripts/record-placement-oracle.mjs http://localhost:18081
 //
-// Run it against a local engine on the build the recorded catalog fixture comes from.
+// Run it against a local API (the rate limiter exempts it) on the build the fixtures come from
+// (scripts/record-fixtures.mjs records them first).
 import { readFileSync, writeFileSync } from "node:fs";
+import { FIXTURES } from "../src/lib/engine/stub-engine.mjs";
 import { applySlotOverrides } from "../src/components/grid/geometry.ts";
 import { defaultRoll } from "../src/components/builder/roll-edits.ts";
 import { indexCatalog, moduleSubject } from "../src/components/builder/rules.ts";
 import { newFit } from "../src/components/builder/state.ts";
 
 const LETTERS = { OutOfBounds: "B", DisabledCell: "D", SlotNotFittable: "S", Overlap: "O", MissingHardpoint: "H", TooManyBatteries: "T" };
-const PLAIN = ["ARMOR HARDENER", "AUTO VENTING", "OMNI REPAIRER TURRET", "LIGHTFRAME THRUSTERS", "INERTIA COUPLER", "HEATSINK MAGAZINE", "TRACER ROUNDS", "PROPULSION CONDUIT"];
-/** Hulls from the engine's catalog beyond the recorded two: a dreadnought, four subsystems, five batteries. */
-const EXTRA_HULLS = ["RUSTER", "ACOLYTE", "VEKTR"];
+const PLAIN = ["ARMOR HARDENER", "AUTO VENTING", "REPAIR PROJECTOR", "LIGHTFRAME THRUSTERS", "INERTIA COUPLER", "HEATSINK MAGAZINE", "TRACER ROUNDS", "PROPULSION CONDUIT"];
+/** Hulls from the API's catalog beyond the recorded two: four propulsion hardpoints, four subsystems, five batteries. */
+const EXTRA_HULLS = ["JACKAL", "ACOLYTE", "VEKTR"];
 const DRUX = "1283267483210613362";
 const SYN = "1305220033100729446";
 /**
@@ -28,7 +30,7 @@ const SYN = "1305220033100729446";
 const PORTED = [
   { name: "ARMOR HARDENER", ports: [{ row: 1, col: 2, direction: "Right", cipher: DRUX }, { row: 3, col: 2, direction: "Left", cipher: null }, { row: 3, col: 2, direction: "Down", cipher: SYN }] },
   { name: "AUTO VENTING", ports: [{ row: 2, col: 2, direction: "Left", cipher: SYN }, { row: 3, col: 2, direction: "Right", cipher: null }] },
-  { name: "OMNI REPAIRER TURRET", ports: [{ row: 2, col: 2, direction: "Up", cipher: DRUX }, { row: 2, col: 2, direction: "Right", cipher: null }] },
+  { name: "REPAIR PROJECTOR", ports: [{ row: 2, col: 2, direction: "Up", cipher: DRUX }, { row: 2, col: 2, direction: "Right", cipher: null }] },
   { name: "INERTIA COUPLER", ports: [{ row: 2, col: 2, direction: "Left", cipher: SYN }] },
   { name: "LIGHTFRAME THRUSTERS", ports: [{ row: 3, col: 2, direction: "Down", cipher: DRUX }, { row: 2, col: 2, direction: "Up", cipher: null }] },
 ];
@@ -36,9 +38,9 @@ const PORTED = [
 const engine = process.argv[2] ?? "http://localhost:18081";
 const fixtures = new URL("../src/lib/engine/__fixtures__/", import.meta.url);
 const read = (name) => JSON.parse(readFileSync(new URL(name, fixtures), "utf8"));
-const recorded = read("catalog.json");
-const live = await (await fetch(`${engine}/v1/catalog`)).json();
-if (live.buildSha !== recorded.buildSha) throw new Error(`engine runs ${live.buildSha}, the fixture catalog is ${recorded.buildSha}`);
+const recorded = FIXTURES.catalog;
+const live = await (await fetch(`${engine}/v1/hulls`)).json();
+if (live.build !== recorded.buildSha) throw new Error(`the API runs ${live.build}, the fixture catalog is ${recorded.buildSha}`);
 const hulls = EXTRA_HULLS.map((name) => live.hulls.find((hull) => hull.name === name));
 const catalog = { ...recorded, hulls: [...recorded.hulls, ...hulls] };
 const cat = indexCatalog(catalog);
@@ -48,7 +50,7 @@ let requests = 0;
 async function evaluate(fit) {
   for (;;) {
     requests++;
-    const response = await fetch(`${engine}/v1/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fit }) });
+    const response = await fetch(`${engine}/v1/fits/evaluate`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ fit }) });
     if (response.status === 429) {
       await new Promise((done) => setTimeout(done, 1000 * Number(response.headers.get("retry-after") ?? 1)));
       continue;
@@ -129,13 +131,13 @@ const bases = {
 };
 const movable = {
   "SCARAB with a ported ARMOR HARDENER": await withPlaced(empty("SCARAB"), PORTED[0]),
-  "ACOLYTE with a ported OMNI REPAIRER TURRET": await withPlaced(empty("ACOLYTE"), PORTED[2]),
+  "ACOLYTE with a ported REPAIR PROJECTOR": await withPlaced(empty("ACOLYTE"), PORTED[2]),
   "fit-showcase.json": read("fit-showcase.json"),
 };
 
 const cases = [];
 for (const [base, fit] of Object.entries(bases)) {
-  const plain = base === "SCARAB" || base === "SERAPH" || base === "fit.json" ? PLAIN : ["ARMOR HARDENER", "OMNI REPAIRER TURRET", "INERTIA COUPLER", "HEATSINK MAGAZINE"];
+  const plain = base === "SCARAB" || base === "SERAPH" || base === "fit.json" ? PLAIN : ["ARMOR HARDENER", "REPAIR PROJECTOR", "INERTIA COUPLER", "HEATSINK MAGAZINE"];
   const drops = [...plain.map((name) => ({ def: itemNamed(name).def, ports: [] })), ...PORTED.map((spec) => ({ def: itemNamed(spec.name).def, ports: spec.ports }))];
   for (const drop of drops) {
     for (let rotation = 0; rotation < 4; rotation++) cases.push(await recordCase(base, fit, { ...drop, rotation }));
@@ -150,7 +152,7 @@ for (const [base, fit] of Object.entries(movable)) {
 }
 
 const note =
-  `Engine verdicts (build ${recorded.buildSha.slice(0, 8)}) for single drops: an item (default roll with \`ports\`) dropped on a base fit, or the fit's module \`moving\` moved, ` +
+  `API verdicts (build ${recorded.buildSha.slice(0, 8)}) for single drops: an item (default roll with \`ports\`) dropped on a base fit, or the fit's module \`moving\` moved, ` +
   `at each anchor of the block; verdicts: one letter per anchor row by row, "." accepted, ${Object.entries(LETTERS).map(([kind, l]) => `${l} ${kind}`).join(", ")}. ` +
-  "`hulls` are the engine catalog's hulls beyond catalog.json's; `bases` the fits moved from.";
+  "`hulls` are the API's hulls beyond the fixture catalog's; `bases` the fits moved from.";
 writeFileSync(new URL("placement-oracle.json", fixtures), JSON.stringify({ note, hulls, bases: movable, cases }) + "\n");

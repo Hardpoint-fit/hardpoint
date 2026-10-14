@@ -1,17 +1,12 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import test from "node:test";
-import { artManifest } from "./art-manifest.ts";
-import { baseIcon, isEffectivelyIdentified, itemIcon, moduleIcon } from "./item-icon.ts";
+import { FIXTURES } from "../engine/stub-engine.mjs";
+import { art2x, baseIcon, isEffectivelyIdentified, itemIcon, moduleIcon } from "./item-icon.ts";
 
 const ALL = { base: "/art/base.webp", Augmented: "/art/aug.webp", Prototype: "/art/proto.webp", Artifact: "/art/arti.webp", Heretical: "/art/proto.webp" };
 const BASE_ONLY = { base: "/art/base.webp" };
-const manifest = {
-  modules: { contentmodulesrail: ALL, plain: BASE_ONLY },
-  artifacts: { configartifactsdreadbane: "/art/dreadbane.webp", dreadbane: "/art/dreadbane.webp" },
-  shipClasses: {},
-};
-const RAIL = { path: "Content/Modules/RailEntityPrototype", category: "Module" };
+const DREADBANE = { base: "/art/dreadbane.webp" };
+const RAIL = { art: ALL, category: "Module" };
 const roll = (rarity, isIdentified = true) => ({ rarity, isIdentified });
 
 test("GetIcon: each rarity picks its authored variant", () => {
@@ -29,11 +24,10 @@ test("GetIcon: a variant the prefab doesn't author falls back to the base icon (
 });
 
 test("an identified artifact shows the artifact's own icon; an unidentified one keeps the module's look", () => {
-  const bane = "Config/Artifacts/DREAD_BANE";
-  assert.equal(itemIcon(RAIL, roll("Artifact"), bane, manifest), "/art/dreadbane.webp");
-  assert.equal(itemIcon(RAIL, roll("Artifact", false), bane, manifest), "/art/arti.webp");
-  // An artifact that authors no icon falls through to GetIcon(rarity).
-  assert.equal(itemIcon(RAIL, roll("Artifact"), "Config/Artifacts/OATH", manifest), "/art/arti.webp");
+  assert.equal(itemIcon(RAIL, roll("Artifact"), DREADBANE), "/art/dreadbane.webp");
+  assert.equal(itemIcon(RAIL, roll("Artifact", false), DREADBANE), "/art/arti.webp");
+  // An artifact that authors no icon (its catalog art is null) falls through to GetIcon(rarity).
+  assert.equal(itemIcon(RAIL, roll("Artifact"), null), "/art/arti.webp");
 });
 
 test("identification follows IsEffectivelyIdentified", () => {
@@ -45,43 +39,39 @@ test("identification follows IsEffectivelyIdentified", () => {
 });
 
 test("an item with no art has no icon, so the caller draws its placeholder", () => {
-  assert.equal(itemIcon({ path: "Content/Nowhere/GhostEntityPrototype", category: "Module" }, roll("Augmented"), null, manifest), null);
-  assert.equal(itemIcon({ path: null, category: null }, roll("Normal"), null, manifest), null);
-  assert.equal(baseIcon("Plain", manifest), "/art/base.webp");
-  assert.equal(baseIcon(null, manifest), null);
+  assert.equal(itemIcon({ art: null, category: "Module" }, roll("Augmented")), null);
+  assert.equal(itemIcon({ art: null, category: null }, roll("Normal")), null);
+  assert.equal(baseIcon(BASE_ONLY), "/art/base.webp");
+  assert.equal(baseIcon(null), null);
 });
 
-test("real catalog paths from the engine find their art in the generated manifest", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../engine/__fixtures__/catalog.json", import.meta.url), "utf8"));
-  const paths = [...catalog.items, ...catalog.hulls].map((entry) => entry.path);
-  assert.ok(paths.every((path) => typeof path === "string" && path.endsWith("EntityPrototype")), "the fixture carries real Identifier.Path values");
-  const missing = paths.filter((path) => !baseIcon(path));
-  assert.deepEqual(missing, []);
-  // The NPC and player OMNI REPAIRER TURRET share a file name; each finds an image.
-  const omni = catalog.items.filter((item) => item.name === "OMNI REPAIRER TURRET");
-  assert.equal(omni.length, 2);
-  for (const item of omni) assert.match(itemIcon(item, roll("Augmented")), /^\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp$/);
-  const scarab = catalog.hulls.find((hull) => hull.name === "SCARAB");
-  assert.match(itemIcon({ path: scarab.path, category: "Ship" }, roll("Normal")), /^\/art\//);
+test("the 256px twin of an art URL has @2x before .webp", () => {
+  assert.equal(art2x("/art/a.webp"), "/art/a@2x.webp");
+  assert.equal(art2x("https://api.thecitadel.com/v1/art/x.y.webp"), "https://api.thecitadel.com/v1/art/x.y@2x.webp");
 });
 
-// Whether the Unity tree authors an icon for an asset: its icon field names an image.
-const ASSETS = new URL("../../../../../../src/Citadel.Unity/Assets/", import.meta.url);
-const authorsIcon = (file, indent) => new RegExp(`\\n${indent}icon: \\{[^}\\n]*guid: [0-9a-f]{32}`).test(readFileSync(new URL(file, ASSETS), "utf8"));
+const URL_SHAPE = /^https:\/\/api\.example\.test\/v1\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp$/;
 
-test("every fixture artifact and cipher that authors art finds its own icon by its catalog path", () => {
-  const catalog = JSON.parse(readFileSync(new URL("../engine/__fixtures__/catalog.json", import.meta.url), "utf8"));
-  const artifacts = catalog.artifacts.filter((artifact) => authorsIcon(`${artifact.path}.asset`, "  "));
-  const ciphers = catalog.ciphers.filter((cipher) => authorsIcon(`${cipher.path.replace(/EntityPrototype$/, "")}.prefab`, "    "));
-  assert.ok(artifacts.length > 0 && ciphers.length > 0, "the fixture holds an artifact and a cipher with art");
-  for (const artifact of artifacts) assert.match(itemIcon(RAIL, roll("Artifact"), artifact.path) ?? "", /^\/art\//, artifact.name);
-  for (const cipher of ciphers) assert.match(itemIcon({ path: cipher.path, category: "Portable" }, roll("Normal")) ?? "", /^\/art\//, cipher.name);
-  // Dreadnought's Bane: its display name ("DREADNOUGHTS BANE") is not its asset's name (DREAD_BANE).
-  const bane = catalog.artifacts.find((artifact) => artifact.name === "DREADNOUGHTS BANE");
-  assert.ok(artifacts.includes(bane));
-  const own = itemIcon(RAIL, roll("Artifact"), bane.path);
-  assert.equal(own, artManifest.artifacts.dreadbane);
-  assert.notEqual(own, itemIcon(RAIL, roll("Artifact"), bane.name), "a display name does not find the asset");
-  const distinct = new Set(artifacts.map((artifact) => itemIcon(RAIL, roll("Artifact"), artifact.path)));
-  assert.equal(distinct.size, artifacts.length, "each artifact shows its own icon");
+test("every fixture item, hull and cipher shows an API art URL, the tiers where the game authors them", () => {
+  const { items, hulls, ciphers } = FIXTURES.catalog;
+  for (const entry of [...items, ...hulls, ...ciphers]) {
+    assert.match(baseIcon(entry.art), URL_SHAPE, entry.name);
+    assert.match(itemIcon({ art: entry.art, category: "Module" }, roll("Augmented")), URL_SHAPE, entry.name);
+  }
+  const tiered = hulls.find((hull) => hull.art.Augmented);
+  assert.ok(tiered, "the fixtures hold an item with tiered art");
+  assert.equal(itemIcon({ art: tiered.art, category: "Ship" }, roll("Augmented")), tiered.art.Augmented);
+  assert.notEqual(tiered.art.Augmented, tiered.art.base);
+});
+
+test("an artifact that authors an icon shows its own, each different; one that doesn't shows its item's", () => {
+  const { artifacts, items } = FIXTURES.catalog;
+  const own = artifacts.filter((artifact) => artifact.art);
+  const without = artifacts.filter((artifact) => !artifact.art);
+  assert.ok(own.length > 0 && without.length > 0, "the fixtures hold artifacts with and without an icon");
+  for (const artifact of own) assert.equal(itemIcon(RAIL, roll("Artifact"), artifact.art), artifact.art.base, artifact.name);
+  assert.equal(new Set(own.map((artifact) => itemIcon(RAIL, roll("Artifact"), artifact.art))).size, own.length, "each shows its own icon");
+  const [artifact] = without;
+  const item = items[0];
+  assert.equal(itemIcon({ art: item.art, category: "Module" }, roll("Artifact"), artifact.art), moduleIcon(item.art, "Artifact"));
 });

@@ -2,7 +2,7 @@
 // (ItemTooltip.uss: .mtt__name-icon, .mtt__row--description, .mtt__row--metric). Plain render, no hooks,
 // so server pages and client panels share it.
 import type { FactRow } from "#/lib/engine/types";
-import { art2x } from "#/lib/art/art-manifest";
+import { art2x } from "#/lib/art/item-icon";
 
 /**
  * An item's image at `size` px, or the no-art placeholder: the tile's own frame with the font's "?",

@@ -42,7 +42,7 @@ async function renderFit(url, id, viewer) {
   const data = await loadFitPage(deps(url), id, viewer);
   assert.equal(data.status, "ok");
   // The page's client controls read the public config, as under the root layout.
-  const config = { engineUrl: url, authEnabled: viewer.authEnabled };
+  const config = { apiUrl: url, authEnabled: viewer.authEnabled };
   return renderToStaticMarkup(h(PublicConfigProvider, { config }, h(FitPageView, { data, viewer })));
 }
 
@@ -63,9 +63,9 @@ test("the grid draws every module, the cipher cell, port notches, conduit and re
 
 test("the fit page shows the hull's art, every module's art, descriptions, fact rows and the stored hull specs", async () => {
   const html = await renderFit(stub.url, ids.showcase, anonymous(false));
-  assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
+  assert.match(html, /class="item-icon fit-head__icon" src="https?:\/\/[^"\/]+\/v1\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
   assert.equal(count(html, 'class="fg-module__icon"'), 13 + 1, "each module's art, and the cipher's in its cell");
-  assert.match(html, /item-icon item-icon--mirrored" src="\/art\//, "the cipher's art faces the other way, as in the game");
+  assert.match(html, /item-icon item-icon--mirrored" src="https?:\/\/[^"\/]+\/v1\/art\//, "the cipher's art faces the other way, as in the game");
   // AUTO VENTING's tooltip: its description and its catalog fact rows.
   assert.match(html, /<p class="item-desc">AUTOMATICALLY VENTS HEAT WHEN UNSTABLE, TEMPORARILY REDUCING YOUR TURNING ABILITY\.<\/p>/);
   assert.match(html, /<span class="facts__label">DEACTIVATION COOLDOWN<\/span>/);
@@ -76,7 +76,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
   assert.match(html, /HULL SPECS/);
   for (const section of FIXTURES.evaluateShowcase.sections) assert.ok(html.includes(`aria-label="${section.label}"`), section.label);
   assert.match(html, /<span class="specs__title">DEFENSE<\/span><span class="specs__summary"><span class="specs__value ">3,644<\/span><span class="specs__unit">HP<\/span>/);
-  assert.match(html, /data-spec="time-to-scram"><span class="specs__label">TIME TO SCRAM<\/span><span class="specs__values"><span class="specs__value ">STABLE<\/span><\/span>/);
+  assert.match(html, /data-spec="time-to-scram"><span class="specs__label">TIME TO SCRAM<\/span><span class="specs__values"><span class="specs__value ">01:04<\/span><\/span>/);
   assert.match(html, /<span class="specs__value ">24<\/span><span class="specs__arrow">→<\/span><span class="specs__value negative">21<\/span><span class="specs__unit">%<\/span>/, "a comparison row, toned as the engine tones it");
   assert.match(html, /COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE\./, "the row's help");
   assert.match(html, /MODIFIERS/);
@@ -84,7 +84,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
 
 test("with the engine down the fit page still shows the stored hull specs (Review Focus #2)", async () => {
   const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
-  assert.match(html, /THE GRID NEEDS THE LOADOUT ENGINE/);
+  assert.match(html, /THE GRID NEEDS THE GAME DATA API/);
   assert.match(html, /data-spec="effective-health"/);
   assert.match(html, /EFFECTIVE HEALTH/);
 });
@@ -110,9 +110,9 @@ test("a removed item is drawn as UNKNOWN ITEM with its issue, and the fit reads 
 
 test("with the engine down the page renders its stored stats under a banner (Review Focus #4)", async () => {
   const html = await renderFit(deadUrl, ids.showcase, anonymous(false));
-  assert.match(html, /THE LOADOUT ENGINE ISN&#x27;T ANSWERING/);
+  assert.match(html, /THE GAME DATA API ISN&#x27;T ANSWERING/);
   assert.match(html, /MAX VELOCITY/);
-  assert.match(html, /THE GRID NEEDS THE LOADOUT ENGINE/);
+  assert.match(html, /THE GRID NEEDS THE GAME DATA API/);
   const up = await renderFit(stub.url, ids.showcase, anonymous(false));
   assert.doesNotMatch(up, /ISN&#x27;T ANSWERING/);
 });
@@ -151,6 +151,6 @@ test("browse cards show hull, title, author, counts and the outdated badge", asy
   assert.match(html, /ALICE/);
   assert.match(html, /2 UPVOTES/);
   assert.match(html, /1 UPVOTE</);
-  assert.equal(html.match(/class="item-icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
+  assert.equal(html.match(/class="item-icon" src="https?:\/\/[^"\/]+\/v1\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/g)?.length, 3, "each card shows its hull's art");
   assert.equal(count(html, "badge--outdated"), 1);
 });

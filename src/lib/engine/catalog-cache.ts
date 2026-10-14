@@ -1,9 +1,8 @@
-// The server's in-memory copy of the engine catalog. The catalog is ~800 KB and changes only when the
-// engine's build does, so it is fetched once and revalidated with its ETag (the build sha) at most every
-// `recheckMs`. A failed revalidation keeps serving the copy we have: the catalog doesn't go bad when the
-// engine blips.
+// The server's in-memory copy of the catalog. The catalog is ~800 KB and changes only when the API's
+// content does, so it is fetched once and revalidated by its parts' ETags at most every `recheckMs`.
+// A failed revalidation keeps serving the copy we have: the catalog doesn't go bad when the API blips.
 
-import type { EngineClient, EngineResult } from "./client.ts";
+import type { CatalogParts, EngineClient, EngineResult } from "./client.ts";
 import type { Catalog } from "./types.ts";
 
 export type CatalogCacheOptions = {
@@ -15,15 +14,15 @@ export type CatalogCacheOptions = {
 };
 
 export type CatalogCache = {
-  /** The catalog for the engine's current build, fetched or revalidated as needed. */
+  /** The catalog for the API's current build, fetched or revalidated as needed. */
   get(): Promise<EngineResult<Catalog>>;
   /** What is held right now, without any request. */
   peek(): Catalog | null;
-  /** The engine's ETag for what is held (null before the first fetch, or when the engine sent none). */
+  /** The ETag for what is held, derived from the API's tags for its parts (null before the first fetch, or when a part came without one). */
   etag(): string | null;
 };
 
-type Held = { catalog: Catalog; etag: string | null; nextCheckAt: number };
+type Held = { catalog: Catalog; etag: string | null; parts: CatalogParts; nextCheckAt: number };
 
 export function createCatalogCache(client: Pick<EngineClient, "catalog">, options: CatalogCacheOptions = {}): CatalogCache {
   const recheckMs = options.recheckMs ?? 60_000;
@@ -33,8 +32,8 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
   let inFlight: Promise<EngineResult<Catalog>> | null = null;
 
   async function refresh(): Promise<EngineResult<Catalog>> {
-    // The catalog is the same only if the engine says so by its tag: the same build can carry new content.
-    const result = await client.catalog({ ifNoneMatch: held?.etag ?? null });
+    // The catalog is the same only if the API says so by its tags: the same build can carry new content.
+    const result = await client.catalog({ held });
     if (!result.ok) {
       if (held) {
         held.nextCheckAt = now() + retryMs;
@@ -44,12 +43,12 @@ export function createCatalogCache(client: Pick<EngineClient, "catalog">, option
     }
     if (result.value.status === "notModified") {
       // Only asked with an etag, so something is held.
-      if (!held) return { ok: false, error: { kind: "unavailable", message: "The loadout engine sent an unexpected answer." } };
+      if (!held) return { ok: false, error: { kind: "unavailable", message: "The game data API sent an unexpected answer." } };
       held.nextCheckAt = now() + recheckMs;
       return { ok: true, value: held.catalog };
     }
-    const { catalog, etag } = result.value;
-    held = { catalog, etag, nextCheckAt: now() + recheckMs };
+    const { catalog, etag, parts } = result.value;
+    held = { catalog, etag, parts, nextCheckAt: now() + recheckMs };
     return { ok: true, value: catalog };
   }
 

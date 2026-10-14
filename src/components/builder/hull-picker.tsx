@@ -32,7 +32,7 @@ export function HullPicker({ cat, current, onPick, onCancel }: { cat: BuilderCat
                 return (
                   <li key={hull.def}>
                     <button type="button" className={`hull-card ${hull.def === current ? "hull-card--current" : ""}`} onClick={() => onPick(hull.def)} aria-pressed={hull.def === current}>
-                      <ItemIcon src={baseIcon(hull.path)} size={48} />
+                      <ItemIcon src={baseIcon(hull.art)} size={48} />
                       <span className="hull-card__text">
                         <span className="hull-card__name">{hull.name}</span>
                         <span className="hull-card__meta">

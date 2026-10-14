@@ -4,7 +4,7 @@ import { FIXTURES } from "../engine/stub-engine.mjs";
 import { createComment, createFit, createReport, publishFit, recordEvaluation, setVote } from "../fits/queries.ts";
 import { toEvaluationInput } from "../fits/service.ts";
 
-export const CURRENT_SHA = FIXTURES.health.buildSha;
+export const CURRENT_SHA = FIXTURES.status.build;
 /** A build before the current one, on which every seeded fit was valid. */
 export const OLD_SHA = "0000000000000000000000000000000000000001";
 

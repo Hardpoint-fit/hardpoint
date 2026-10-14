@@ -1,0 +1,164 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "artifacts": [
+  {
+   "def": "275107089619583858",
+   "name": "OATH BRINGER",
+   "path": "Config/Quantum/Definitions/Artifacts/OATH",
+   "item": "1442637265074437522",
+   "modifiers": [
+    {
+     "stat": "MaxHeat",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "76021",
+     "max": "83886"
+    },
+    {
+     "stat": "MaxArmor",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "93716",
+     "max": "115343"
+    },
+    {
+     "stat": "Mass",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "93716",
+     "max": "115343"
+    },
+    {
+     "stat": "SignatureRadius",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "340787",
+     "max": "504627"
+    }
+   ],
+   "scaledStat": null,
+   "pointRating": 3850,
+   "patinaMax": 0,
+   "art": null
+  },
+  {
+   "def": "278460097613111756",
+   "name": "YELLOWJACKET",
+   "path": "Config/Quantum/Definitions/Artifacts/YELLOWJACKET",
+   "item": "1426216244610980278",
+   "modifiers": [
+    {
+     "stat": "MissileDamage",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "72089",
+     "max": "76677"
+    },
+    {
+     "stat": "MissileRechargeTime",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "55051",
+     "max": "58983"
+    },
+    {
+     "stat": "MissileRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "47186",
+     "max": "55051"
+    }
+   ],
+   "scaledStat": null,
+   "pointRating": 300,
+   "patinaMax": 0,
+   "art": null
+  },
+  {
+   "def": "358841703442488635",
+   "name": "EREBOS",
+   "path": "Config/Quantum/Definitions/Artifacts/EREBOS",
+   "item": "1326187971131623458",
+   "modifiers": [
+    {
+     "stat": "HeatDissipationRate",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "76021",
+     "max": "83886"
+    },
+    {
+     "stat": "TurretRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "77332",
+     "max": "87818"
+    },
+    {
+     "stat": "ECMMaxRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "93716",
+     "max": "115343"
+    },
+    {
+     "stat": "MaxHull",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "33424",
+     "max": "45220"
+    }
+   ],
+   "scaledStat": {
+    "rule": "462345323116144043",
+    "min": "65536",
+    "max": "131072"
+   },
+   "pointRating": 3250,
+   "patinaMax": 0,
+   "art": null
+  },
+  {
+   "def": "522214128622278413",
+   "name": "DREADNOUGHTS BANE",
+   "path": "Config/Quantum/Definitions/Artifacts/DREAD_BANE",
+   "item": "1530715940003253209",
+   "modifiers": [
+    {
+     "stat": "TurretCycleDuration",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "55051",
+     "max": "60949"
+    },
+    {
+     "stat": "SignatureRadius",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "51119",
+     "max": "57672"
+    },
+    {
+     "stat": "TurretDamage",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "70778",
+     "max": "77332"
+    },
+    {
+     "stat": "HeatDissipationRate",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "36701",
+     "max": "53740"
+    }
+   ],
+   "scaledStat": null,
+   "pointRating": 750,
+   "patinaMax": 0,
+   "art": {
+    "base": "/v1/art/53d8c335b7d1b461d99612fa3806c7fa.996793cfe9b54c2f.webp"
+   }
+  }
+ ]
+}

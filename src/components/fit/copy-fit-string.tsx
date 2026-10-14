@@ -9,7 +9,7 @@ import type { OpenFit } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
 import { slowDownMessage } from "#/lib/slow-down";
 
-export const ENGINE_DOWN_FOR_STRINGS = "THE LOADOUT ENGINE CAN'T BE REACHED, SO FIT STRINGS CAN'T BE MADE OR READ RIGHT NOW.";
+export const ENGINE_DOWN_FOR_STRINGS = "THE GAME DATA API CAN'T BE REACHED, SO FIT STRINGS CAN'T BE MADE OR READ RIGHT NOW.";
 
 /** What to show when the engine didn't turn a fit or a string around; `refused` words a 400. */
 export function fitStringProblem(error: EngineError, refused: string): string {

@@ -50,7 +50,7 @@ export function toEvaluationInput(response: EvaluationResponse): EvaluationInput
 }
 
 export const ENGINE_DOWN_MESSAGE =
-  "The loadout engine can't be reached right now, so this fit can't be checked. Your draft is saved; try publishing again in a moment.";
+  "The game data API can't be reached right now, so this fit can't be checked. Your draft is saved; try publishing again in a moment.";
 
 /** A refusal the page can show. `message` is safe for the user. */
 export type Refusal =

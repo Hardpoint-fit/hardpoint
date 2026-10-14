@@ -39,7 +39,7 @@ export function EngineBanner({ engine }: { engine: PageEngine }) {
   if (engine.state.status === "up") return null;
   return (
     <div className="banner" role="status">
-      <span>THE LOADOUT ENGINE ISN&apos;T ANSWERING. SHOWING STORED RESULTS.</span>
+      <span>THE GAME DATA API ISN&apos;T ANSWERING. SHOWING STORED RESULTS.</span>
       <small>
         {engine.currentSha ? `LAST BUILD SEEN ${shortSha(engine.currentSha)}` : "NO BUILD SEEN YET"}
         {engine.catalog ? "" : " · GRIDS RETURN WHEN IT DOES"}

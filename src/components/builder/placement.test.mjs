@@ -83,7 +83,7 @@ test("slot overrides open cells the hull has disabled", () => {
 // ---- The verdict -----------------------------------------------------------------------------
 
 const HARDENER = itemNamed(catalog, "ARMOR HARDENER");
-const TURRET = itemNamed(catalog, "OMNI REPAIRER TURRET");
+const TURRET = itemNamed(catalog, "REPAIR PROJECTOR");
 const SERAPH_FIT = reduce(cat, initialState(), { type: "start", hull: SERAPH }).fit;
 const at = (def, row, col, rotation = 0, fit = empty, extra = {}) => placementVerdict(cat, fit, { def, anchor: { row, col }, rotation, ...extra });
 
@@ -156,7 +156,7 @@ test("overlap names the module in the way; a moved module doesn't block itself",
   const one = withModuleAt(TURRET.def, 5, 8);
   const verdict = at(itemNamed(catalog, "TRACER ROUNDS").def, 4, 8, 0, one);
   assert.equal(verdict.kind, "Overlap");
-  assert.equal(verdict.reason, "OVERLAPS OMNI REPAIRER TURRET");
+  assert.equal(verdict.reason, "OVERLAPS REPAIR PROJECTOR");
   assert.deepEqual(keys(verdict.offending), ["5,8"]);
   assert.equal(at(TURRET.def, 5, 8, 0, one, { moving: 0 }).ok, true);
 });

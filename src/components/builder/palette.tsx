@@ -35,7 +35,7 @@ export function ItemTip({ item, needs = null, nowhere = null }: { item: CatalogI
     <div className="plate">
       {nowhere && <p className="palette-tip__nowhere">CAN&apos;T BE FITTED NOW: {nowhere}</p>}
       <div className="plate__head">
-        <ItemIcon src={baseIcon(item.path)} size={32} />
+        <ItemIcon src={baseIcon(item.art)} size={32} />
         <div className="plate__head-text">
           <div className="plate__name">{item.name}</div>
           <div className="plate__sub">
@@ -193,7 +193,7 @@ export function Palette({
               aria-label={`${item.name}, ${enumWords(item.slotType)} ${enumWords(item.moduleType)}${needs ? `, needs a ${needs.toLowerCase()}` : ""}${blocked ? `. Can't be fitted now: ${blocked.toLowerCase()}` : ""}`}
             >
               <span className="palette-item__icon">
-                <ItemIcon src={baseIcon(item.path)} size={36} />
+                <ItemIcon src={baseIcon(item.art)} size={36} />
               </span>
               <span className="palette-item__text">
                 <span className="palette-item__name">{item.name}</span>

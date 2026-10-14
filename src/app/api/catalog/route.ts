@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const { catalog } = await pageEngine(deps);
   if (!catalog) {
     return Response.json(
-      { error: "no_catalog", message: "The loadout engine hasn't answered since this server started, so there is no catalog yet." },
+      { error: "no_catalog", message: "The game data API hasn't answered since this server started, so there is no catalog yet." },
       { status: 503, headers: { "cache-control": "no-store" } },
     );
   }

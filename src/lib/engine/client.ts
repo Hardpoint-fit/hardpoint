@@ -1,14 +1,23 @@
-// A typed client for the loadout engine. It runs on the server (given the internal URL) and in the
-// browser (given the public URL from the public config) and never throws: every outcome is an
+// A typed client for the game data API (api.thecitadel.com). It runs on the server (given the internal URL)
+// and in the browser (given the public URL from the public config) and never throws: every outcome is an
 // EngineResult. It knows nothing about fits or the database; fits/service.ts and the pages build on it.
 
-import type { Catalog, EvaluationResponse, ErrorBody, FactsBody, FitBody, FitStringBody, HealthResponse, OpenFit, OpenItem } from "./types.ts";
+import {
+  assembleCatalog,
+  CATALOG_PARTS,
+  CATALOG_ROUTES,
+  commonBuild,
+  isPartBody,
+  type CatalogBodies,
+  type CatalogPart,
+} from "./catalog-resources.ts";
+import type { Catalog, ErrorBody, EvaluationResponse, FactsBody, FitBody, FitStringBody, OpenFit, OpenItem, StatusResponse } from "./types.ts";
 
 export type EngineErrorKind =
-  /** Unreachable, not configured, a 5xx, or an answer that isn't the engine's. Worth retrying later. */
+  /** Unreachable, not configured, a 5xx, or an answer that isn't the API's. Worth retrying later. */
   | "unavailable"
   | "timeout"
-  /** The engine refused the input (400). `message` is the engine's, safe to show. */
+  /** The API refused the input (400). `message` is the API's, safe to show. */
   | "rejected"
   | "rateLimited"
   | "tooLarge"
@@ -18,7 +27,7 @@ export type EngineErrorKind =
 export type EngineError = {
   kind: EngineErrorKind;
   message: string;
-  /** rateLimited only: how long the engine asked to wait (Retry-After), when it said. */
+  /** rateLimited only: how long the API asked to wait (Retry-After), when it said. */
   retryAfterMs?: number;
 };
 
@@ -38,24 +47,47 @@ export function parseRetryAfter(value: string | null, now = Date.now()): number 
 }
 export type EngineResult<T> = { ok: true; value: T } | { ok: false; error: EngineError };
 
-export type CatalogResponse = { status: "ok"; catalog: Catalog; etag: string | null } | { status: "notModified" };
+/** What came back for each part of the catalog, with the validator to revalidate it by. */
+export type CatalogParts = { [P in CatalogPart]: { body: CatalogBodies[P]; etag: string | null } };
 
-export type EngineTimeouts = { healthMs: number; catalogMs: number; evaluateMs: number; fitStringMs: number };
+/** A catalog the caller holds, to revalidate: each part is asked for again with its own If-None-Match. */
+export type HeldCatalog = { parts: CatalogParts };
 
-export const DEFAULT_TIMEOUTS: EngineTimeouts = { healthMs: 3_000, catalogMs: 15_000, evaluateMs: 5_000, fitStringMs: 5_000 };
+export type CatalogResponse =
+  | {
+      status: "ok";
+      catalog: Catalog;
+      /** One tag for the whole catalog, derived from its parts' tags; null when a part came without one. */
+      etag: string | null;
+      parts: CatalogParts;
+    }
+  | { status: "notModified" };
+
+export type EngineTimeouts = { statusMs: number; catalogMs: number; evaluateMs: number; fitStringMs: number };
+
+export const DEFAULT_TIMEOUTS: EngineTimeouts = { statusMs: 3_000, catalogMs: 15_000, evaluateMs: 5_000, fitStringMs: 5_000 };
 
 export type EngineClientOptions = {
-  /** No trailing slash. Null when the site has no engine configured: every call is then "unavailable". */
+  /** No trailing slash. Null when the site has no API configured: every call is then "unavailable". */
   baseUrl: string | null;
+  /**
+   * The PUBLIC API origin (no trailing slash) the catalog's art URLs are made absolute with, because the
+   * browser loads art from it; `baseUrl` may be an internal address. Defaults to `baseUrl`.
+   */
+  artBaseUrl?: string | null;
   timeouts?: Partial<EngineTimeouts>;
   /** For tests; defaults to the global fetch. */
   fetch?: typeof fetch;
 };
 
 export type EngineClient = {
-  health(): Promise<EngineResult<HealthResponse>>;
-  /** Pass the etag of a catalog you hold to get `notModified` when it is still current. */
-  catalog(options?: { ifNoneMatch?: string | null }): Promise<EngineResult<CatalogResponse>>;
+  /** Which build is live (GET /v1/status). */
+  status(): Promise<EngineResult<StatusResponse>>;
+  /**
+   * The catalog, read from the API's resource routes and assembled. Pass the one you hold to get
+   * `notModified` when every part is still current.
+   */
+  catalog(options?: { held?: HeldCatalog | null }): Promise<EngineResult<CatalogResponse>>;
   /** `signal` cancels the request; it then resolves with a "cancelled" error. */
   evaluate(fit: OpenFit, options?: { signal?: AbortSignal }): Promise<EngineResult<EvaluationResponse>>;
   importFitString(fitString: string): Promise<EngineResult<FitBody>>;
@@ -71,11 +103,9 @@ type Raw<T> = { ok: false; error: EngineError } | { ok: true; notModified: true 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-// Just enough of a check to tell the engine from a proxy's error page or a wrong URL; types.test.mjs
+// Just enough of a check to tell the API from a proxy's error page or a wrong URL; types.test.mjs
 // holds the full shapes.
-const isHealth = (v: unknown): v is HealthResponse => isObject(v) && typeof v.buildSha === "string";
-const isCatalog = (v: unknown): v is Catalog =>
-  isObject(v) && typeof v.buildSha === "string" && Array.isArray(v.hulls) && Array.isArray(v.items) && isObject(v.affinity);
+const isStatus = (v: unknown): v is StatusResponse => isObject(v) && typeof v.build === "string";
 const isEvaluation = (v: unknown): v is EvaluationResponse =>
   isObject(v) &&
   typeof v.buildSha === "string" &&
@@ -87,8 +117,27 @@ const isFactsBody = (v: unknown): v is FactsBody => isObject(v) && Array.isArray
 const isFitBody = (v: unknown): v is FitBody => isObject(v) && isObject(v.fit);
 const isFitStringBody = (v: unknown): v is FitStringBody => isObject(v) && typeof v.fitString === "string";
 
+/** The `{ error: { code, message } }` envelope every API error carries, or null for any other body. */
+function envelopeOf(body: unknown): ErrorBody["error"] | null {
+  if (!isObject(body) || !isObject(body.error)) return null;
+  const { code, message } = body.error;
+  return typeof code === "string" && typeof message === "string" ? { code, message } : null;
+}
+
+/** One tag for the catalog: a hash of its parts' tags, or null when a part has none. */
+async function catalogEtag(parts: CatalogParts): Promise<string | null> {
+  const tags = CATALOG_PARTS.map((part) => parts[part].etag);
+  if (tags.some((tag) => tag === null)) return null;
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(tags.join("\n")));
+  return `"${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}"`;
+}
+
+/** Names this app and where to reach it, as the API asks of a client. */
+const USER_AGENT = "hardpoint.fit (https://hardpoint.fit)";
+
 export function createEngineClient(options: EngineClientOptions): EngineClient {
   const timeouts = { ...DEFAULT_TIMEOUTS, ...options.timeouts };
+  const artBase = options.artBaseUrl === undefined ? options.baseUrl : options.artBaseUrl;
 
   async function call<T>(
     method: "GET" | "POST",
@@ -97,13 +146,16 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     guard: (value: unknown) => value is T,
     extra: { body?: unknown; headers?: Record<string, string>; signal?: AbortSignal } = {},
   ): Promise<Raw<T>> {
-    if (options.baseUrl === null) return fail("unavailable", "The loadout engine isn't configured.");
+    if (options.baseUrl === null) return fail("unavailable", "The game data API isn't configured.");
     try {
       const doFetch = options.fetch ?? fetch;
       const response = await doFetch(`${options.baseUrl}${path}`, {
         method,
         headers: {
           accept: "application/json",
+          // The API asks its clients to say who they are (a missing one earns a Warning header). Browsers
+          // choose their own User-Agent, and setting one would add a CORS preflight, so only the server does.
+          ...(typeof window === "undefined" ? { "user-agent": USER_AGENT } : {}),
           ...(extra.body !== undefined ? { "content-type": "application/json" } : {}),
           ...extra.headers,
         },
@@ -113,27 +165,26 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       });
 
       if (response.status === 304) return { ok: true, notModified: true };
-      if (response.status === 413) return fail("tooLarge", "That fit is too large for the engine.");
+      if (response.status === 413) return fail("tooLarge", "That fit is too large for the game data API.");
       if (response.status === 429) {
         const retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
         return { ok: false, error: { kind: "rateLimited", message: "Too many requests. Wait a moment and try again.", ...(retryAfterMs === undefined ? {} : { retryAfterMs }) } };
       }
       if (response.status === 400) {
-        const body: unknown = await response.json().catch(() => null);
-        const message = isObject(body) && typeof (body as Partial<ErrorBody>).error === "string" ? (body as ErrorBody).error : "The engine rejected the request.";
-        return fail("rejected", message);
+        const envelope = envelopeOf(await response.json().catch(() => null));
+        return fail("rejected", envelope?.message ?? "The game data API rejected the request.");
       }
-      if (!response.ok) return fail("unavailable", `The loadout engine answered ${response.status}.`);
+      if (!response.ok) return fail("unavailable", `The game data API answered ${response.status}.`);
 
       const body: unknown = await response.json().catch(() => null);
-      if (!guard(body)) return fail("unavailable", "The loadout engine sent an answer the site doesn't understand.");
+      if (!guard(body)) return fail("unavailable", "The game data API sent an answer the site doesn't understand.");
       return { ok: true, notModified: false, value: body, etag: response.headers.get("etag") };
     } catch (error) {
       if (extra.signal?.aborted) return fail("cancelled", "The request was cancelled.");
       if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
-        return fail("timeout", "The loadout engine took too long to answer.");
+        return fail("timeout", "The game data API took too long to answer.");
       }
-      return fail("unavailable", "The loadout engine can't be reached.");
+      return fail("unavailable", "The game data API can't be reached.");
     }
   }
 
@@ -142,23 +193,58 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
     !result.ok
       ? result
       : result.notModified
-        ? fail("unavailable", "The loadout engine sent an unexpected answer.")
+        ? fail("unavailable", "The game data API sent an unexpected answer.")
         : { ok: true, value: result.value };
 
+  /** One try at the catalog: every part, asked for together. `changed` when the parts are of different builds. */
+  async function fetchCatalog(held: HeldCatalog | null): Promise<EngineResult<CatalogResponse> | "changed"> {
+    const results = await Promise.all(
+      CATALOG_PARTS.map((part) => {
+        const validator = held?.parts[part].etag;
+        return call("GET", CATALOG_ROUTES[part].path, timeouts.catalogMs, (value): value is CatalogBodies[typeof part] => isPartBody(part, value), {
+          headers: validator ? { "if-none-match": validator } : undefined,
+        });
+      }),
+    );
+    const failed = results.find((result) => !result.ok);
+    if (failed && !failed.ok) return failed;
+
+    const parts: Record<string, { body: unknown; etag: string | null }> = {};
+    let anyChanged = false;
+    for (const [index, part] of CATALOG_PARTS.entries()) {
+      const result = results[index]!;
+      if (!result.ok) return fail("unavailable", "The game data API sent an unexpected answer.");
+      if (result.notModified) {
+        // A 304 answers a request that sent the held tag, so the part is held.
+        if (!held) return fail("unavailable", "The game data API sent an unexpected answer.");
+        parts[part] = held.parts[part];
+      } else {
+        anyChanged = true;
+        parts[part] = { body: result.value, etag: result.etag };
+      }
+    }
+    if (!anyChanged) return { ok: true, value: { status: "notModified" } };
+
+    const assembled = parts as CatalogParts;
+    const bodies = Object.fromEntries(CATALOG_PARTS.map((part) => [part, assembled[part].body])) as CatalogBodies;
+    // The parts were fetched one request each; a build that went live in between leaves them mixed.
+    if (commonBuild(bodies) === null) return "changed";
+    return { ok: true, value: { status: "ok", catalog: assembleCatalog(bodies, artBase), etag: await catalogEtag(assembled), parts: assembled } };
+  }
+
   return {
-    async health() {
-      return plain(await call("GET", "/healthz", timeouts.healthMs, isHealth));
+    async status() {
+      return plain(await call("GET", "/v1/status", timeouts.statusMs, isStatus));
     },
     async catalog(opts = {}) {
-      const result = await call("GET", "/v1/catalog", timeouts.catalogMs, isCatalog, {
-        headers: opts.ifNoneMatch ? { "if-none-match": opts.ifNoneMatch } : undefined,
-      });
-      if (!result.ok) return result;
-      if (result.notModified) return { ok: true, value: { status: "notModified" } };
-      return { ok: true, value: { status: "ok", catalog: result.value, etag: result.etag } };
+      // A deploy can land between the parts' requests: ask again from scratch once before giving up.
+      const first = await fetchCatalog(opts.held ?? null);
+      if (first !== "changed") return first;
+      const second = await fetchCatalog(null);
+      return second === "changed" ? fail("unavailable", "The game data API changed builds while the catalog was loading.") : second;
     },
     async evaluate(fit, opts = {}) {
-      return plain(await call("POST", "/v1/evaluate", timeouts.evaluateMs, isEvaluation, { body: { fit }, signal: opts.signal }));
+      return plain(await call("POST", "/v1/fits/evaluate", timeouts.evaluateMs, isEvaluation, { body: { fit }, signal: opts.signal }));
     },
     async importFitString(fitString) {
       return plain(await call("POST", "/v1/fits/import", timeouts.fitStringMs, isFitBody, { body: { fitString } }));
@@ -167,7 +253,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       return plain(await call("POST", "/v1/fits/export", timeouts.fitStringMs, isFitStringBody, { body: { fit } }));
     },
     async itemFacts(item, opts = {}) {
-      return plain(await call("POST", "/v1/item-facts", timeouts.evaluateMs, isFactsBody, { body: { item }, signal: opts.signal }));
+      return plain(await call("POST", "/v1/items/facts", timeouts.evaluateMs, isFactsBody, { body: { item }, signal: opts.signal }));
     },
   };
 }

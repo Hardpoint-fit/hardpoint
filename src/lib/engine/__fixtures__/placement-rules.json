@@ -1,0 +1,60 @@
+{
+ "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "placementRules": [
+  {
+   "slotType": "Battery",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": "Battery"
+  },
+  {
+   "slotType": "Subsystem",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": "Subsystem"
+  },
+  {
+   "slotType": "Core",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": null
+  },
+  {
+   "slotType": "Propulsion",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": "Propulsion"
+  },
+  {
+   "slotType": "Harpoon",
+   "covers": [
+    "Battery",
+    "Subsystem",
+    "Core",
+    "Propulsion",
+    "Harpoon"
+   ],
+   "hardpoint": null
+  }
+ ]
+}

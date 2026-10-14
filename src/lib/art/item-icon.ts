@@ -7,7 +7,8 @@
 //   3. an item with no art at all has no icon: the caller draws its placeholder.
 // "Identified" is InventorySharedHelpers.IsEffectivelyIdentified: the category can't be identified, or
 // the item is Normal rarity, or it has been identified.
-import { artManifest, findArtifactArt, findModuleArt, type ArtManifest, type ModuleArt } from "./art-manifest";
+// The images are the API's: each catalog entity carries its `art` (URLs), and this only picks among them.
+import type { ArtKeys } from "../engine/types.ts";
 
 /** IdentifyItemRules.SupportsIdentification. */
 const IDENTIFIABLE = new Set(["Module", "Conduit", "Consumable", "Ship"]);
@@ -16,8 +17,8 @@ export function isEffectivelyIdentified(category: string | null, roll: { rarity:
   return category === null || !IDENTIFIABLE.has(category) || roll.rarity === "Normal" || roll.isIdentified;
 }
 
-/** BaseModuleDefPrototype.GetIcon(rarity) over the manifest's variants. */
-export function moduleIcon(art: ModuleArt, rarity: string): string {
+/** BaseModuleDefPrototype.GetIcon(rarity) over the art's variants. */
+export function moduleIcon(art: ArtKeys, rarity: string): string {
   switch (rarity) {
     case "Augmented":
       return art.Augmented ?? art.base;
@@ -32,8 +33,8 @@ export function moduleIcon(art: ModuleArt, rarity: string): string {
 }
 
 export type IconSubject = {
-  /** The item prototype's catalog path (a module, hull or cipher). */
-  path: string | null;
+  /** The item's, hull's or cipher's catalog `art`. */
+  art: ArtKeys | null;
   /** ItemCategory; null when unknown, which nothing can identify. */
   category: string | null;
 };
@@ -41,19 +42,20 @@ export type IconSubject = {
 export type IconRoll = { rarity: string; isIdentified: boolean };
 
 /**
- * The image URL (128px; see art2x for 256px) an item shows, or null when it has none. `artifactPath` is
- * the catalog `path` of the artifact the roll names, if any: its asset is found by that path.
+ * The image URL (128px; see art2x for 256px) an item shows, or null when it has none. `artifactArt` is
+ * the catalog `art` of the artifact the roll names, if any (null for one that authors no icon).
  */
-export function itemIcon(subject: IconSubject, roll: IconRoll, artifactPath: string | null = null, manifest: ArtManifest = artManifest): string | null {
-  if (artifactPath && isEffectivelyIdentified(subject.category, roll)) {
-    const own = findArtifactArt(artifactPath, manifest);
-    if (own) return own;
-  }
-  const art = findModuleArt(subject.path, manifest);
-  return art ? moduleIcon(art, roll.rarity) : null;
+export function itemIcon(subject: IconSubject, roll: IconRoll, artifactArt: ArtKeys | null = null): string | null {
+  if (artifactArt && isEffectivelyIdentified(subject.category, roll)) return artifactArt.base;
+  return subject.art ? moduleIcon(subject.art, roll.rarity) : null;
 }
 
 /** The icon of an item's plainest roll: what the palette and hull picker show. */
-export function baseIcon(path: string | null, manifest: ArtManifest = artManifest): string | null {
-  return findModuleArt(path, manifest)?.base ?? null;
+export function baseIcon(art: ArtKeys | null): string | null {
+  return art?.base ?? null;
+}
+
+/** The 256px twin of an art URL, for high-density screens. */
+export function art2x(url: string): string {
+  return url.replace(/\.webp$/, "@2x.webp");
 }

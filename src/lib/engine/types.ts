@@ -1,7 +1,7 @@
-// The loadout engine's JSON, mirrored from its C# records (tools/game-data-api/Citadel.GameDataApi:
-// OpenFit.cs, Evaluator.cs, CatalogBuilder.cs, ItemFacts.cs, Program.cs). The engine writes camelCase with enums as
-// their C# names. GUIDs are decimal strings and FP values are raw decimal strings. types.test.mjs checks
-// these shapes against real engine responses recorded in __fixtures__, so keep them in step with the C#.
+// The game data API's JSON, mirrored from its contract (tools/game-data-api/openapi/openapi.json) and the
+// C# records behind it. The API writes camelCase with enums as their C# names. GUIDs are decimal strings and
+// FP values are raw decimal strings. types.test.mjs checks these shapes against real API responses
+// recorded in __fixtures__ (scripts/record-fixtures.mjs), so keep them in step with the contract.
 
 // ---- Open fit (OpenFit.cs) ---------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ export type OpenFit = {
 
 export type OpenItem = { def: string; roll: OpenRoll; patina: number };
 
-/** No point rating: the engine derives it from the roll, so a sent one is ignored. */
+/** No point rating: the API derives it from the roll, so a sent one is ignored. */
 export type OpenRoll = {
   quality: string;
   rarity: string;
@@ -134,17 +134,49 @@ export type SpecHelp = { title: string; text: string };
 /** A line of the game's item tooltip facts: `value` then `unit`, toned "Neutral", "Positive" or "Negative". */
 export type FactRow = { label: string; value: string | null; unit: string | null; tone: string };
 
-// ---- Request and response bodies (Program.cs) --------------------------------------------------
+// ---- Request and response bodies ---------------------------------------------------------------
 
-export type HealthResponse = { buildSha: string };
+/** GET /v1/status: which build is live. */
+export type StatusResponse = { build: string; liveSince: string; counts: StatusCounts };
+export type StatusCounts = { hulls: number; items: number; ciphers: number; artifacts: number; regaliaSets: number };
 export type FitBody = { fit: OpenFit };
 export type FitStringBody = { fitString: string };
-export type ErrorBody = { error: string };
-/** POST /v1/item-facts: a rolled item, validated as /v1/evaluate validates a module. */
+/** Every error: `code` is "bad_request", "not_found", "too_large", "rate_limited", "starting" or "internal". */
+export type ErrorBody = { error: ErrorDetail };
+export type ErrorDetail = { code: string; message: string };
+/** POST /v1/items/facts: a rolled item, validated as /v1/fits/evaluate validates a module. */
 export type ItemBody = { item: OpenItem };
 export type FactsBody = { facts: FactRow[] };
 
-// ---- Catalog v2 (CatalogBuilder.cs) ------------------------------------------------------------
+// ---- The public resource routes (OpenAPI: ItemList, HullList, ...) -----------------------------
+
+export type ItemsBody = { build: string; items: CatalogItem[] };
+export type HullsBody = { build: string; hulls: CatalogHull[] };
+export type CiphersBody = { build: string; ciphers: CatalogCipher[] };
+export type ArtifactsBody = { build: string; artifacts: CatalogArtifact[] };
+export type RegaliaSetsBody = { build: string; regaliaSets: CatalogRegaliaSet[] };
+export type AffinityBody = { build: string; affinity: CatalogAffinity };
+export type RegaliaBody = { build: string; regalia: CatalogRegalia[] };
+export type HereticalSpecialsBody = { build: string; hereticalSpecials: CatalogHereticalSpecial[] };
+export type HarmonicSetsBody = { build: string; harmonicSets: CatalogHarmonicSet[] };
+export type ModifierPoolsBody = { build: string; modifierPools: CatalogModifierPool[] };
+export type QualitiesBody = { build: string; qualities: CatalogQuality[] };
+export type PlacementRulesBody = { build: string; placementRules: CatalogSlotPlacement[] };
+
+/**
+ * An entity's art: API-relative URLs (`/v1/art/<file>.webp`, 128px; the 256px twin has @2x before .webp).
+ * `base` is always there; the other variants only where the game authors tiered art. The catalog the
+ * site holds has them made absolute (catalog-resources.ts).
+ */
+export type ArtKeys = {
+  base: string;
+  Augmented?: string;
+  Prototype?: string;
+  Artifact?: string;
+  Heretical?: string;
+};
+
+// ---- The catalog the site holds: the resource routes assembled (catalog-resources.ts) ---------
 
 export type Catalog = {
   buildSha: string;
@@ -174,7 +206,7 @@ export type CatalogSlotPlacement = { slotType: string; covers: string[]; hardpoi
 export type CatalogHull = {
   def: string;
   name: string;
-  /** The hull item prototype's asset path (Identifier.Path), which keys its art. */
+  /** The hull item prototype's asset path (Identifier.Path). */
   path: string;
   shipClass: string;
   /** The ShipRole of the ship the hull unlocks; "None" when it has none. */
@@ -184,12 +216,13 @@ export type CatalogHull = {
   /** The fitting grid, row-major SlotType names. */
   slots: string[];
   roll: CatalogRoll;
+  art: ArtKeys | null;
 };
 
 export type CatalogItem = {
   def: string;
   name: string;
-  /** The item prototype's asset path (Identifier.Path), which keys its art. */
+  /** The item prototype's asset path (Identifier.Path). */
   path: string;
   /** The module's authored description, trimmed; null when it has none. Plain text, may hold newlines. */
   description: string | null;
@@ -203,6 +236,7 @@ export type CatalogItem = {
   shape: CatalogShape;
   portRules: CatalogPortRules;
   roll: CatalogRoll;
+  art: ArtKeys | null;
 };
 
 export type CatalogRegaliaSet = { def: string; name: string; pieces: string[] };
@@ -274,13 +308,15 @@ export type CatalogQuality = { quality: string; multiplier: string };
 export type CatalogArtifact = {
   def: string;
   name: string;
-  /** The artifact definition's asset path (Identifier.Path), which keys its art; its name is a display name. */
+  /** The artifact definition's asset path (Identifier.Path); its name is a display name. */
   path: string;
   item: string;
   modifiers: CatalogTemplateLine[];
   scaledStat: CatalogScaledStatRange | null;
   pointRating: number;
   patinaMax: number;
+  /** The artifact's own icon, shown for an identified artifact; only artifacts whose definition authors one have it. */
+  art: ArtKeys | null;
 };
 
 export type CatalogRegalia = {
@@ -316,12 +352,13 @@ export type CatalogHarmonicSet = {
 export type CatalogCipher = {
   def: string;
   name: string;
-  /** The cipher item prototype's asset path (Identifier.Path), which keys its art. */
+  /** The cipher item prototype's asset path (Identifier.Path). */
   path: string;
   stat: string;
   operation: string;
   value: string;
   pointRating: number;
+  art: ArtKeys | null;
 };
 
 export type CatalogAffinity = {

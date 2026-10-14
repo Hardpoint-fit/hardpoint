@@ -138,12 +138,12 @@ test("asking again for the fit already answered doesn't call the engine", async 
 
 test("an engine that is down is reported, keeps the last answer, and is retried every 5 s", async () => {
   let up = false;
-  const { timers, calls, evaluator } = harness(async () => (up ? ok() : { ok: false, error: { kind: "unavailable", message: "The loadout engine can't be reached." } }));
+  const { timers, calls, evaluator } = harness(async () => (up ? ok() : { ok: false, error: { kind: "unavailable", message: "The game data API can't be reached." } }));
   evaluator.request(fit(1));
   timers.tick(EVALUATION_DELAY_MS);
   await settle();
   assert.equal(evaluator.current().status, "down");
-  assert.equal(evaluator.current().message, "The loadout engine can't be reached.");
+  assert.equal(evaluator.current().message, "The game data API can't be reached.");
   assert.equal(evaluator.current().outage, "down");
   timers.tick(RETRY_MS);
   await settle();

@@ -48,12 +48,12 @@ export function matchesEtag(ifNoneMatch: string | null, etag: string): boolean {
 }
 
 /**
- * `engineEtag` is the engine's tag for this catalog, a hash of its content, so browsers drop their copy
- * whenever the engine's catalog changes, not only when the game build does. Without one, the tag is a hash
+ * `apiEtag` is the tag the client derived for this catalog from the API's tags for its parts, so browsers drop
+ * their copy whenever the API's catalog changes, not only when the game build does. Without one, the tag is a hash
  * of the body this server sends.
  */
-export function catalogResponse(catalog: Catalog, request: Request, engineEtag: string | null = null): Response {
-  const etag = engineEtag?.replace(/^W\//, "") ?? `"${createHash("sha256").update(bodies(catalog).identity).digest("hex")}"`;
+export function catalogResponse(catalog: Catalog, request: Request, apiEtag: string | null = null): Response {
+  const etag = apiEtag?.replace(/^W\//, "") ?? `"${createHash("sha256").update(bodies(catalog).identity).digest("hex")}"`;
   const headers: Record<string, string> = { etag, "cache-control": "no-cache", vary: "accept-encoding" };
   if (matchesEtag(request.headers.get("if-none-match"), etag)) return new Response(null, { status: 304, headers });
   const encoding = pickEncoding(request.headers.get("accept-encoding"));

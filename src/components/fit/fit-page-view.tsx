@@ -18,7 +18,7 @@ import { isOpenFit } from "#/lib/engine/open-fit";
 type Ready = Extract<FitPageData, { status: "ok" }>;
 
 const GRID_NOTES: Record<Exclude<Ready["grid"]["status"], "ready">, string> = {
-  no_catalog: "THE GRID NEEDS THE LOADOUT ENGINE, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
+  no_catalog: "THE GRID NEEDS THE GAME DATA API, WHICH ISN'T ANSWERING. STATS BELOW ARE STORED.",
   unknown_hull: "THIS HULL ISN'T IN THE CURRENT BUILD.",
   unreadable: "THIS FIT CAN'T BE DRAWN.",
 };
@@ -87,7 +87,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
   const published = fit.status === "published";
   const hullName = data.hull?.name ?? "UNKNOWN HULL";
   const rating = shown.reference?.rating ?? null;
-  const hullIcon = data.hull ? itemIcon({ path: data.hull.path, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
+  const hullIcon = data.hull ? itemIcon({ art: data.hull.art, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
   return (
     <main className="page">
       <EngineBanner engine={engine} />
