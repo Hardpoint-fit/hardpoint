@@ -1,12 +1,14 @@
 // Derives the site's design tokens, font, fitting-grid art and stat wording from the Unity tree, which
 // owns all of them. Nothing here is authored: the outputs (listed in .gitignore) are rebuilt before
-// every dev and build run (item art included: game-art.mjs). The repo root is found by walking up from this file, so it works in a
+// every dev and build run (item art included: tools/game-data-api/art/game-art.mjs). The repo root is found by walking up from this file, so it works in a
 // checkout and in the Docker build (whose context is the repo root).
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import postcss from "postcss";
-import { buildGameArt } from "./game-art.mjs";
+import sharp from "sharp";
+// The extractor belongs to the game data API (tools/game-data-api/art); the site runs it until it reads the API's art.
+import { buildGameArt } from "../../../../tools/game-data-api/art/game-art.mjs";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const unityRoot = resolve(appRoot, "../../../src/Citadel.Unity");
@@ -192,8 +194,8 @@ export async function prepare() {
   writeFileSync(OUTPUTS.fittingArt, `${JSON.stringify(buildFittingArt(), null, 1)}\n`);
   writeFileSync(OUTPUTS.statText, `${JSON.stringify(buildStatText(), null, 1)}\n`);
   writeFileSync(OUTPUTS.progressionLayout, `${JSON.stringify(buildProgressionLayout(), null, 1)}\n`);
-  // Item art: modules, hull items, ciphers, artifacts and ship classes (see game-art.mjs).
-  const art = await buildGameArt({ assetsRoot: assets, outDir: OUTPUTS.artDir, manifestFile: OUTPUTS.artManifest, cacheFile: OUTPUTS.artCache });
+  // Item art: modules, hull items, ciphers, artifacts and ship classes (see tools/game-data-api/art/game-art.mjs).
+  const art = await buildGameArt({ sharp, assetsRoot: assets, outDir: OUTPUTS.artDir, manifestFile: OUTPUTS.artManifest, cacheFile: OUTPUTS.artCache });
   console.log(`game art: ${art.images} images (${art.rebuilt} rebuilt, ${(art.bytes / 1024 / 1024).toFixed(1)} MB), ${art.modules} module keys, ${art.artifacts} artifacts, ${art.shipClasses} ship classes${art.unresolved.length ? `, ${art.unresolved.length} icon guids without an image` : ""}`);
 }
 

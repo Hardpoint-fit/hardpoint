@@ -27,9 +27,10 @@ COPY src/Citadel.Unity/Assets/Scripts/Runtime/Common/Stats/StatTypeText.cs src/C
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/StatTypeRules.cs src/Citadel.Unity/Assets/Scripts/Simulation/LootGeneration/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/Modules/Modules.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Modules/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/Effects.qtn src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs src/Citadel.Unity/Assets/Scripts/Simulation/
-# Item art (scripts/game-art.mjs): the prefabs and assets that name icons, the images and their .meta files.
+# Item art (tools/game-data-api/art/game-art.mjs, run by prepare-game-assets with this app's sharp): the prefabs and assets that name icons, the images and their .meta files.
 # Dockerfile.dockerignore keeps this to those file types; prepare fails on an image that is an LFS pointer.
 COPY tools/ship-restore/lib/game-assets.js tools/ship-restore/lib/rarity-names.js tools/ship-restore/lib/
+COPY tools/game-data-api/art/game-art.mjs tools/game-data-api/art/
 COPY src/Citadel.Unity/Assets/Scripts/Simulation/Items/Items.qtn src/Citadel.Unity/Assets/Scripts/Simulation/Items/
 COPY src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Modules/ src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Modules/
 COPY src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Ships/ src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Ships/

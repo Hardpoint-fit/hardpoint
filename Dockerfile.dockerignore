@@ -1,5 +1,5 @@
 # Allow-list: the build needs only this app and the Unity files scripts/prepare-game-assets.mjs reads.
-# The item art (scripts/game-art.mjs) reads the prefabs and assets below through tools/ship-restore/lib/
+# The item art (tools/game-data-api/art/game-art.mjs) reads the prefabs and assets below through tools/ship-restore/lib/
 # game-assets.js and the images they name (with their .meta files, which carry the GUIDs).
 *
 !js/projects/theorycrafting
@@ -15,6 +15,7 @@
 !src/Citadel.Unity/Assets/Scripts/Simulation/AffinityThresholdResolver.cs
 !tools/ship-restore/lib/game-assets.js
 !tools/ship-restore/lib/rarity-names.js
+!tools/game-data-api/art/game-art.mjs
 !src/Citadel.Unity/Assets/Scripts/Simulation/Items/Items.qtn
 !src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Modules/**/*.prefab
 !src/Citadel.Unity/Assets/Content/SessionDestinations/Shared/Quantum/Ships/**/*.prefab

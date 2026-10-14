@@ -8,7 +8,7 @@ export type ArtVariant = "base" | "Augmented" | "Prototype" | "Artifact" | "Here
 export type ModuleArt = { base: string } & Partial<Record<Exclude<ArtVariant, "base">, string>>;
 
 /**
- * Written by scripts/game-art.mjs from the Unity tree. Every URL is a 128px WebP under /art; the same
+ * Written by tools/game-data-api/art/game-art.mjs from the Unity tree. Every URL is a 128px WebP under /art; the same
  * name with "@2x" before ".webp" is the 256px one (see `art2x`).
  */
 export type ArtManifest = {

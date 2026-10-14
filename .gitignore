@@ -9,7 +9,7 @@ src/app/fonts/
 src/components/grid/fitting-art.generated.json
 src/lib/fits/stat-text.generated.json
 src/lib/engine/progression-layout.generated.json
-# Item art written by scripts/game-art.mjs.
+# Item art written by tools/game-data-api/art/game-art.mjs.
 public/art/
 .cache/
 src/lib/art/art-manifest.generated.json

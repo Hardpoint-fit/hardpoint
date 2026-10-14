@@ -1,5 +1,5 @@
 // How the site joins a catalog item to its game art. The art manifest (art-manifest.generated.json,
-// written by scripts/game-art.mjs) is keyed the way tools/ship-restore/lib/game-assets.js keys icons
+// written by tools/game-data-api/art/game-art.mjs) is keyed the way tools/ship-restore/lib/game-assets.js keys icons
 // (`iconKeys`): a name lower-cased with everything but a-z and 0-9 removed. The catalog's `path` is the
 // prototype's Identifier.Path, the item prefab's path plus "EntityPrototype". Candidates, most specific
 // first:
