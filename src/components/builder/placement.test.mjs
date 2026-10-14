@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { cellKey } from "../grid/geometry.ts";
 import { FIXTURES } from "../../lib/engine/stub-engine.mjs";
-import { cellsAt, dropPreview, firstOpenCell, fitsAnywhere, gridOf, hardpointTargets, nowhereReason, placementVerdict, takenCells } from "./placement.ts";
+import { cellsAt, dropPreview, firstOpenCell, fitsAnywhere, gridOf, hardpointTargets, nowhereReason, placementContext, placementVerdict, takenCells } from "./placement.ts";
 import { indexCatalog } from "./rules.ts";
 import { initialState, reduce } from "./state.ts";
 import { SCARAB, SERAPH, itemNamed } from "./test-catalog.mjs";
@@ -170,32 +170,71 @@ test("an item fits nowhere when its hardpoints are gone, and the palette says wh
   for (const [row, col] of [[3, 6], [3, 8], [5, 8], [6, 7]]) full = withModuleAt(TURRET.def, row, col, full);
   assert.equal(full.modules.length, 4);
   assert.equal(fitsAnywhere(cat, full, TURRET.def), false);
-  assert.equal(nowhereReason(cat, full, TURRET.def), "EVERY BATTERY HARDPOINT IS TAKEN");
+  assert.equal(nowhereReason(cat, full, TURRET.def), "EVERY BATTERY HARDPOINT IS TAKEN. REMOVE A MODULE TO FREE ONE");
   const noSubsystems = { ...SERAPH_FIT, slotOverrides: [{ cell: 4 * 15 + 7, slotType: "Core" }, { cell: 8 * 15 + 7, slotType: "Core" }] };
   assert.equal(fitsAnywhere(cat, noSubsystems, HARDENER.def), false);
-  assert.equal(nowhereReason(cat, noSubsystems, HARDENER.def), "THIS HULL HAS NO SUBSYSTEM HARDPOINT");
+  assert.equal(nowhereReason(cat, noSubsystems, HARDENER.def), "THIS HULL HAS NO SUBSYSTEM HARDPOINT", "nothing to remove: the hull can't take it");
+  const crowded = withModuleAt(TURRET.def, 4, 6, noSubsystems);
+  assert.equal(nowhereReason(cat, crowded, HARDENER.def), "THIS HULL HAS NO SUBSYSTEM HARDPOINT", "modules fitted, but removing one wouldn't help");
+});
+
+test("an item walled out by fitted modules says removing one frees room", () => {
+  const conduit = itemNamed(catalog, "PROPULSION CONDUIT").def;
+  const tracer = itemNamed(catalog, "TRACER ROUNDS").def;
+  const hull = cat.hulls.get(SERAPH);
+  const modules = hull.slots.flatMap((slot, index) =>
+    slot === "None" ? [] : [{ item: { def: conduit, roll: SERAPH_FIT.hull.roll, patina: 0 }, row: Math.floor(index / hull.cols), col: index % hull.cols, rotation: 0 }],
+  );
+  const full = { ...SERAPH_FIT, modules };
+  assert.equal(fitsAnywhere(cat, full, tracer), false);
+  assert.equal(nowhereReason(cat, full, tracer), "NO ROOM LEFT ON THE GRID. REMOVE A MODULE TO FREE ONE");
+  assert.equal(nowhereReason(cat, full, HARDENER.def), "EVERY SUBSYSTEM HARDPOINT IS TAKEN. REMOVE A MODULE TO FREE ONE");
+});
+
+test("a catalog without placement rules (an older engine) checks only bounds and overlap", () => {
+  const old = structuredClone(catalog);
+  delete old.placement;
+  const bare = indexCatalog(old);
+  assert.equal(bare.placement, null);
+  assert.equal(placementVerdict(bare, empty, { def: HARDENER.def, anchor: { row: 4, col: 6 }, rotation: 0 }).ok, true, "the engine judges the hardpoint after the drop");
+  assert.equal(placementVerdict(bare, empty, { def: HARDENER.def, anchor: { row: 13, col: 7 }, rotation: 0 }).ok, false, "still inside the grid");
+  assert.deepEqual(hardpointTargets(bare, empty, HARDENER.def), []);
+  assert.equal(fitsAnywhere(bare, empty, HARDENER.def), true);
 });
 
 test("the builder refuses exactly the drops the engine refuses (recorded engine verdicts)", () => {
-  const bases = { SCARAB: empty, SERAPH: SERAPH_FIT, "fit.json": FIXTURES.fit };
+  const oracle = FIXTURES.placementOracle;
+  // The recording's extra hulls come from the engine's catalog for the same build.
+  const wide = indexCatalog({ ...catalog, hulls: [...catalog.hulls, ...oracle.hulls] });
+  const bases = { SCARAB: empty, SERAPH: SERAPH_FIT, "fit.json": FIXTURES.fit, ...oracle.bases };
+  for (const hull of oracle.hulls) bases[hull.name] = reduce(wide, initialState(), { type: "start", hull: hull.def }).fit;
   let checked = 0;
-  for (const recorded of FIXTURES.placementOracle.cases) {
+  const seen = { ported: 0, moved: 0, hulls: new Set(), letters: new Set() };
+  for (const recorded of oracle.cases) {
     const fit = bases[recorded.base];
+    assert.ok(fit, recorded.base);
+    seen.hulls.add(fit.hull.def);
+    if (recorded.ports.some((port) => port.cipher !== null)) seen.ported++;
+    if (recorded.moving !== null) seen.moved++;
+    const context = placementContext(wide, fit, recorded.moving);
     let index = 0;
     for (let row = recorded.rows[0]; row <= recorded.rows[1]; row++) {
       for (let col = recorded.cols[0]; col <= recorded.cols[1]; col++) {
         const engine = recorded.verdicts[index++];
-        const verdict = placementVerdict(cat, fit, { def: recorded.item, anchor: { row, col }, rotation: recorded.rotation });
-        const where = `${recorded.base} ${recorded.name} r${recorded.rotation} at (${row},${col}): engine ${engine}, builder ${verdict.ok ? "." : verdict.kind}`;
+        seen.letters.add(engine);
+        const verdict = placementVerdict(wide, fit, { def: recorded.item, anchor: { row, col }, rotation: recorded.rotation, ports: recorded.ports, moving: recorded.moving }, context);
+        const where = `${recorded.base} ${recorded.name}${recorded.ports.length ? " ported" : ""}${recorded.moving !== null ? " moved" : ""} r${recorded.rotation} at (${row},${col}): engine ${engine}, builder ${verdict.ok ? "." : verdict.kind}`;
         assert.equal(verdict.ok, engine === ".", where);
         if (engine === "H") assert.equal(verdict.kind, "MissingHardpoint", where);
         checked++;
       }
     }
   }
-  assert.ok(checked > 8000, `${checked} drops checked`);
-  const letters = new Set(FIXTURES.placementOracle.cases.flatMap((each) => [...each.verdicts]));
-  for (const letter of [".", "S", "O", "H"]) assert.ok(letters.has(letter), `the recording has ${letter} verdicts`);
+  assert.ok(checked > 20000, `${checked} drops checked`);
+  assert.ok(seen.hulls.size >= 5, "five hulls");
+  assert.ok(seen.ported >= 40, "ported drops");
+  assert.ok(seen.moved >= 12, "moved modules");
+  for (const letter of [".", "S", "O", "H"]) assert.ok(seen.letters.has(letter), `the recording has ${letter} verdicts`);
 });
 
 function withModuleAt(def, row, col, fit = empty) {

@@ -84,15 +84,18 @@ export function placementVerdict(cat: BuilderCatalog, fit: OpenFit, candidate: C
   const item = cat.items.get(candidate.def);
   const cells = cellsAt(cat, candidate.def, { ...candidate.anchor, rotation: candidate.rotation }, candidate.ports ?? []);
   const refuse = (kind: RefusalKind, reason: string, offending: Cell[]): Verdict => ({ ok: false, kind, reason, cells, offending });
-  const rule = item ? cat.placement.get(item.slotType) : undefined;
-  if (!ctx || !item || !rule) return refuse("UnknownItem", "NOT IN THE CURRENT BUILD", cells);
+  if (!ctx || !item) return refuse("UnknownItem", "NOT IN THE CURRENT BUILD", cells);
+  // Without the catalog's rules (an older engine) only bounds and overlap are checked here.
+  const rule = cat.placement ? cat.placement.get(item.slotType) : { slotType: item.slotType, covers: null, hardpoint: null };
+  if (!rule) return refuse("SlotNotFittable", `${enumWords(item.slotType)} ITEMS CAN'T BE FITTED`, cells);
   const { grid, owners } = ctx;
 
   const outside = cells.filter((cell) => !insideGrid(cell, grid) || grid.slots[cell.row * grid.cols + cell.col] === "None");
   if (outside.length > 0) return refuse(outside.some((cell) => !insideGrid(cell, grid)) ? "OutOfBounds" : "SlotNotFittable", "OUTSIDE THE GRID", outside);
 
   const slotOf = (cell: Cell) => grid.slots[cell.row * grid.cols + cell.col]!;
-  const unfit = cells.filter((cell) => !rule.covers.includes(slotOf(cell)));
+  const covers = rule.covers;
+  const unfit = covers === null ? [] : cells.filter((cell) => !covers.includes(slotOf(cell)));
   if (unfit.length > 0) return refuse("SlotNotFittable", `NOTHING FITS ON ${enumWords(slotOf(unfit[0]!))} CELLS`, unfit);
 
   const overlapping = cells.filter((cell) => owners.has(cellKey(cell)));
@@ -111,7 +114,7 @@ export function placementVerdict(cat: BuilderCatalog, fit: OpenFit, candidate: C
 /** The hardpoint an item needs under it, or null when any fittable cell will do. */
 export function requiredHardpoint(cat: BuilderCatalog, def: string): string | null {
   const item = cat.items.get(def);
-  return item ? (cat.placement.get(item.slotType)?.hardpoint ?? null) : null;
+  return item ? (cat.placement?.get(item.slotType)?.hardpoint ?? null) : null;
 }
 
 /**
@@ -143,13 +146,20 @@ export function fitsAnywhere(cat: BuilderCatalog, fit: OpenFit, def: string, con
   return false;
 }
 
-/** Why an item fits nowhere on this fit: the hull lacks its hardpoint, or there is no room left. */
+/**
+ * Why an item fits nowhere on this fit. When it would fit on the bare hull only the fitted modules are in
+ * the way, and removing one frees room; otherwise the hull itself can't take it.
+ */
 export function nowhereReason(cat: BuilderCatalog, fit: OpenFit, def: string): string {
   const hardpoint = requiredHardpoint(cat, def);
   const grid = gridOf(cat, fit);
+  if (fit.modules.length > 0 && fitsAnywhere(cat, { ...fit, modules: [] }, def)) {
+    return hardpoint !== null && hardpointTargets(cat, fit, def).length === 0
+      ? `EVERY ${hardpointName(hardpoint)} IS TAKEN. REMOVE A MODULE TO FREE ONE`
+      : "NO ROOM LEFT ON THE GRID. REMOVE A MODULE TO FREE ONE";
+  }
   if (hardpoint !== null && grid && !grid.slots.includes(hardpoint)) return `THIS HULL HAS NO ${hardpointName(hardpoint)}`;
-  if (hardpoint !== null && hardpointTargets(cat, fit, def).length === 0) return `EVERY ${hardpointName(hardpoint)} IS TAKEN`;
-  return "NO ROOM FOR IT ON THE GRID";
+  return "IT DOESN'T FIT ON THIS HULL";
 }
 
 /** What is being placed: a palette item or a fitted module, turned, held at a cursor cell. */

@@ -41,11 +41,21 @@ export type BuilderCatalog = {
   pools: Map<string, CatalogModifierSlots>;
   /** Regalia set def to its name and piece count, as the grid model reads it. */
   regaliaSets: Map<string, { name: string; pieces: number }>;
-  /** Item slot type to the cells it may cover and the hardpoint it needs (placement.ts reads it). */
-  placement: Map<string, CatalogSlotPlacement>;
+  /**
+   * Item slot type to the cells it may cover and the hardpoint it needs (placement.ts reads it). Null when
+   * the catalog has no placement rules (an engine from before them): the builder then checks only bounds
+   * and overlap, and the engine judges the rest after the drop.
+   */
+  placement: Map<string, CatalogSlotPlacement> | null;
 };
 
 const byDef = <T extends { def: string }>(list: readonly T[]) => new Map(list.map((entry) => [entry.def, entry]));
+
+function placementRules(catalog: Catalog): Map<string, CatalogSlotPlacement> | null {
+  // An older engine's catalog (or a copy cached from one) has no `placement`.
+  const rules = (catalog.placement as CatalogSlotPlacement[] | undefined) ?? [];
+  return rules.length > 0 ? new Map(rules.map((rule) => [rule.slotType, rule])) : null;
+}
 
 export function indexCatalog(catalog: Catalog): BuilderCatalog {
   return {
@@ -59,7 +69,7 @@ export function indexCatalog(catalog: Catalog): BuilderCatalog {
     ciphers: byDef(catalog.ciphers),
     pools: new Map(catalog.modifierPools.map((pool) => [pool.moduleType, pool.modifiers])),
     regaliaSets: new Map(catalog.regaliaSets.map((set) => [set.def, { name: set.name, pieces: set.pieces.length }])),
-    placement: new Map(catalog.placement.map((rule) => [rule.slotType, rule])),
+    placement: placementRules(catalog),
   };
 }
 
