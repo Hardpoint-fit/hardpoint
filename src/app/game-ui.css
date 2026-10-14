@@ -928,6 +928,9 @@ a.chip:hover {
 }
 
 .module-filter__remove {
+  min-width: 32px;
+  min-height: 32px;
+  margin: -6px -6px -6px 0;
   border: 0;
   background: none;
   padding: 0 2px;
@@ -1237,4 +1240,13 @@ a.chip:hover {
 .module-list__name {
   flex: 1 1 12rem;
   min-width: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

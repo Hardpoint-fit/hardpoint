@@ -8,5 +8,5 @@ import { siteDeps } from "#/lib/site/server";
 export async function GET(request: Request) {
   const q = new URL(request.url).searchParams.get("q") ?? "";
   const { catalog } = await pageEngine(siteDeps());
-  return Response.json({ modules: searchModules(catalog, q.slice(0, MAX_SEARCH_LENGTH)) }, { headers: { "cache-control": "no-store" } });
+  return Response.json({ modules: searchModules(catalog, q.slice(0, MAX_SEARCH_LENGTH)) }, { headers: { "cache-control": "public, max-age=60" } });
 }

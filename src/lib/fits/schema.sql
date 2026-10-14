@@ -201,8 +201,9 @@ BEGIN
     CREATE INDEX IF NOT EXISTS fits_description_trgm_idx ON fits USING gin (description gin_trgm_ops);
     CREATE INDEX IF NOT EXISTS pilots_name_trgm_idx ON pilots USING gin (name gin_trgm_ops);
   END IF;
-EXCEPTION WHEN insufficient_privilege THEN
-  RAISE NOTICE 'pg_trgm not created: text search runs without trigram indexes';
+EXCEPTION WHEN OTHERS THEN
+  -- The extension and its indexes are optional: nothing here may abort the migration.
+  RAISE NOTICE 'pg_trgm indexes skipped (SQLSTATE %): text search runs without trigram indexes', SQLSTATE;
 END
 $trgm$;
 
