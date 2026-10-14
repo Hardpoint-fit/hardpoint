@@ -486,3 +486,16 @@ test("two moderators banning each other at once: the ban is checked inside its t
   const { rows } = await db.query(`SELECT count(*)::int AS n FROM pilot_bans`);
   assert.equal(rows[0].n, 1);
 });
+
+test("publish refusals say whether the engine was unreachable, failed, or refused the fit", async () => {
+  const via = (error) => deps(authAs(ALICE.userId), { engine: { evaluate: async () => ({ ok: false, error }) } });
+  const unreachable = await publishFit(via({ kind: "unavailable", message: "x" }), { fitId: ids.draft });
+  assert.deepEqual([unreachable.reason, unreachable.status], ["engine", 503]);
+  assert.match(unreachable.message, /can't be reached right now/);
+  const failed = await publishFit(via({ kind: "failed", message: "x" }), { fitId: ids.draft });
+  assert.deepEqual([failed.reason, failed.status], ["engine", 502]);
+  assert.match(failed.message, /^The fit check failed on the loadout engine\./);
+  const refused = await publishFit(via({ kind: "rejected", message: "modules[0]: bad port" }), { fitId: ids.draft });
+  assert.deepEqual([refused.reason, refused.status], ["engine", 422]);
+  assert.match(refused.message, /modules\[0\]: bad port/);
+});

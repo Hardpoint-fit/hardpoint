@@ -3,7 +3,7 @@
 // authenticates: every function takes the acting user's id as a parameter and trusts it. Callers (the
 // server actions of Task 5) must pass the id of the authenticated session user, never one from the request.
 
-import type { EngineClient, EngineError } from "../engine/client.ts";
+import { ENGINE_FAILED_MESSAGE, type EngineClient, type EngineError } from "../engine/client.ts";
 import type { EvaluationIssue, EvaluationResponse, OpenFit } from "../engine/types.ts";
 import {
   FitDataError,
@@ -51,6 +51,8 @@ export function toEvaluationInput(response: EvaluationResponse): EvaluationInput
 
 export const ENGINE_DOWN_MESSAGE =
   "The loadout engine can't be reached right now, so this fit can't be checked. Your draft is saved; try publishing again in a moment.";
+
+export { ENGINE_FAILED_MESSAGE };
 
 /** A refusal the page can show. `message` is safe for the user. */
 export type Refusal =
@@ -193,7 +195,8 @@ export async function publish({ db, engine }: FitServiceDeps, input: { fitId: st
 }
 
 function engineRefusal(error: EngineError): string {
-  return error.kind === "rejected" ? `The engine couldn't read this fit: ${error.message}` : ENGINE_DOWN_MESSAGE;
+  if (error.kind === "rejected") return `The engine couldn't read this fit: ${error.message}`;
+  return error.kind === "failed" ? ENGINE_FAILED_MESSAGE : ENGINE_DOWN_MESSAGE;
 }
 
 export type ReevaluateResult =

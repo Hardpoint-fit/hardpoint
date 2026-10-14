@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test, { after, before, beforeEach } from "node:test";
-import { createEngineClient } from "./client.ts";
+import { ENGINE_FAILED_MESSAGE, createEngineClient } from "./client.ts";
 import { FIXTURES, deadEngineUrl, startStubEngine } from "./stub-engine.mjs";
 
 let stub;
@@ -139,16 +139,16 @@ test("a 400 is rejected with the engine's message", async () => {
   assert.equal(err(await client.evaluate(undefined)).kind, "rejected");
 });
 
-test("413, 429 and 5xx map to tooLarge, rateLimited and unavailable", async () => {
+test("413, 429 and 5xx map to tooLarge, rateLimited and failed", async () => {
   stub.fail(413);
   assert.equal(err(await client.evaluate(FIXTURES.fit)).kind, "tooLarge");
   stub.fail(429);
   assert.equal(err(await client.evaluate(FIXTURES.fit)).kind, "rateLimited");
   assert.equal(err(await client.catalog()).kind, "rateLimited");
   stub.fail(500);
-  assert.equal(err(await client.evaluate(FIXTURES.fit)).kind, "unavailable");
+  assert.equal(err(await client.evaluate(FIXTURES.fit)).kind, "failed");
   stub.fail(503);
-  assert.equal(err(await client.health()).kind, "unavailable");
+  assert.equal(err(await client.health()).kind, "failed");
 });
 
 test("a real over-limit body gets the engine's 413", async () => {
@@ -229,4 +229,24 @@ test("a 429's Retry-After (seconds or a date) comes back as retryAfterMs", async
   } finally {
     await stub.close();
   }
+});
+
+test("the engine's {error:{code,message}} envelope reaches the site; the old string shape still does", async () => {
+  const answer = (status, body) => createEngineClient({ baseUrl: "http://engine.test", fetch: async () => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } }) });
+  const envelope = err(await answer(400, { error: { code: "bad_fit", message: "modules[2]: unknown item" } }).evaluate(FIXTURES.fit));
+  assert.deepEqual([envelope.kind, envelope.message], ["rejected", "modules[2]: unknown item"]);
+  const legacy = err(await answer(400, { error: "version: expected 1" }).evaluate(FIXTURES.fit));
+  assert.equal(legacy.message, "version: expected 1");
+  const other4xx = err(await answer(422, { error: { code: "x", message: "That hull can't carry this." } }).evaluate(FIXTURES.fit));
+  assert.deepEqual([other4xx.kind, other4xx.message], ["rejected", "That hull can't carry this."]);
+  const unreadable = err(await answer(404, "nope").evaluate(FIXTURES.fit));
+  assert.equal(unreadable.kind, "rejected");
+  assert.match(unreadable.message, /rejected/);
+});
+
+test("a 5xx is 'failed' (the engine answered), with the engine's text kept out of the message", async () => {
+  const boom = createEngineClient({ baseUrl: "http://engine.test", fetch: async () => new Response(JSON.stringify({ error: { code: "internal", message: "NullReferenceException at X" } }), { status: 500 }) });
+  const e = err(await boom.evaluate(FIXTURES.fit));
+  assert.equal(e.kind, "failed");
+  assert.equal(e.message, ENGINE_FAILED_MESSAGE);
 });

@@ -162,8 +162,13 @@ export function readProgression(fit: unknown): OpenProgression | null {
   const progression = (fit as { progression?: unknown } | null)?.progression as Record<string, unknown> | null | undefined;
   if (!progression || typeof progression !== "object") return null;
   const { affinityType, affinityXp, allocatedPoints, thresholdSelections } = progression;
-  if (typeof affinityType !== "string" || typeof affinityXp !== "number" || !Number.isFinite(affinityXp) || !isInts(allocatedPoints) || !isInts(thresholdSelections)) return null;
-  return { affinityType, affinityXp, allocatedPoints, thresholdSelections };
+  if (typeof affinityType !== "string" || typeof affinityXp !== "number" || !Number.isFinite(affinityXp)) return null;
+  if (!Array.isArray(allocatedPoints) || !Array.isArray(thresholdSelections)) return null;
+  // Longer than the layout has slots is damaged or hostile: only the slots that exist are read.
+  const points = allocatedPoints.slice(0, LAYOUT.allocationSlots);
+  const selections = thresholdSelections.slice(0, LAYOUT.thresholdSlots);
+  if (!isInts(points) || !isInts(selections)) return null;
+  return { affinityType, affinityXp, allocatedPoints: points, thresholdSelections: selections };
 }
 
 /** Whether the hull has an affinity to show: a type, points spent, or XP beyond the first level. */

@@ -219,3 +219,51 @@ test("the schema refuses a fit that is both forked and marked deleted", async ()
   const fork = await draft(BOB, { forkedFrom: source.id });
   await assert.rejects(db.query("UPDATE fits SET forked_from_deleted = true WHERE id = $1", [fork.id]));
 });
+
+// A source fit deleted between the check and the insert makes Postgres raise 23503; simulate it on the one statement.
+const raceDb = (target) => {
+  const raced = (text, params, run) => {
+    if (text.includes(target)) throw Object.assign(new Error("insert or update violates foreign key constraint"), { code: "23503" });
+    return run();
+  };
+  return {
+    query: (text, params) => raced(text, params, () => db.query(text, params)),
+    transaction: (work) => db.transaction((tx) => work({ query: (text, params) => raced(text, params, () => tx.query(text, params)) })),
+  };
+};
+
+test("a fit deleted between check and bookmark is the ordinary not_found, not a database error", async () => {
+  const fit = await published(ALICE);
+  await assert.rejects(setBookmark(raceDb("INSERT INTO fit_bookmarks"), { fitId: fit.id, userId: BOB.userId, bookmarked: true }), (e) => e instanceof FitDataError && e.code === "not_found");
+  await assert.rejects(setBookmark(db, { fitId: "AAAAAAAAAA", userId: BOB.userId, bookmarked: true }), (e) => e.code === "not_found");
+});
+
+test("a fork whose source is deleted under the insert is stored with no credit instead of failing", async () => {
+  const source = await published(ALICE);
+  let first = true;
+  const flaky = {
+    transaction: (work) =>
+      db.transaction((tx) =>
+        work({
+          query: (text, params) => {
+            if (text.startsWith("INSERT INTO fits") && first) {
+              first = false;
+              throw Object.assign(new Error("fk"), { code: "23503" });
+            }
+            return tx.query(text, params);
+          },
+        }),
+      ),
+  };
+  const fork = await createFit(flaky, { authorUserId: BOB.userId, authorName: "bob", title: "Fork", content: sampleFit("1000"), buildSha: SHA, evaluation: good, forkedFrom: source.id });
+  assert.equal(first, false, "the race was hit");
+  const stored = await getFit(db, fork.id, { viewer: BOB, buildSha: SHA });
+  assert.equal(stored.title, "Fork");
+  assert.equal((await getForkInfo(db, fork.id, BOB)).credit, null);
+});
+
+test("a fork of a live source still gets its credit", async () => {
+  const source = await published(ALICE);
+  const fork = await draft(BOB, { forkedFrom: source.id });
+  assert.equal((await getForkInfo(db, fork.id, BOB)).credit?.id, source.id);
+});

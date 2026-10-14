@@ -96,7 +96,7 @@ test("with nothing held, a failure is returned, and the next get tries again", a
   stub.fail(503);
   const failed = await cache.get();
   assert.equal(failed.ok, false);
-  assert.equal(failed.error.kind, "unavailable");
+  assert.equal(failed.error.kind, "failed");
   stub.fail(null);
   assert.equal((await cache.get()).ok, true);
 });

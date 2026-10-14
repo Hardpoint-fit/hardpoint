@@ -2,7 +2,7 @@
 // that is down reported without blocking edits (Review Focus #4).
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createEngineClient } from "../../lib/engine/client.ts";
+import { ENGINE_FAILED_MESSAGE, createEngineClient } from "../../lib/engine/client.ts";
 import { FIXTURES, deadEngineUrl, startStubEngine } from "../../lib/engine/stub-engine.mjs";
 import { EVALUATION_DELAY_MS, RETRY_MS, createLiveEvaluator, fitKey } from "./live-evaluation.ts";
 import { indexCatalog } from "./rules.ts";
@@ -222,4 +222,17 @@ test("with the stub engine: the request is aborted on the wire, and the answer a
   } finally {
     await stub.close();
   }
+});
+
+test("a failing engine is retried like an outage but says the check failed, not that it is unreachable", async () => {
+  const { timers, calls, evaluator } = harness(async () => ({ ok: false, error: { kind: "failed", message: ENGINE_FAILED_MESSAGE } }));
+  evaluator.request(fit(1));
+  timers.tick(EVALUATION_DELAY_MS);
+  await settle();
+  assert.equal(evaluator.current().status, "down");
+  assert.equal(evaluator.current().message, ENGINE_FAILED_MESSAGE);
+  assert.doesNotMatch(evaluator.current().message, /can't be reached/);
+  timers.tick(RETRY_MS);
+  await settle();
+  assert.equal(calls.length, 2);
 });

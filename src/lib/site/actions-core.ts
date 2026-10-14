@@ -226,7 +226,7 @@ export function unbanPilot(deps: ActionDeps, input: { userId: string }): Promise
 function serviceRefusal(refusal: Refusal): ActionRefusal {
   switch (refusal.reason) {
     case "engine":
-      return refuse("engine", refusal.engineError.kind === "rejected" ? 422 : 503, refusal.message);
+      return refuse("engine", refusal.engineError.kind === "rejected" ? 422 : refusal.engineError.kind === "failed" ? 502 : 503, refusal.message);
     case "invalid_fit":
       return { ...refuse("invalid_fit", 409, refusal.message), issues: refusal.issues };
     default:

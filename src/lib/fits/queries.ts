@@ -305,11 +305,16 @@ const MODULE_ITEMS_SQL = `COALESCE((SELECT jsonb_agg(jsonb_build_object(
 // Only the two progression fields a card needs, bounded, not the whole progression: type capped in length,
 // XP only when it is a sane number (a hostile or damaged value reads as null rather than failing the query).
 const AFFINITY_TYPE_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinityType}') = 'string' THEN left(f.fit #>> '{progression,affinityType}', 40) END`;
-const AFFINITY_XP_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinityXp}') = 'number'
-    AND (f.fit #>> '{progression,affinityXp}')::numeric BETWEEN 0 AND 1000000000 THEN (f.fit #>> '{progression,affinityXp}')::float8 END`;
+const AFFINITY_XP_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinityXp}') = 'number' THEN
+    CASE WHEN (f.fit #>> '{progression,affinityXp}')::numeric BETWEEN 0 AND 1000000000 THEN (f.fit #>> '{progression,affinityXp}')::float8 END END`;
 
-const AFFINITY_POINTS_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,allocatedPoints}') = 'array'
-    AND jsonb_array_length(f.fit #> '{progression,allocatedPoints}') <= 64 THEN f.fit #> '{progression,allocatedPoints}' END`;
+// The first 64 allocated-point slots, as numbers only: a slot holding anything else (a string, an object, null)
+// reads as 0 so the others keep their positions (a slot's index is its module type and option). The payload
+// per card is at most 64 numbers however large the stored array is. Every cast sits inside the type check.
+const AFFINITY_POINTS_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,allocatedPoints}') = 'array' THEN
+    (SELECT jsonb_agg(CASE WHEN jsonb_typeof(p.value) = 'number' THEN p.value ELSE '0'::jsonb END ORDER BY p.n)
+     FROM (SELECT e.value, e.n FROM jsonb_array_elements(f.fit #> '{progression,allocatedPoints}') WITH ORDINALITY AS e(value, n)
+           ORDER BY e.n LIMIT 64) AS p) END`;
 
 export function summaryColumns(shaRef: string, viewerRef: string): string {
   return `f.id, f.author_user_id, p.name AS author_name, f.title, f.hull_item, f.tags, f.status,
@@ -582,12 +587,24 @@ export async function createFit(db: Db, input: CreateFitInput): Promise<FitDetai
     try {
       return await db.transaction(async (tx) => {
         await ensurePilot(tx, { userId: input.authorUserId, name: input.authorName });
-        await tx.query(
+        // The fork credit is a convenience, never a reason to fail: FOR KEY SHARE keeps the source from being
+        // deleted under the insert, and if it still is (23503), the insert runs again inside a savepoint
+        // with no credit. Only this statement is retried.
+        const insertSql = (credit: boolean) =>
           `INSERT INTO fits (id, author_user_id, title, description, hull_item, tags, fit, created_build_sha, forked_from)
            VALUES ($1, $2, $3, $4, $5, $6::text[], $7::jsonb, $8,
-             (SELECT s.id FROM fits s WHERE s.id = $9::text AND (s.status = 'published' OR s.author_user_id = $2)))`,
-          [id, input.authorUserId, title, description, hullItem, tags, json, input.buildSha, input.forkedFrom && ID.test(input.forkedFrom) ? input.forkedFrom : null],
-        );
+             ${credit ? "(SELECT s.id FROM fits s WHERE s.id = $9::text AND (s.status = 'published' OR s.author_user_id = $2) FOR KEY SHARE)" : "$9::text"})`;
+        const source = input.forkedFrom && ID.test(input.forkedFrom) ? input.forkedFrom : null;
+        const args = [id, input.authorUserId, title, description, hullItem, tags, json, input.buildSha];
+        await tx.query("SAVEPOINT fork_credit");
+        try {
+          await tx.query(insertSql(true), [...args, source]);
+        } catch (error) {
+          if (errorCode(error) !== "23503") throw error;
+          await tx.query("ROLLBACK TO SAVEPOINT fork_credit");
+          await tx.query(insertSql(false), [...args, null]);
+        }
+        await tx.query("RELEASE SAVEPOINT fork_credit");
         if (input.evaluation) await insertEvaluation(tx, id, input.evaluation);
         const fit = await getFit(tx, id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha });
         return fit!;

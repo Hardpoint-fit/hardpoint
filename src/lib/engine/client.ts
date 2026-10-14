@@ -2,13 +2,15 @@
 // browser (given the public URL from the public config) and never throws: every outcome is an
 // EngineResult. It knows nothing about fits or the database; fits/service.ts and the pages build on it.
 
-import type { Catalog, EvaluationResponse, ErrorBody, FactsBody, FitBody, FitStringBody, GridModsResponse, HealthResponse, OpenFit, OpenItem, RollRequest, RollResponse } from "./types.ts";
+import type { Catalog, EvaluationResponse, FactsBody, FitBody, FitStringBody, GridModsResponse, HealthResponse, OpenFit, OpenItem, RollRequest, RollResponse } from "./types.ts";
 
 export type EngineErrorKind =
-  /** Unreachable, not configured, a 5xx, or an answer that isn't the engine's. Worth retrying later. */
+  /** Unreachable, not configured, or an answer that isn't the engine's. Worth retrying later. */
   | "unavailable"
+  /** The engine answered with a 5xx: it is up but the check itself failed. `message` is safe to show. */
+  | "failed"
   | "timeout"
-  /** The engine refused the input (400). `message` is the engine's, safe to show. */
+  /** The engine refused the input (a 4xx). `message` is the engine's, safe to show. */
   | "rejected"
   | "rateLimited"
   | "tooLarge"
@@ -21,6 +23,26 @@ export type EngineError = {
   /** rateLimited only: how long the engine asked to wait (Retry-After), when it said. */
   retryAfterMs?: number;
 };
+
+/** What users are told when the engine can't be reached at all (network error, not configured, unreadable answer). */
+export const ENGINE_UNREACHABLE_MESSAGE = "The loadout engine can't be reached right now.";
+/** What users are told when the engine answered with an error of its own (a 5xx). */
+export const ENGINE_FAILED_MESSAGE = "The fit check failed on the loadout engine. Your draft is saved; try again, and report the fit if it keeps failing.";
+
+/**
+ * The message of an engine error body. The engine answers `{error:{code,message}}`; the stub (and older
+ * engines) answered `{error:"message"}`. Null when the body has neither.
+ */
+export function engineErrorMessage(body: unknown): string | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const error = (body as { error?: unknown }).error;
+  if (typeof error === "string") return error.trim() ? error : null;
+  if (typeof error === "object" && error !== null) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return null;
+}
 
 /** The wait a Retry-After is held to: never a tight loop (0 or a past date), never minutes of nothing. */
 export const RETRY_AFTER_MIN_MS = 1_000;
@@ -131,12 +153,12 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
         const retryAfterMs = parseRetryAfter(response.headers.get("retry-after"));
         return { ok: false, error: { kind: "rateLimited", message: "Too many requests. Wait a moment and try again.", ...(retryAfterMs === undefined ? {} : { retryAfterMs }) } };
       }
-      if (response.status === 400) {
+      if (response.status >= 400 && response.status < 500) {
         const body: unknown = await response.json().catch(() => null);
-        const message = isObject(body) && typeof (body as Partial<ErrorBody>).error === "string" ? (body as ErrorBody).error : "The engine rejected the request.";
-        return fail("rejected", message);
+        return fail("rejected", engineErrorMessage(body) ?? "The engine rejected the request.");
       }
-      if (!response.ok) return fail("unavailable", `The loadout engine answered ${response.status}.`);
+      if (response.status >= 500) return fail("failed", ENGINE_FAILED_MESSAGE);
+      if (!response.ok) return fail("unavailable", ENGINE_UNREACHABLE_MESSAGE);
 
       const body: unknown = await response.json().catch(() => null);
       if (!guard(body)) return fail("unavailable", "The loadout engine sent an answer the site doesn't understand.");
@@ -146,7 +168,7 @@ export function createEngineClient(options: EngineClientOptions): EngineClient {
       if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) {
         return fail("timeout", "The loadout engine took too long to answer.");
       }
-      return fail("unavailable", "The loadout engine can't be reached.");
+      return fail("unavailable", ENGINE_UNREACHABLE_MESSAGE);
     }
   }
 

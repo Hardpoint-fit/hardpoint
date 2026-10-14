@@ -986,3 +986,26 @@ test("the module and trigram indexes exist where the server has them", async () 
   assert.ok(names.includes("fits_description_trgm_idx"));
   assert.ok(names.includes("pilots_name_trgm_idx"));
 });
+
+test("card affinity columns bound and sanitise stored progression values", async () => {
+  const stored = async (progression) => {
+    const fit = await createFit(db, { authorUserId: "user_alice", authorName: "alice", title: "Affinity", content: { ...sampleFit("1000"), fit: { ...sampleFit("1000").fit, progression } }, buildSha: SHA, evaluation: good });
+    await publishFit(db, { id: fit.id, authorUserId: "user_alice", buildSha: SHA });
+    return (await browse()).fits.find((each) => each.id === fit.id);
+  };
+  const clean = await stored({ affinityType: "Weapon", affinityXp: 250, allocatedPoints: [0, 1, 2] });
+  assert.deepEqual([clean.affinityXp, clean.affinityPoints], [250, [0, 1, 2]]);
+
+  const mixed = await stored({ affinityType: "Weapon", affinityXp: "900", allocatedPoints: [1, "two", { n: 3 }, null, 4] });
+  assert.equal(mixed.affinityXp, null, "string XP is not a number");
+  assert.deepEqual(mixed.affinityPoints, [1, 0, 0, 0, 4], "non-numbers hold their slot as 0");
+
+  const big = await stored({ affinityType: "Weapon", affinityXp: 1e12, allocatedPoints: Array.from({ length: 500 }, (_, i) => i) });
+  assert.equal(big.affinityXp, null, "an absurd XP reads as null");
+  assert.equal(big.affinityPoints.length, 64, "at most 64 slots reach a card");
+
+  const notArray = await stored({ affinityType: "Weapon", affinityXp: 1, allocatedPoints: "lots" });
+  assert.equal(notArray.affinityPoints, null);
+  const nested = await stored({ affinityType: { a: 1 }, affinityXp: { b: 2 }, allocatedPoints: { c: 3 } });
+  assert.deepEqual([nested.affinityXp, nested.affinityPoints], [null, null]);
+});

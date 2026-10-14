@@ -16,6 +16,7 @@ export function fitStringProblem(error: EngineError, refused: string): string {
   if (error.kind === "rejected") return `${refused}: ${error.message.toUpperCase()}`;
   if (error.kind === "rateLimited") return slowDownMessage(error.retryAfterMs ?? 1_000);
   if (error.kind === "tooLarge") return "THIS FIT IS TOO LARGE FOR A FIT STRING.";
+  if (error.kind === "failed") return "THE FIT CHECK FAILED ON THE LOADOUT ENGINE. TRY AGAIN, AND REPORT THE FIT IF IT KEEPS FAILING.";
   return ENGINE_DOWN_FOR_STRINGS;
 }
 

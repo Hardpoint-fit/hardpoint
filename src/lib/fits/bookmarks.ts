@@ -22,12 +22,20 @@ export async function setBookmark(db: Queryable, input: { fitId: string; userId:
     if (ID.test(input.fitId)) await db.query(`DELETE FROM fit_bookmarks WHERE fit_id = $1 AND user_id = $2`, [input.fitId, input.userId]);
     return { bookmarked: false };
   }
-  const { rows } = await db.query(
-    `INSERT INTO fit_bookmarks (fit_id, user_id)
-     SELECT id, $2 FROM fits WHERE id = $1 AND status = 'published'
-     ON CONFLICT (user_id, fit_id) DO NOTHING RETURNING fit_id`,
-    [ID.test(input.fitId) ? input.fitId : "", input.userId],
-  );
+  // FOR KEY SHARE holds the fit against a concurrent delete; if the fit is deleted between the check and
+  // the insert anyway, Postgres raises 23503 and that is the same answer as "no such fit".
+  let rows: unknown[];
+  try {
+    ({ rows } = await db.query(
+      `INSERT INTO fit_bookmarks (fit_id, user_id)
+       SELECT id, $2 FROM fits WHERE id = $1 AND status = 'published' FOR KEY SHARE
+       ON CONFLICT (user_id, fit_id) DO NOTHING RETURNING fit_id`,
+      [ID.test(input.fitId) ? input.fitId : "", input.userId],
+    ));
+  } catch (error) {
+    if (typeof error === "object" && error !== null && (error as { code?: unknown }).code === "23503") throw new FitDataError("not_found", "No such fit.");
+    throw error;
+  }
   if (rows.length === 0) {
     // Nothing inserted: already bookmarked (fine), or not a published fit.
     const { rows: held } = await db.query(

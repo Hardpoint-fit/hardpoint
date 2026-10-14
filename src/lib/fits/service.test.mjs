@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test, { after, before, beforeEach } from "node:test";
-import { createEngineClient } from "../engine/client.ts";
+import { ENGINE_FAILED_MESSAGE, createEngineClient } from "../engine/client.ts";
 import { FIXTURES, deadEngineUrl, startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, updateFit } from "./queries.ts";
 import { publish, reevaluate, saveDraft, toEvaluationInput } from "./service.ts";
@@ -240,4 +240,16 @@ test("reevaluate drops a verdict for content edited meanwhile", async () => {
   assert.equal(result.ok, true);
   assert.equal(result.recorded, false);
   assert.equal((await read(fit.id)).evaluation, null);
+});
+
+test("publish tells an unreachable engine, a failing engine and a refusing engine apart", async () => {
+  const { fit } = await draft();
+  const via = (error) => ({ evaluate: async () => ({ ok: false, error }) });
+  const unreachable = await publish({ db, engine: via({ kind: "timeout", message: "slow" }) }, { fitId: fit.id, authorUserId: ALICE.authorUserId });
+  assert.match(unreachable.message, /can't be reached right now/);
+  const failing = await publish({ db, engine: via({ kind: "failed", message: ENGINE_FAILED_MESSAGE }) }, { fitId: fit.id, authorUserId: ALICE.authorUserId });
+  assert.equal(failing.message, "The fit check failed on the loadout engine. Your draft is saved; try again, and report the fit if it keeps failing.");
+  const refusing = await publish({ db, engine: via({ kind: "rejected", message: "modules[1]: no such port" }) }, { fitId: fit.id, authorUserId: ALICE.authorUserId });
+  assert.match(refusing.message, /modules\[1\]: no such port/);
+  assert.equal((await read(fit.id)).status, "draft");
 });
