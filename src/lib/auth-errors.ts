@@ -39,7 +39,7 @@ export class AuthError extends Error {
     return new AuthError(503, SIGN_IN_UNAVAILABLE_MESSAGE);
   }
 
-  /** Clerk is configured but failed to answer. */
+  /** Sign-in is configured but failed: the session could not be read, or the provider did not answer. */
   static outage(): AuthError {
     return new AuthError(503, SIGN_IN_OUTAGE_MESSAGE);
   }

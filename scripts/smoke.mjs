@@ -9,6 +9,7 @@
 // stub running for a look in the browser (Ctrl+C stops both).
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { request as httpRequest } from "node:http";
 import { cpSync, existsSync } from "node:fs";
 import { createServer } from "node:net";
 import { dirname, join, resolve } from "node:path";
@@ -18,6 +19,7 @@ import { startStubEngine } from "../src/lib/engine/stub-engine.mjs";
 import { applySchema } from "../src/lib/fits/migrate.mjs";
 import { seedSite } from "../src/lib/site/seed.mjs";
 import { artManifest } from "../src/lib/art/art-manifest.ts";
+import { startFakeIdp } from "../src/lib/fake-idp.mjs";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const standalone = join(appRoot, ".next/standalone");
@@ -67,6 +69,7 @@ async function seed() {
 
 async function startSite(env) {
   const port = await freePort();
+  if (typeof env === "function") env = env(`http://127.0.0.1:${port}`);
   const child = spawn(process.execPath, ["server.js"], {
     cwd: standalone,
     env: { PATH: process.env.PATH, NODE_ENV: "production", HOSTNAME: "127.0.0.1", PORT: String(port), ...env },
@@ -98,6 +101,29 @@ async function check(site, path, { status = 200, has = [], lacks = [], type, enc
   for (const text of lacks) assert.ok(!body.includes(text), `${path}: has ${JSON.stringify(text)}`);
   results.push(`${response.status} ${path}${has.length ? `  [${has.join(" | ")}]` : ""}`);
 }
+
+/** A GET with a chosen Host header (fetch won't send one), for the www redirect. */
+function getWithHost(site, path, host) {
+  return new Promise((done, fail) => {
+    const url = new URL(site.url + path);
+    httpRequest({ host: url.hostname, port: url.port, path, headers: { host } }, (response) => {
+      response.resume();
+      done({ status: response.statusCode, location: response.headers.location });
+    })
+      .on("error", fail)
+      .end();
+  });
+}
+
+async function checkWww(site, host, path, location) {
+  const response = await getWithHost(site, path, host);
+  assert.equal(response.status, 308, `${host}${path}: status ${response.status}`);
+  assert.equal(response.location, location, `${host}${path}: location`);
+  results.push(`308 ${host}${path} -> ${location}`);
+}
+
+/** Set-Cookie name -> value of a fetch response. */
+const cookiesOf = (response) => Object.fromEntries(response.headers.getSetCookie().map((line) => line.split(";")[0].split(/=(.*)/s).slice(0, 2)));
 
 const ALICE_ID = "user_alice";
 const ids = await seed();
@@ -157,7 +183,54 @@ try {
   await check(up, `/fits/${ids.showcase}/edit`, { status: 307 });
   await check(up, `/fits/${ids.draft}/edit`, { status: 404 });
   await check(up, `/fits/${ids.showcase}`, { has: ["COPY FIT TO BUILDER"], lacks: [`/fits/${ids.showcase}/edit`] });
+  // Sign-in not configured: the header says so, the auth routes answer 503, www still goes to the apex.
+  await check(up, "/", { has: ["Sign-in isn&#x27;t configured on this site yet"], lacks: ["/auth/signin"] });
+  await check(up, "/auth/signin?returnTo=%2F", { status: 503, has: ["Sign-in isn&#39;t configured on this site yet"] });
+  await check(up, "/auth/callback?code=x&state=y", { status: 503 });
+  await checkWww(up, "www.hardpoint.fit", "/fits/abc?x=1", "https://hardpoint.fit/fits/abc?x=1");
+  await checkWww(up, "www.hardpoint.fit", ART_URL, `https://hardpoint.fit${ART_URL}`);
   up.child.kill();
+
+  // ---- Sign in with Citadel, against a local fake provider -----------------------------------
+  const idp = await startFakeIdp();
+  try {
+    const authed = await startSite((origin) => ({
+      DATABASE_URL: databaseUrl,
+      LOADOUT_ENGINE_URL: stub.url,
+      CITADEL_OAUTH_ISSUER: idp.issuer,
+      CITADEL_OAUTH_CLIENT_ID: idp.clientId,
+      CITADEL_OAUTH_CLIENT_SECRET: idp.clientSecret,
+      SESSION_SECRET: Buffer.alloc(48, 3).toString("base64"),
+      SITE_URL: origin,
+    }));
+    sites.push(authed);
+    results.push("== sign in with citadel");
+    await check(authed, "/", { has: ["/auth/signin?returnTo=%2F", "Sign in"], lacks: ["Sign-in isn&#x27;t configured"] });
+    const start = await fetch(`${authed.url}/auth/signin?returnTo=${encodeURIComponent(`/fits/${ids.showcase}`)}`, { redirect: "manual" });
+    assert.equal(start.status, 302, "signin redirects to the provider");
+    const back = idp.authorize(start.headers.get("location"));
+    assert.equal(back.origin, authed.url, "the redirect URI is SITE_URL/auth/callback");
+    const signInCookie = Object.entries(cookiesOf(start)).map(([k, v]) => `${k}=${v}`).join("; ");
+    const callback = await fetch(back, { redirect: "manual", headers: { cookie: signInCookie } });
+    assert.equal(callback.status, 303, "callback signs in");
+    assert.equal(callback.headers.get("location"), `${authed.url}/fits/${ids.showcase}`);
+    const session = cookiesOf(callback)["__Host-citadel-session"];
+    assert.ok(session, "session cookie set");
+    results.push(`303 /auth/callback -> /fits/${ids.showcase} (session cookie set)`);
+    const signedIn = await fetch(`${authed.url}/`, { headers: { cookie: `__Host-citadel-session=${session}` } });
+    const page = await signedIn.text();
+    assert.ok(page.includes("ahab") && page.includes("Sign out") && page.includes('action="/auth/signout"'), "header shows the pilot and SIGN OUT");
+    results.push("200 / signed in  [ahab | Sign out]");
+    const forged = await fetch(`${authed.url}/auth/signout`, { method: "POST", redirect: "manual", headers: { origin: "https://evil.example", cookie: `__Host-citadel-session=${session}` } });
+    assert.equal(forged.status, 403, "cross-site sign-out refused");
+    const out = await fetch(`${authed.url}/auth/signout`, { method: "POST", redirect: "manual", headers: { origin: authed.url, "content-type": "application/x-www-form-urlencoded", cookie: `__Host-citadel-session=${session}` }, body: "returnTo=%2F" });
+    assert.equal(out.status, 303);
+    assert.equal(cookiesOf(out)["__Host-citadel-session"], "", "sign-out clears the session");
+    results.push("303 POST /auth/signout (cleared); 403 cross-site");
+    authed.child.kill();
+  } finally {
+    await idp.close();
+  }
 
   // ---- Engine down since start: stored verdicts, a banner, no 500 --------------------------
   const down = await startSite({ DATABASE_URL: databaseUrl, LOADOUT_ENGINE_URL: "http://127.0.0.1:9" });

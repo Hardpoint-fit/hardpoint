@@ -1,46 +1,42 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { FALLBACK_AUTHOR_NAME, createAuth, describeClerkError, displayName } from "./auth-core.ts";
+import { FALLBACK_AUTHOR_NAME, createAuth, describeAuthError, displayName, hasAdminRole } from "./auth-core.ts";
 import { AuthError, authErrorResponse, withAuthRefusal } from "./auth-errors.ts";
 
 const profile = (over = {}) => ({ username: null, firstName: null, lastName: null, publicMetadata: {}, ...over });
 
-/** An adapter that counts its calls and never touches the network. */
-function fakeAdapter({ userId = "user_a", profiles = {} } = {}) {
-  const calls = { session: 0, profile: 0 };
-  return {
-    calls,
-    sessionUserId: async () => (calls.session++, userId),
-    profile: async (id) => (calls.profile++, profiles[id] ?? null),
-  };
+/** An adapter that counts its reads and never touches a cookie. */
+function fakeAdapter(session = { userId: "user_a", name: "ahab", isAdminRole: false }) {
+  const calls = { session: 0 };
+  return { calls, session: async () => (calls.session++, session) };
 }
 
 const ON = { authEnabled: true, adminUserIds: [] };
 const OFF = { authEnabled: false, adminUserIds: [] };
 
-test("auth disabled: requireAuthor refuses with 503 and never calls Clerk", async () => {
+test("auth disabled: requireAuthor refuses with 503 and never reads the session", async () => {
   const adapter = fakeAdapter();
   const auth = createAuth(OFF, adapter);
   await assert.rejects(auth.requireAuthor(), (e) => e instanceof AuthError && e.status === 503 && e.message === "Sign-in isn't configured on this site yet");
   await assert.rejects(auth.requireAdmin(), (e) => e.status === 503);
   assert.equal(await auth.currentAuthor(), null);
   assert.equal(await auth.isAdmin("user_a"), false);
-  assert.deepEqual(adapter.calls, { session: 0, profile: 0 });
+  assert.equal(adapter.calls.session, 0);
 });
 
 test("signed out: requireAuthor refuses with 401, currentAuthor is null", async () => {
-  const auth = createAuth(ON, fakeAdapter({ userId: null }));
+  const auth = createAuth(ON, fakeAdapter(null));
   assert.equal(await auth.currentAuthor(), null);
   await assert.rejects(auth.requireAuthor(), (e) => e instanceof AuthError && e.status === 401);
 });
 
-test("signed in: author carries the Clerk display name, fetched once per instance", async () => {
-  const adapter = fakeAdapter({ profiles: { user_a: profile({ username: "ahab" }) } });
+test("signed in: the author is the session's id and name, read once per instance", async () => {
+  const adapter = fakeAdapter();
   const auth = createAuth(ON, adapter);
   assert.deepEqual(await auth.requireAuthor(), { userId: "user_a", name: "ahab" });
   await auth.currentAuthor();
   await auth.isAdmin("user_a");
-  assert.deepEqual(adapter.calls, { session: 1, profile: 1 });
+  assert.equal(adapter.calls.session, 1);
 });
 
 test("display name: username, else first and last, else PILOT", () => {
@@ -52,31 +48,27 @@ test("display name: username, else first and last, else PILOT", () => {
   assert.equal(displayName(null), "PILOT");
 });
 
-test("admin: Clerk role admin, or listed in the env ids", async () => {
-  const profiles = {
-    mod: profile({ publicMetadata: { role: "admin" } }),
-    plain: profile({ publicMetadata: { role: "member" } }),
-    listed: profile(),
-  };
-  const auth = createAuth({ authEnabled: true, adminUserIds: ["listed"] }, fakeAdapter({ profiles }));
-  assert.equal(await auth.isAdmin("mod"), true);
-  assert.equal(await auth.isAdmin("listed"), true);
-  assert.equal(await auth.isAdmin("plain"), false);
-  assert.equal(await auth.isAdmin("ghost"), false);
+test("admin role: public metadata role admin only", () => {
+  assert.equal(hasAdminRole(profile({ publicMetadata: { role: "admin" } })), true);
+  assert.equal(hasAdminRole(profile({ publicMetadata: { role: "member" } })), false);
+  assert.equal(hasAdminRole(null), false);
 });
 
-test("the env list needs no Clerk lookup", async () => {
-  const adapter = fakeAdapter();
-  const auth = createAuth({ authEnabled: true, adminUserIds: ["listed"] }, adapter);
-  assert.equal(await auth.isAdmin("listed"), true);
-  assert.equal(adapter.calls.profile, 0);
+test("admin: the session's role, or listed in the env ids", async () => {
+  const mod = createAuth(ON, fakeAdapter({ userId: "mod", name: "m", isAdminRole: true }));
+  assert.equal(await mod.isAdmin("mod"), true);
+  assert.equal(await mod.isAdmin("someone_else"), false);
+  const listed = createAuth({ authEnabled: true, adminUserIds: ["listed"] }, fakeAdapter({ userId: "plain", name: "p", isAdminRole: false }));
+  assert.equal(await listed.isAdmin("listed"), true);
+  assert.equal(await listed.isAdmin("plain"), false);
 });
 
 test("requireAdmin: 403 for a plain user, the author for an admin", async () => {
-  const plain = createAuth(ON, fakeAdapter({ profiles: { user_a: profile() } }));
-  await assert.rejects(plain.requireAdmin(), (e) => e.status === 403);
-  const admin = createAuth(ON, fakeAdapter({ profiles: { user_a: profile({ publicMetadata: { role: "admin" } }) } }));
+  await assert.rejects(createAuth(ON, fakeAdapter()).requireAdmin(), (e) => e.status === 403);
+  const admin = createAuth(ON, fakeAdapter({ userId: "user_a", name: "a", isAdminRole: true }));
   assert.equal((await admin.requireAdmin()).userId, "user_a");
+  const listed = createAuth({ authEnabled: true, adminUserIds: ["user_a"] }, fakeAdapter());
+  assert.equal((await listed.requireAdmin()).userId, "user_a");
 });
 
 test("error to status: each AuthError maps to its HTTP response", async () => {
@@ -108,44 +100,31 @@ test("withAuthRefusal turns an AuthError into a refusal value and rethrows anyth
   );
 });
 
-const failing = (what) => async () => {
-  throw new Error(`clerk ${what} down`);
-};
-
-test("Clerk session outage: reads degrade to signed out, writes refuse with 503", async () => {
-  const auth = createAuth(ON, { sessionUserId: failing("session"), profile: async () => null });
+test("an unreadable session: reads degrade to signed out, writes refuse with 503", async (t) => {
+  t.mock.method(console, "error", () => {});
+  const auth = createAuth(ON, {
+    session: async () => {
+      throw new Error("cookie store down");
+    },
+  });
   assert.equal(await auth.currentAuthor(), null);
+  assert.equal(await auth.isAdmin("user_a"), false);
   await assert.rejects(auth.requireAuthor(), (e) => e instanceof AuthError && e.status === 503 && e.message === "Sign-in is unavailable right now");
   await assert.rejects(auth.requireAdmin(), (e) => e.status === 503);
 });
 
-test("Clerk profile outage: reads keep the user as PILOT, writes refuse with 503, admin is false", async () => {
-  const auth = createAuth(ON, { sessionUserId: async () => "user_a", profile: failing("profile") });
-  assert.deepEqual(await auth.currentAuthor(), { userId: "user_a", name: "PILOT" });
-  assert.equal(await auth.isAdmin("user_a"), false);
-  await assert.rejects(auth.requireAuthor(), (e) => e.status === 503);
-  await assert.rejects(auth.requireAdmin(), (e) => e.status === 503);
-});
-
-test("a Clerk failure is logged by class and message, with tokens and keys redacted", async (t) => {
+test("an auth failure is logged by class and message, with tokens and keys redacted", async (t) => {
   const logged = t.mock.method(console, "error", () => {});
-  class ClerkAPIResponseError extends Error {}
+  class OAuthTrouble extends Error {}
   const token = "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ1c2VyX2EifQ.c2lnbmF0dXJl";
   const auth = createAuth(ON, {
-    sessionUserId: async () => {
-      throw new ClerkAPIResponseError(`Unauthorized: token ${token} with sk_live_abc123 rejected`);
+    session: async () => {
+      throw new OAuthTrouble(`Unauthorized: token ${token} with sk_live_abc123 and Bearer abc.def rejected`);
     },
-    profile: async () => null,
   });
   assert.equal(await auth.currentAuthor(), null);
   assert.equal(logged.mock.callCount(), 1);
   const line = logged.mock.calls[0].arguments.join(" ");
-  assert.match(line, /^clerk session failed: ClerkAPIResponseError: Unauthorized: token \[redacted\] with \[redacted\] rejected$/);
-  assert.equal(describeClerkError("plain"), "string: ");
-});
-
-test("a listed admin is still admin when the profile lookup is down (but the write needs the name, so it refuses)", async () => {
-  const auth = createAuth({ authEnabled: true, adminUserIds: ["user_a"] }, { sessionUserId: async () => "user_a", profile: failing("profile") });
-  assert.equal(await auth.isAdmin("user_a"), true);
-  await assert.rejects(auth.requireAuthor(), (e) => e.status === 503);
+  assert.match(line, /^auth session failed: OAuthTrouble: Unauthorized: token \[redacted\] with \[redacted\] and \[redacted\] rejected$/);
+  assert.equal(describeAuthError("plain"), "string: ");
 });

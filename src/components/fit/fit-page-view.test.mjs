@@ -42,7 +42,7 @@ async function renderFit(url, id, viewer) {
   const data = await loadFitPage(deps(url), id, viewer);
   assert.equal(data.status, "ok");
   // The page's client controls read the public config, as under the root layout.
-  const config = { engineUrl: url, clerkPublishableKey: null, authEnabled: viewer.authEnabled };
+  const config = { engineUrl: url, authEnabled: viewer.authEnabled };
   return renderToStaticMarkup(h(PublicConfigProvider, { config }, h(FitPageView, { data, viewer })));
 }
 

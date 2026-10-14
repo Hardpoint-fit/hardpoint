@@ -30,10 +30,7 @@ const profiles = { [ALICE.userId]: ALICE, [BOB.userId]: BOB, [ADMIN.userId]: ADM
 function authAs(userId, { enabled = true } = {}) {
   return createAuth(
     { authEnabled: enabled, adminUserIds: [ADMIN.userId] },
-    {
-      sessionUserId: async () => userId,
-      profile: async (id) => (profiles[id] ? { username: profiles[id].name, firstName: null, lastName: null, publicMetadata: {} } : null),
-    },
+    { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", isAdminRole: false } : null) },
   );
 }
 const deps = (auth, { database = { status: "ready", db }, engine = createEngineClient({ baseUrl: stub.url }) } = {}) => ({

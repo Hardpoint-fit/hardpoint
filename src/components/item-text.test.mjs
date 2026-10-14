@@ -62,7 +62,7 @@ test("a module with no art at all keeps its footprint and name, and the grid sti
   const model = buildGridModel({ hull, ...catalogLookups(catalog) }, FIXTURES.fit);
   const bare = model.modules.find((module) => module.name === "NO ART HERE");
   assert.equal(bare.icon, null);
-  const config = { engineUrl: null, clerkPublishableKey: null, authEnabled: false };
+  const config = { engineUrl: null, authEnabled: false };
   const html = render(h(PublicConfigProvider, { config }, h(FittingGrid, { model })));
   assert.equal(html.split('data-module="').length - 1, FIXTURES.fit.modules.length);
   const start = html.indexOf(`data-module="${bare.index}"`);

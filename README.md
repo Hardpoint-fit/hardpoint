@@ -50,11 +50,25 @@ All optional, read at run time by `src/lib/config.ts` (through the server-only `
 | `LOADOUT_ENGINE_URL` | Public engine URL. Browsers call it; also the server's fallback. |
 | `LOADOUT_ENGINE_INTERNAL_URL` | Engine URL for the server (Railway private network). |
 | `DATABASE_URL` | Fits database (Postgres). `node src/lib/fits/migrate.mjs` applies `src/lib/fits/schema.sql` and runs before the server in the container. |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Sign-in. `authEnabled` is true only when both are set. |
-| `SITE_ADMIN_USER_IDS` | Comma-separated Clerk user ids that may moderate, besides the Clerk `admin` role. |
+| `CITADEL_OAUTH_CLIENT_ID`, `CITADEL_OAUTH_CLIENT_SECRET`, `SESSION_SECRET` | "Sign in with Citadel". `authEnabled` is true only when all three are set. `SESSION_SECRET` is base64 of at least 32 random bytes (`openssl rand -base64 48`); it keys the session cookies, so changing it signs everyone out. |
+| `CITADEL_OAUTH_ISSUER` | The OpenID provider. Default `https://clerk.alpha.thecitadel.com`, the game's production Clerk instance. |
+| `SITE_URL` | The canonical origin. Default `https://hardpoint.fit`. Sign-in completes at `SITE_URL/auth/callback`, and `www.<its host>` 308-redirects to it. Locally: `http://localhost:3000`. |
+| `SITE_ADMIN_USER_IDS` | Comma-separated Clerk user ids that may moderate, besides the Clerk `admin` role in public metadata. |
 | `PORT` | Listen port (default 3000). |
 
-The browser learns its config from the server: the root layout reads the environment per request and passes the public part (`engineUrl`, `clerkPublishableKey`, `authEnabled`) to `PublicConfigProvider`; client code calls `usePublicConfig()`. Nothing is inlined at build time, so one image serves every environment.
+The browser learns its config from the server: the root layout reads the environment per request and passes the public part (`engineUrl`, `authEnabled`) to `PublicConfigProvider`; client code calls `usePublicConfig()`. Nothing is inlined at build time, so one image serves every environment.
+
+## Sign in with Citadel
+
+The game's production Clerk instance is the OpenID Connect provider and the site is a confidential client of its OAuth app "Citadel Fits"; there is no Clerk SDK. `oauth4webapi` runs the protocol checks and `jose` verifies the ID token's signature against the provider's JWKS and seals the cookies.
+
+- `GET /auth/signin?returnTo=/path` (`src/lib/auth-routes.ts`, `src/lib/oidc.ts`) moves to `SITE_URL` if the request came to another host, then redirects to Clerk with PKCE (S256), `state` and `nonce`, which it keeps in a 10-minute encrypted cookie, `__Host-citadel-signin`. `returnTo` must be a path on this site (`safeReturnTo`); anything else becomes `/`.
+- `GET /auth/callback` checks `state` and the `iss` parameter, redeems the code with the client secret and PKCE verifier, verifies the ID token (signature, `iss`, `aud`, `exp`, `nonce`) and reads userinfo for the same `sub`. The session is the `sub` (a Clerk user id, `user_...`, as stored in `author_user_id`), the display name (username, else first and last name, else `PILOT`) and whether public metadata has `role: "admin"`. Unsafe metadata, which the pilot can write, is never read.
+- The session is `__Host-citadel-session`: a JWE (`dir`, A256GCM, key derived from `SESSION_SECRET` with HKDF), HttpOnly, Secure, SameSite=Lax, host-only on `SITE_URL`'s host, 30 days, re-issued by the proxy once it is a day old. Name and role are read at sign-in only; a change in Clerk shows at the next sign-in. No server-side store.
+- `POST /auth/signout` clears it, and is refused unless `Origin` (or `Sec-Fetch-Site: same-origin`) shows it came from the site.
+- `src/lib/auth.ts` reads the session for `currentAuthor`, `requireAuthor`, `isAdmin` and `requireAdmin` (rules in `auth-core.ts`): reads never throw; writes refuse 401 signed out and 503 when sign-in isn't configured.
+
+Tests run the whole flow against a local fake provider (`src/lib/fake-idp.mjs`), and `pnpm smoke` signs in through it on the built server.
 
 ## Re-evaluation job
 

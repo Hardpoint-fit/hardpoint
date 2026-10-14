@@ -17,7 +17,7 @@ export function actionDeps(): ActionDeps {
   return { database: getDatabase, auth: { requireAuthor, requireAdmin }, engine: getEngine(), currentBuild: () => getServerCatalog().peek()?.buildSha ?? null };
 }
 
-/** Who is reading this page. Never throws: Clerk trouble reads as signed out. */
+/** Who is reading this page. Never throws: an unreadable session reads as signed out. */
 export type PageViewer = Viewer & { name: string | null; authEnabled: boolean };
 
 export async function pageViewer(): Promise<PageViewer> {

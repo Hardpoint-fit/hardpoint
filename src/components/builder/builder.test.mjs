@@ -46,7 +46,7 @@ const profiles = { [ALICE.userId]: ALICE, [BOB.userId]: BOB };
 const authAs = (userId, enabled = true) =>
   createAuth(
     { authEnabled: enabled, adminUserIds: [] },
-    { sessionUserId: async () => userId, profile: async (id) => (profiles[id] ? { username: profiles[id].name, firstName: null, lastName: null, publicMetadata: {} } : null) },
+    { session: async () => (userId ? { userId, name: profiles[userId]?.name ?? "PILOT", isAdminRole: false } : null) },
   );
 const HELD_BUILD = "held0build";
 const actionDeps = (auth, engineUrl = stub.url) => ({ database: () => ({ status: "ready", db }), auth, engine: createEngineClient({ baseUrl: engineUrl }), currentBuild: () => HELD_BUILD });
@@ -75,7 +75,7 @@ test("the builder pages load a new fit, a copy, and an edit for its author only"
 });
 
 function render(start, auth) {
-  const config = { engineUrl: stub.url, clerkPublishableKey: null, authEnabled: auth.enabled };
+  const config = { engineUrl: stub.url, authEnabled: auth.enabled };
   return renderToStaticMarkup(h(PublicConfigProvider, { config }, h(Workspace, { cat, start, auth, navigate: { replace() {}, push() {} } })));
 }
 const NEW = { fitId: null, fit: null, meta: { title: "", description: "", tags: [] }, status: null, updatedAt: null, copiedFrom: null, note: null };
