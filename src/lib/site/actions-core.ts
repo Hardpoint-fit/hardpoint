@@ -204,11 +204,17 @@ export function banPilot(
   deps: ActionDeps,
   input: { userId: string; reason: string; hideAll: boolean },
 ): Promise<ActionResult<{ created: boolean; hidden: HiddenContent | null }>> {
-  return withAuthor(deps, "ban", { admin: true }, async (db, admin) => {
-    if (input.userId === admin.userId) return refuse("invalid", 400, "You can't ban yourself.");
-    if (await deps.auth.isAdmin(input.userId)) return refuse("forbidden", 403, "Site admins can't be banned.");
-    return { ok: true, ...(await banPilotRow(db, { userId: input.userId, reason: input.reason, bannedBy: admin.userId, hideAll: input.hideAll })) };
-  });
+  // The rules (not yourself, not a site admin, the moderator not banned) are checked inside the ban's transaction.
+  return withAuthor(deps, "ban", { admin: true }, async (db, admin) => ({
+    ok: true,
+    ...(await banPilotRow(db, {
+      userId: input.userId,
+      reason: input.reason,
+      bannedBy: admin.userId,
+      hideAll: input.hideAll,
+      isProtected: (userId) => deps.auth.isAdmin(userId),
+    })),
+  }));
 }
 
 /** Admin: lifts a ban. What the ban hid stays hidden. */

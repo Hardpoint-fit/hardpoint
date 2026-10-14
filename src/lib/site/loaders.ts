@@ -23,7 +23,8 @@ import { listBookmarks } from "../fits/bookmarks";
 import { countUnread, listNotifications, UNREAD_DISPLAY_CAP, type Notification } from "../fits/notifications";
 import { getForkInfo, type ForkInfo } from "../fits/forks";
 import { getPilotProfile, type PilotProfile } from "../fits/pilots";
-import { getBan, listPilots, type AdminPilot, type PilotBan } from "../fits/bans";
+import { getBan, isBanned, listPilots, type AdminPilot, type PilotBan } from "../fits/bans";
+import type { ModerationState } from "../auth-core";
 import { getRevision, listRevisions, parseRevisionParam, type Revision, type RevisionSummary } from "../fits/revisions";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
@@ -555,4 +556,16 @@ export async function loadPilots(deps: Pick<SiteDeps, "database">, params: Searc
   const banned = read("banned") === "1";
   const page = await guarded("pilots", () => listPilots(db, { q, banned, cursor: read("cursor") }));
   return page ? { status: "ok", q, banned, ...page } : { status: "unavailable" };
+}
+
+/**
+ * The moderation a page offers the signed-in pilot: their session's state (auth-core moderationState), except that
+ * a banned pilot gets none (no Admin link, no queues, no ban reasons), as every moderation write refuses them too.
+ * A database that can't answer leaves the state as it is: the admin pages then show their unavailable state.
+ */
+export async function viewerModeration(deps: Pick<SiteDeps, "database">, userId: string, state: ModerationState): Promise<ModerationState> {
+  if (state === "none") return "none";
+  const db = databaseOf(deps);
+  if (!db) return state;
+  return (await guarded("ban check", () => isBanned(db, userId))) ? "none" : state;
 }

@@ -473,3 +473,16 @@ test("a ban that hides everything hides the pilot's published fits and comments 
   assert.equal((await getFit(db, ids.showcase)).status, "published", "other pilots' fits are untouched");
   assert.deepEqual((await listOpenReports(db)).reports.map((r) => r.id), [ids.commentReport], "the report on Alice's reply stays open");
 });
+
+test("two moderators banning each other at once: the ban is checked inside its transaction, so only one lands", async () => {
+  const OTHER = { userId: "user_mod2", name: "MOD2" };
+  for (const pilot of [MOD, OTHER]) await db.query(`INSERT INTO pilots (user_id, name) VALUES ($1, $2)`, [pilot.userId, pilot.name]);
+  const results = await Promise.all([
+    banPilot(deps(authAs(MOD.userId, { adminRole: "active" })), { userId: OTHER.userId, reason: "x", hideAll: false }),
+    banPilot(deps(authAs(OTHER.userId, { adminRole: "active" })), { userId: MOD.userId, reason: "y", hideAll: false }),
+  ]);
+  assert.equal(results.filter((result) => result.ok).length, 1, JSON.stringify(results));
+  assert.deepEqual(results.find((result) => !result.ok), BANNED);
+  const { rows } = await db.query(`SELECT count(*)::int AS n FROM pilot_bans`);
+  assert.equal(rows[0].n, 1);
+});

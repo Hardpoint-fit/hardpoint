@@ -21,10 +21,14 @@ export class PilotBannedError extends Error {
 const USER_ID = /^[A-Za-z0-9_-]{1,100}$/;
 type Row = Record<string, any>;
 
+export async function isBanned(db: Queryable, userId: string): Promise<boolean> {
+  const { rows } = await db.query(`SELECT 1 FROM pilot_bans WHERE user_id = $1`, [userId]);
+  return rows.length > 0;
+}
+
 /** Refuses a banned pilot's write. Called before the write's budget is spent, so a refused write costs nothing. */
 export async function assertNotBanned(db: Queryable, userId: string): Promise<void> {
-  const { rows } = await db.query(`SELECT 1 FROM pilot_bans WHERE user_id = $1`, [userId]);
-  if (rows.length > 0) throw new PilotBannedError();
+  if (await isBanned(db, userId)) throw new PilotBannedError();
 }
 
 export type PilotBan = {
@@ -104,15 +108,28 @@ export type BanResult = {
 };
 
 /**
- * Bans a pilot who has a row. The caller (actions-core) has checked the moderator, and that the pilot is neither
- * them nor a site admin. Idempotent: banning a banned pilot keeps the first ban, and can still hide their content.
+ * Bans a pilot who has a row, on behalf of moderator `bannedBy` (actions-core has checked they are an admin now).
+ * Every rule is checked inside the transaction, after locking the pilot rows of both the target and the moderator
+ * (in user id order, so two moderators banning each other can't deadlock): the moderator is not banned (so of two
+ * concurrent bans of each other, the second sees the first and is refused), the target is not the moderator, and
+ * `isProtected(target)` (a site admin) is false. Idempotent: banning a banned pilot keeps the first ban, and can
+ * still hide their content.
  */
-export async function banPilot(db: Db, input: { userId: string; reason: string; bannedBy: string; hideAll: boolean }): Promise<BanResult> {
+export async function banPilot(
+  db: Db,
+  input: { userId: string; reason: string; bannedBy: string; hideAll: boolean; isProtected?: (userId: string) => Promise<boolean> | boolean },
+): Promise<BanResult> {
   const reason = validateBanReason(input.reason);
   if (!USER_ID.test(input.userId)) throw new FitDataError("not_found", "No such pilot.");
   return db.transaction(async (tx) => {
-    const { rows: pilot } = await tx.query(`SELECT 1 FROM pilots WHERE user_id = $1 FOR UPDATE`, [input.userId]);
-    if (pilot.length === 0) throw new FitDataError("not_found", "No such pilot.");
+    const { rows: locked } = await tx.query<Row>(
+      `SELECT user_id FROM pilots WHERE user_id = ANY($1::text[]) ORDER BY user_id FOR UPDATE`,
+      [[input.userId, input.bannedBy]],
+    );
+    if (input.userId === input.bannedBy) throw new FitDataError("invalid", "You can't ban yourself.");
+    if (await input.isProtected?.(input.userId)) throw new FitDataError("forbidden", "Site admins can't be banned.");
+    if (!locked.some((row) => row.user_id === input.userId)) throw new FitDataError("not_found", "No such pilot.");
+    await assertNotBanned(tx, input.bannedBy);
     const { rows } = await tx.query(
       `INSERT INTO pilot_bans (user_id, reason, banned_by) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO NOTHING RETURNING user_id`,
       [input.userId, reason, input.bannedBy],

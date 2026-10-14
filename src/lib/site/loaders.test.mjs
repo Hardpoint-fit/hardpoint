@@ -11,7 +11,7 @@ import { setBookmark } from "../fits/bookmarks.ts";
 import { toEvaluationInput } from "../fits/service.ts";
 import { FIXTURES } from "../engine/stub-engine.mjs";
 import { createTestDb } from "../fits/test-db.mjs";
-import { brokenOnBuild, loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadCompare, loadFitPage, loadPilots, loadReports } from "./loaders.ts";
+import { brokenOnBuild, loadAuthor, loadBookmarks, loadBrowse, loadBuilder, loadCompare, loadFitPage, loadPilots, loadReports, viewerModeration } from "./loaders.ts";
 import { banPilot, unbanPilot } from "../fits/bans.ts";
 import { ALICE, BOB, CURRENT_SHA, seedSite } from "./seed.mjs";
 import { setFollow } from "../fits/pilots.ts";
@@ -406,6 +406,9 @@ test("the bookmarks page data is the signed-in pilot's published bookmarks as ca
   const deps = depsFor(stub.url);
   await setBookmark(db, { fitId: ids.showcase, userId: BOB.userId, bookmarked: true });
   await setBookmark(db, { fitId: ids.removed, userId: BOB.userId, bookmarked: true });
+  // Two inserts can share a microsecond; set the times so "newest bookmark first" is what decides the order.
+  await db.query(`UPDATE fit_bookmarks SET created_at = $2 WHERE user_id = $1 AND fit_id = $3`, [BOB.userId, "2026-10-14T10:00:00Z", ids.showcase]);
+  await db.query(`UPDATE fit_bookmarks SET created_at = $2 WHERE user_id = $1 AND fit_id = $3`, [BOB.userId, "2026-10-14T11:00:00Z", ids.removed]);
   const data = await loadBookmarks(deps, {}, BOB.userId);
   assert.equal(data.status, "ok");
   assert.deepEqual(data.cards.map((card) => card.id), [ids.removed, ids.showcase]);
@@ -506,6 +509,21 @@ test("a pilot's ban is read for admins only; the admin pilot list searches, filt
     assert.deepEqual((await loadPilots(deps, new URLSearchParams("banned=1"))).pilots.map((p) => p.userId), [BOB.userId]);
     assert.deepEqual((await loadPilots(deps, { q: ["a", "b"] })).q, "", "a repeated q is ignored");
     assert.deepEqual(await loadPilots(depsFor(stub.url, () => ({ status: "unavailable" })), {}), { status: "unavailable" });
+  } finally {
+    await unbanPilot(db, BOB.userId);
+  }
+});
+
+test("a banned pilot gets no moderation, whatever their session says; others keep theirs, and a failing database changes nothing", async () => {
+  const deps = depsFor(stub.url);
+  await banPilot(db, { userId: BOB.userId, reason: "Spam", bannedBy: ALICE.userId, hideAll: false });
+  try {
+    assert.equal(await viewerModeration(deps, BOB.userId, "active"), "none");
+    assert.equal(await viewerModeration(deps, BOB.userId, "reverify"), "none");
+    assert.equal(await viewerModeration(deps, ALICE.userId, "active"), "active");
+    assert.equal(await viewerModeration(deps, ALICE.userId, "reverify"), "reverify");
+    assert.equal(await viewerModeration(deps, ALICE.userId, "none"), "none");
+    assert.equal(await viewerModeration(depsFor(stub.url, () => ({ status: "unavailable" })), BOB.userId, "active"), "active");
   } finally {
     await unbanPilot(db, BOB.userId);
   }

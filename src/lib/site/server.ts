@@ -5,7 +5,7 @@ import { getDatabase } from "../fits/db";
 import type { Viewer } from "../fits/queries";
 import { getConfig } from "../site-config";
 import type { ActionDeps } from "./actions-core";
-import type { SiteDeps } from "./loaders";
+import { viewerModeration, type SiteDeps } from "./loaders";
 
 /** The real dependencies of the page loaders. */
 export function siteDeps(): SiteDeps {
@@ -26,6 +26,6 @@ export type PageViewer = Viewer & { name: string | null; authEnabled: boolean; m
 export async function pageViewer(): Promise<PageViewer> {
   const { authEnabled } = getConfig();
   const author = await currentAuthor();
-  const moderation = author ? await moderationState() : "none";
+  const moderation = author ? await viewerModeration(siteDeps(), author.userId, await moderationState()) : "none";
   return { userId: author?.userId ?? null, name: author?.name ?? null, isAdmin: moderation === "active", authEnabled, moderation };
 }

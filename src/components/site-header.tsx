@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { currentAuthor, moderationState } from "#/lib/auth";
+import { currentAuthor } from "#/lib/auth";
 import { SIGN_IN_UNAVAILABLE_MESSAGE } from "#/lib/auth-errors";
 import { getConfig } from "#/lib/site-config";
 import { loadUnreadCount, unreadLabel } from "#/lib/site/loaders";
-import { siteDeps } from "#/lib/site/server";
+import { pageViewer, siteDeps } from "#/lib/site/server";
 import { SignInLink, SignedIn } from "./auth-controls";
 
 const NAV = [
@@ -17,8 +17,8 @@ export async function SiteHeader() {
   const author = authEnabled ? await currentAuthor() : null;
   // One indexed count per page view for a signed-in pilot; a database that can't answer reads as none.
   const unread = author ? await loadUnreadCount(siteDeps(), author.userId) : 0;
-  // Moderators, live or due a re-verify (the admin pages offer the re-verify link).
-  const moderation = author ? await moderationState() : "none";
+  // Moderators, live or due a re-verify (the admin pages offer the re-verify link); never a banned one.
+  const moderation = author ? (await pageViewer()).moderation : "none";
   return (
     // Below sm the links drop to their own row under the logo and sign-in, so the header never scrolls sideways.
     <header className="flex min-h-12 flex-wrap items-center gap-x-6 gap-y-1 border-b border-[color:var(--panel-border)] bg-header px-4 py-1">
