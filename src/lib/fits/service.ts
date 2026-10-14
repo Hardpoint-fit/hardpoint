@@ -85,6 +85,8 @@ export type SaveDraftInput = {
   fit?: OpenFit;
   /** The build the author's catalog came from; used for a new draft when the engine can't be asked. */
   buildSha?: string | null;
+  /** "What changed?", recorded with the revision when this saves a published fit. Ignored for a draft. */
+  note?: string | null;
 };
 
 const UNKNOWN_BUILD = "unknown";
@@ -119,6 +121,7 @@ export async function saveDraft({ db, engine }: FitServiceDeps, input: SaveDraft
           tags: input.tags,
           content,
           evaluation,
+          note: input.note,
         })
       : await createFit(db, {
           authorUserId: input.authorUserId,

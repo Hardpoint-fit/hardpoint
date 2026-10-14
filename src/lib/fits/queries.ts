@@ -18,7 +18,7 @@ import {
   type BrowseQuery,
 } from "./filters.ts";
 import type { Db, Queryable } from "./db.ts";
-import { COMMENT_MAX, DESCRIPTION_MAX, FIT_JSON_MAX_BYTES, REPORT_REASON_MAX, TITLE_MAX } from "./limits.ts";
+import { COMMENT_MAX, DESCRIPTION_MAX, FIT_JSON_MAX_BYTES, REPORT_REASON_MAX, REVISION_NOTE_MAX, TITLE_MAX } from "./limits.ts";
 
 // ---------------------------------------------------------------------------------------------------
 // Types
@@ -183,6 +183,15 @@ export function validateTags(raw: readonly string[]): string[] {
   }
   if (tags.length > MAX_TAGS) invalid(`A fit can have at most ${MAX_TAGS} tags.`);
   return tags;
+}
+
+/** The author's "what changed?": trimmed, at most REVISION_NOTE_MAX characters, null when empty. */
+export function validateRevisionNote(raw: string | null | undefined): string | null {
+  const note = cleanBody(raw ?? "").trim();
+  if (note === "") return null;
+  if (/\p{Cc}/u.test(note)) invalid("The note must be a single line of plain text.");
+  if (length(note) > REVISION_NOTE_MAX) invalid(`The note can be at most ${REVISION_NOTE_MAX} characters.`);
+  return note;
 }
 
 function validateContent(hullItem: string, fit: unknown): { hullItem: string; json: string } {
@@ -457,6 +466,26 @@ export type CreateFitInput = {
   evaluation?: EvaluationInput;
 };
 
+/**
+ * Appends the fit's current content as its next revision (1, 2, 3, ...). Call it inside the transaction that
+ * holds the fit row's lock (`SELECT ... FOR UPDATE`) and has just made the change being recorded, so the
+ * numbers never collide and a revision exists exactly when its change does. `buildSha` is the build the
+ * content was checked against; without one the previous revision's (or the fit's creation) build is kept.
+ */
+async function appendRevision(tx: Queryable, input: { fitId: string; buildSha: string | null; note: string | null }): Promise<void> {
+  await tx.query(
+    `INSERT INTO fit_revisions (fit_id, revision, title, description, tags, hull_item, fit, build_sha, note)
+     SELECT f.id, COALESCE((SELECT max(r.revision) FROM fit_revisions r WHERE r.fit_id = f.id), 0) + 1,
+            f.title, f.description, f.tags, f.hull_item, f.fit,
+            COALESCE($2::text,
+                     (SELECT r.build_sha FROM fit_revisions r WHERE r.fit_id = f.id ORDER BY r.revision DESC LIMIT 1),
+                     f.created_build_sha),
+            $3::text
+     FROM fits f WHERE f.id = $1`,
+    [input.fitId, input.buildSha, input.note],
+  );
+}
+
 async function insertEvaluation(db: Queryable, fitId: string, e: EvaluationInput): Promise<void> {
   validateEvaluation(e);
   await db.query(
@@ -510,12 +539,15 @@ export type UpdateFitInput = {
   /** New fit content. Drops the fit's cached evaluations; pass `evaluation` to store the new verdict. */
   content?: FitContent;
   evaluation?: EvaluationInput;
+  /** "What changed?", recorded with the revision a save of a published fit appends. Ignored for a draft. */
+  note?: string | null;
 };
 
 /**
  * Edits the author's own fit and keeps its id, votes and comments. A published fit can only change
  * content to something the engine accepted (`evaluation.valid`); unpublish it first to save a broken one.
- * Hidden fits can't be edited.
+ * Hidden fits can't be edited. Every save of a published fit appends a revision (appendRevision) in the same
+ * transaction; a draft's saves leave no history.
  */
 export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetail> {
   const title = input.title === undefined ? undefined : validateTitle(input.title);
@@ -523,6 +555,7 @@ export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetai
   const tags = input.tags === undefined ? undefined : validateTags(input.tags);
   const content = input.content === undefined ? undefined : validateContent(input.content.hullItem, input.content.fit);
   if (input.evaluation && !content) invalid("An evaluation needs new content to belong to.");
+  const note = validateRevisionNote(input.note);
 
   return db.transaction(async (tx) => {
     const { rows } = await tx.query<Row>(`SELECT author_user_id, status FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
@@ -550,6 +583,7 @@ export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetai
       await tx.query(`DELETE FROM fit_evaluations WHERE fit_id = $1`, [input.id]);
       if (input.evaluation) await insertEvaluation(tx, input.id, input.evaluation);
     }
+    if (current.status === "published") await appendRevision(tx, { fitId: input.id, buildSha: input.evaluation?.buildSha ?? null, note });
     const fit = await getFit(tx, input.id, {
       viewer: { userId: input.authorUserId, isAdmin: false },
       buildSha: input.evaluation?.buildSha ?? null,
@@ -560,9 +594,12 @@ export async function updateFit(db: Db, input: UpdateFitInput): Promise<FitDetai
 
 /**
  * Publishes the author's draft. Refused unless the engine's cached verdict for `buildSha` says the fit
- * is valid. Publishing again keeps the original publication time.
+ * is valid. Publishing again keeps the original publication time. Going from draft to published appends
+ * a revision, including a re-publish after an unpublish; publishing a fit that is already published
+ * changes nothing and appends none.
  */
-export async function publishFit(db: Db, input: { id: string; authorUserId: string; buildSha: string }): Promise<FitDetail> {
+export async function publishFit(db: Db, input: { id: string; authorUserId: string; buildSha: string; note?: string | null }): Promise<FitDetail> {
+  const note = validateRevisionNote(input.note);
   return db.transaction(async (tx) => {
     const { rows } = await tx.query<Row>(`SELECT author_user_id, status FROM fits WHERE id = $1 FOR UPDATE`, [input.id]);
     const current = rows[0];
@@ -579,6 +616,7 @@ export async function publishFit(db: Db, input: { id: string; authorUserId: stri
       `UPDATE fits SET status = 'published', published_at = COALESCE(published_at, now()), updated_at = now() WHERE id = $1`,
       [input.id],
     );
+    if (current.status !== "published") await appendRevision(tx, { fitId: input.id, buildSha: input.buildSha, note });
     return (await getFit(tx, input.id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha }))!;
   });
 }

@@ -7,16 +7,20 @@ import { loadFitPage } from "#/lib/site/loaders";
 import { pageViewer, siteDeps } from "#/lib/site/server";
 
 type Params = Promise<{ id: string }>;
+type Search = Promise<{ rev?: string | string[] }>;
 
-// The metadata and the page read the same fit once per request.
-const load = cache(async (id: string) => {
+// The metadata and the page read the same fit once per request. `rev` is `null` for the latest, else the
+// raw `?rev=` value (a repeated one is passed as text no revision number matches, so it is not found).
+const load = cache(async (id: string, rev: string | null) => {
   const viewer = await pageViewer();
-  return { viewer, data: await loadFitPage(siteDeps(), id, viewer) };
+  return { viewer, data: await loadFitPage(siteDeps(), id, viewer, rev ?? undefined) };
 });
 
-export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+const revParam = (search: { rev?: string | string[] }) => (search.rev === undefined ? null : Array.isArray(search.rev) ? "invalid" : search.rev);
+
+export async function generateMetadata({ params, searchParams }: { params: Params; searchParams: Search }): Promise<Metadata> {
   const { id } = await params;
-  const { data } = await load(id);
+  const { data } = await load(id, revParam(await searchParams));
   if (data.status !== "ok") return { title: "Fit · hardpoint.fit" };
   const hull = data.hull?.name ?? "Ship";
   const description = `${hull} fit by ${data.fit.authorName}: ${data.fit.votes} upvotes.`;
@@ -28,9 +32,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function FitPage({ params }: { params: Params }) {
+export default async function FitPage({ params, searchParams }: { params: Params; searchParams: Search }) {
   const { id } = await params;
-  const { viewer, data } = await load(id);
+  const { viewer, data } = await load(id, revParam(await searchParams));
   if (data.status === "not_found") notFound();
   if (data.status === "unavailable")
     return (

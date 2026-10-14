@@ -166,7 +166,28 @@ CREATE TABLE IF NOT EXISTS pilot_follows (
 
 CREATE INDEX IF NOT EXISTS pilot_follows_followee_idx ON pilot_follows (followee_user_id);
 
+-- A fit's history: one row per publication and per save of an already published fit (revisions.ts), written
+-- in the same transaction as the change it records. These rows are the authority for what a past revision
+-- held; the fit row stays the authority for the current content. Never backfilled: a fit published before
+-- this table has no history until its next publish or save.
+CREATE TABLE IF NOT EXISTS fit_revisions (
+  fit_id text NOT NULL REFERENCES fits (id) ON DELETE CASCADE,
+  revision integer NOT NULL CHECK (revision >= 1),
+  title text NOT NULL,
+  description text NOT NULL,
+  tags text[] NOT NULL,
+  hull_item text NOT NULL,
+  fit jsonb NOT NULL,
+  -- The engine build the content was checked against when it was written.
+  build_sha text NOT NULL,
+  -- The author's "what changed?", trimmed; null when they wrote none.
+  note text CHECK (note IS NULL OR char_length(note) BETWEEN 1 AND 200),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (fit_id, revision)
+);
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (4) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (5) ON CONFLICT DO NOTHING;

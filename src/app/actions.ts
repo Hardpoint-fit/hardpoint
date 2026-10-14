@@ -68,13 +68,14 @@ export async function resolveReportAction(reportId: unknown): Promise<core.Actio
 }
 
 /** Generous bounds on what the builder sends; the data layer applies the real limits and words them. */
-function isMeta(value: unknown): value is { title: string; description: string; tags: string[] } {
-  const meta = value as { title?: unknown; description?: unknown; tags?: unknown } | null;
+function isMeta(value: unknown): value is { title: string; description: string; tags: string[]; note?: string } {
+  const meta = value as { title?: unknown; description?: unknown; tags?: unknown; note?: unknown } | null;
   return (
     typeof meta === "object" &&
     meta !== null &&
     text(meta.title, 1_000) &&
     text(meta.description, 40_000) &&
+    (meta.note === undefined || text(meta.note, 1_000)) &&
     Array.isArray(meta.tags) &&
     meta.tags.length <= 50 &&
     meta.tags.every((tag) => text(tag, 100))
@@ -85,7 +86,7 @@ function isMeta(value: unknown): value is { title: string; description: string; 
 export async function saveFitAction(fitId: unknown, meta: unknown, fit: unknown): Promise<core.ActionResult<{ fit: core.SavedFit }>> {
   if ((fitId !== null && !isId(fitId)) || !isMeta(meta)) return BAD_INPUT;
   if (!isEditableFit(fit) || JSON.stringify(fit).length > FIT_JSON_MAX_BYTES) return BAD_INPUT;
-  const result = await core.saveFit(actionDeps(), { fitId, ...meta, fit });
+  const result = await core.saveFit(actionDeps(), { fitId, title: meta.title, description: meta.description, tags: meta.tags, note: meta.note, fit });
   if (result.ok) revalidatePath(`/fits/${result.fit.fitId}`);
   return result;
 }

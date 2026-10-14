@@ -818,6 +818,36 @@ a.chip:hover {
   line-height: 1.4;
 }
 
+/* A fit's revision history: one row each, the open one marked with the accent rule. */
+.history {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-xs) var(--spacing-lg);
+  border-bottom: 1px solid var(--rule);
+  border-left: 2px solid transparent;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.history__row[aria-current="true"] {
+  border-left-color: var(--accent-orange);
+}
+
+.history__note {
+  flex-basis: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-small);
+  letter-spacing: 0.08em;
+}
+
 .comment-thread {
   display: flex;
   flex-direction: column;

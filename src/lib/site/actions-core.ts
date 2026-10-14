@@ -179,11 +179,12 @@ export type SavedFit = {
 
 /**
  * Saves the builder's fit as the author's draft (a new one, or an edit of theirs), with the engine's
- * verdict when it answers. Editing a published fit keeps it published, so the new content must pass.
+ * verdict when it answers. Editing a published fit keeps it published, so the new content must pass, and
+ * each such save appends a revision carrying the optional `note` ("what changed?").
  */
 export function saveFit(
   deps: ActionDeps,
-  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit },
+  input: { fitId: string | null; title: string; description: string; tags: readonly string[]; fit: OpenFit; note?: string | null },
 ): Promise<ActionResult<{ fit: SavedFit }>> {
   return withAuthor(deps, "fit save", { budget: "fit" }, async (db, author) => {
     const result = await saveDraft(
@@ -197,6 +198,7 @@ export function saveFit(
         tags: input.tags,
         fit: input.fit,
         buildSha: deps.currentBuild?.() ?? null,
+        note: input.note,
       },
     );
     if (!result.ok) return serviceRefusal(result);

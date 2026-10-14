@@ -7,3 +7,4 @@ export const COMMENT_MAX = 2_000;
 export const REPORT_REASON_MAX = 1_000;
 export const FIT_JSON_MAX_BYTES = 200_000;
 export const BIO_MAX = 500;
+export const REVISION_NOTE_MAX = 200;

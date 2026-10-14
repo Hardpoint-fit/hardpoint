@@ -10,6 +10,7 @@ import { createEngineClient } from "../../lib/engine/client.ts";
 import { createEngineMonitor } from "../../lib/engine/engine-state.ts";
 import { deadEngineUrl, startStubEngine } from "../../lib/engine/stub-engine.mjs";
 import { createTestDb } from "../../lib/fits/test-db.mjs";
+import { updateFit } from "../../lib/fits/queries.ts";
 import { loadBrowse, loadFitPage } from "../../lib/site/loaders.ts";
 import { ALICE, BOB, seedSite } from "../../lib/site/seed.mjs";
 import { FitCards } from "./browse-view.tsx";
@@ -38,8 +39,8 @@ const deps = (url) => {
 const anonymous = (authEnabled) => ({ userId: null, isAdmin: false, name: null, authEnabled });
 const signedIn = (user) => ({ userId: user.userId, isAdmin: false, name: user.name, authEnabled: true });
 
-async function renderFit(url, id, viewer) {
-  const data = await loadFitPage(deps(url), id, viewer);
+async function renderFit(url, id, viewer, rev) {
+  const data = await loadFitPage(deps(url), id, viewer, rev);
   assert.equal(data.status, "ok");
   // The page's client controls read the public config, as under the root layout.
   const config = { engineUrl: url, authEnabled: viewer.authEnabled };
@@ -79,7 +80,7 @@ test("the fit page shows the hull's art, every module's art, descriptions, fact 
   assert.match(html, /data-spec="time-to-scram"><span class="specs__label">TIME TO SCRAM<\/span><span class="specs__values"><span class="specs__value ">STABLE<\/span><\/span>/);
   assert.match(html, /<span class="specs__value ">24<\/span><span class="specs__arrow">→<\/span><span class="specs__value negative">21<\/span><span class="specs__unit">%<\/span>/, "a comparison row, toned as the engine tones it");
   assert.match(html, /COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE\./, "the row's help");
-  assert.match(html, /MODIFIERS/);
+  assert.match(html, /<span>MODIFIERS<\/span>/);
 });
 
 test("with the engine down the fit page still shows the stored hull specs (Review Focus #2)", async () => {
@@ -181,4 +182,32 @@ test("the author sees delete (and unpublish when published) on their fit; others
   } finally {
     await db.query("UPDATE fit_comments SET body = 'Does the **cipher** cell still fit with a second scanner?', deleted_at = NULL WHERE id = $1::bigint", [ids.comment]);
   }
+});
+
+test("a fit lists its history, and a fit with none shows no HISTORY section", async () => {
+  await db.query("DELETE FROM fit_revisions WHERE fit_id = $1", [ids.pending]);
+  assert.doesNotMatch(await renderFit(stub.url, ids.pending, anonymous(false)), /HISTORY/);
+  await updateFit(db, { id: ids.pending, authorUserId: BOB.userId, title: "Waiting, renamed", note: "Renamed it" });
+  await updateFit(db, { id: ids.pending, authorUserId: BOB.userId, description: "More words", note: "<b>Said more</b>" });
+  const html = await renderFit(stub.url, ids.pending, anonymous(false));
+  assert.match(html, /HISTORY/);
+  assert.ok(html.indexOf("REVISION 2") < html.indexOf("REVISION 1"), "newest first");
+  assert.match(html, /RENAMED IT/);
+  assert.match(html, /&lt;B&gt;SAID MORE&lt;\/B&gt;/, "a note is text, never markup");
+  assert.match(html, /\?rev=1"/, "an older revision links to its view");
+  assert.doesNotMatch(html, /REVISION \d+ OF/, "the latest page has no revision banner");
+  assert.match(html, /<span>MODIFIERS<\/span>/);
+});
+
+test("?rev=N is read-only on that revision: banner, its words and fit string source, no stats for an old one", async () => {
+  // The tests above left two revisions: 1 (renamed) and 2 (described); the seeded one was deleted.
+  const html = await renderFit(stub.url, ids.pending, anonymous(false), "1");
+  assert.match(html, /REVISION 1 OF 2/);
+  assert.match(html, /VIEW LATEST/);
+  assert.match(html, /STATS ARE SHOWN FOR THE LATEST REVISION/);
+  assert.doesNotMatch(html, /<span>(MODIFIERS|HULL SPECS)<\/span>/);
+  assert.match(html, /Waiting, renamed/, "the first revision's title");
+  assert.doesNotMatch(html, /More words/, "the later revision's description");
+  assert.match(html, /\/fits\/new\?from=[A-Za-z0-9]+&amp;rev=1"/, "copy to builder carries the revision");
+  assert.equal(count(html, 'data-module="'), FIXTURES.fit.modules.length);
 });

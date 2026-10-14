@@ -6,7 +6,9 @@ import { createCatalogCache } from "../engine/catalog-cache.ts";
 import { createEngineClient } from "../engine/client.ts";
 import { createEngineMonitor } from "../engine/engine-state.ts";
 import { deadEngineUrl, startStubEngine } from "../engine/stub-engine.mjs";
-import { ANONYMOUS } from "../fits/queries.ts";
+import { ANONYMOUS, createFit, publishFit, setFitHidden, unpublishFit, updateFit } from "../fits/queries.ts";
+import { toEvaluationInput } from "../fits/service.ts";
+import { FIXTURES } from "../engine/stub-engine.mjs";
 import { createTestDb } from "../fits/test-db.mjs";
 import { loadAuthor, loadBrowse, loadBuilder, loadFitPage, loadReports } from "./loaders.ts";
 import { ALICE, BOB, CURRENT_SHA, seedSite } from "./seed.mjs";
@@ -217,4 +219,103 @@ test("browse keeps 'from pilots I follow' only for a signed-in reader", async ()
   } finally {
     await setFollow(db, { follower: BOB, followeeUserId: ALICE.userId, following: false });
   }
+});
+
+// A published fit of ALICE's with three revisions: its first hull, then a rename, then new content.
+async function fitWithHistory() {
+  const verdict = { ...toEvaluationInput(FIXTURES.evaluateValid), buildSha: CURRENT_SHA };
+  const made = await createFit(db, {
+    authorUserId: ALICE.userId,
+    authorName: ALICE.name,
+    title: "Version one",
+    description: "first words",
+    tags: ["one"],
+    content: { hullItem: FIXTURES.fit.hull.def, fit: FIXTURES.fit },
+    buildSha: CURRENT_SHA,
+    evaluation: verdict,
+  });
+  await publishFit(db, { id: made.id, authorUserId: ALICE.userId, buildSha: CURRENT_SHA });
+  await updateFit(db, { id: made.id, authorUserId: ALICE.userId, title: "Version two", description: "second words", tags: ["two"], note: "Renamed" });
+  const changed = { ...FIXTURES.fit, modules: FIXTURES.fit.modules.slice(0, 1) };
+  await updateFit(db, { id: made.id, authorUserId: ALICE.userId, title: "Version three", content: { hullItem: FIXTURES.fit.hull.def, fit: changed }, evaluation: verdict, note: "Dropped modules" });
+  return { id: made.id, changed };
+}
+
+test("a fit page lists its revisions newest first and shows the latest with stats", async () => {
+  const { id } = await fitWithHistory();
+  const data = await loadFitPage(depsFor(stub.url), id, ANONYMOUS);
+  assert.equal(data.status, "ok");
+  assert.deepEqual(data.revisions.map((r) => [r.revision, r.note]), [[3, "Dropped modules"], [2, "Renamed"], [1, null]]);
+  assert.equal(data.revision, null);
+  assert.equal(data.fit.title, "Version three");
+  assert.ok(data.shown.result.stats.length > 0);
+});
+
+test("?rev=N shows that revision's words, grid and no stats, and the latest revision keeps its stats", async () => {
+  const { id, changed } = await fitWithHistory();
+  const old = await loadFitPage(depsFor(stub.url), id, ANONYMOUS, "1");
+  assert.equal(old.status, "ok");
+  assert.deepEqual(old.revision, { number: 1, of: 3, statsShown: false, note: null, createdAt: old.revisions[2].createdAt });
+  assert.equal(old.fit.title, "Version one");
+  assert.equal(old.fit.description, "first words");
+  assert.deepEqual(old.fit.tags, ["one"]);
+  assert.equal(old.shown.reference, null);
+  assert.equal(old.grid.status, "ready");
+  assert.equal(old.grid.model.modules.length, FIXTURES.fit.modules.length, "the grid draws the revision's own modules");
+  const latest = await loadFitPage(depsFor(stub.url), id, ANONYMOUS, "3");
+  assert.equal(latest.revision.statsShown, true);
+  assert.equal(latest.grid.model.modules.length, changed.modules.length);
+  assert.ok(latest.shown.result.stats.length > 0);
+});
+
+test("an unknown or malformed ?rev is not found", async () => {
+  const { id } = await fitWithHistory();
+  const deps = depsFor(stub.url);
+  for (const rev of ["4", "0", "-1", "01", "1.5", "1e0", "abc", "", " 1", "1 ", "99999999999", ["1", "2"], 1, null]) {
+    assert.equal((await loadFitPage(deps, id, ANONYMOUS, rev)).status, "not_found", JSON.stringify(rev));
+  }
+  // A fit with no history has no revision to ask for.
+  await db.query("DELETE FROM fit_revisions WHERE fit_id = $1", [ids.pending]);
+  assert.equal((await loadFitPage(deps, ids.pending, ANONYMOUS)).status, "ok");
+  assert.deepEqual((await loadFitPage(deps, ids.pending, ANONYMOUS)).revisions, []);
+  assert.equal((await loadFitPage(deps, ids.pending, ANONYMOUS, "1")).status, "not_found");
+});
+
+test("revisions follow the fit's visibility: hidden fits and other pilots' drafts never leak them", async () => {
+  const { id } = await fitWithHistory();
+  const deps = depsFor(stub.url);
+  const alice = { userId: ALICE.userId, isAdmin: false };
+  const bob = { userId: BOB.userId, isAdmin: false };
+  const admin = { userId: "user_admin", isAdmin: true };
+  await setFitHidden(db, id, true);
+  assert.equal((await loadFitPage(deps, id, ANONYMOUS, "1")).status, "not_found");
+  assert.equal((await loadFitPage(deps, id, bob, "1")).status, "not_found");
+  assert.equal((await loadFitPage(deps, id, alice, "1")).status, "ok");
+  assert.equal((await loadFitPage(deps, id, admin, "2")).status, "ok");
+  await setFitHidden(db, id, false);
+  await unpublishFit(db, { id, authorUserId: ALICE.userId });
+  assert.equal((await loadFitPage(deps, id, ANONYMOUS, "1")).status, "not_found");
+  assert.equal((await loadFitPage(deps, id, bob, "1")).status, "not_found");
+  const own = await loadFitPage(deps, id, alice, "3");
+  assert.equal(own.status, "ok");
+  assert.equal(own.revisions.length, 3);
+  await publishFit(db, { id, authorUserId: ALICE.userId, buildSha: CURRENT_SHA });
+});
+
+test("the builder copies a revision's content when asked, and refuses one the fit doesn't have", async () => {
+  const { id, changed } = await fitWithHistory();
+  const deps = depsFor(stub.url);
+  const latest = await loadBuilder(deps, { copyFrom: id }, ANONYMOUS);
+  assert.equal(latest.start.fit.modules.length, changed.modules.length);
+  const first = await loadBuilder(deps, { copyFrom: id, rev: "1" }, ANONYMOUS);
+  assert.equal(first.start.fit.modules.length, FIXTURES.fit.modules.length);
+  assert.deepEqual(first.start.meta.tags, ["one"]);
+  assert.deepEqual(first.start.copiedFrom, { id, title: "Version three" }, "the credit names the fit by its id");
+  for (const rev of ["9", "0", "x"]) {
+    const missing = await loadBuilder(deps, { copyFrom: id, rev }, ANONYMOUS);
+    assert.equal(missing.start.fit, null, rev);
+    assert.ok(missing.start.note);
+  }
+  const hidden = await loadBuilder(deps, { copyFrom: ids.draft, rev: "1" }, ANONYMOUS);
+  assert.equal(hidden.start.fit, null, "another pilot's draft is not copyable");
 });

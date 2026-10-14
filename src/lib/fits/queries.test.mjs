@@ -29,6 +29,7 @@ import {
   updateFit,
 } from "./queries.ts";
 import { parseBrowseParams } from "./filters.ts";
+import { getRevision, listRevisions } from "./revisions.ts";
 
 const SHA = "build-a";
 const SHA2 = "build-b";
@@ -88,7 +89,7 @@ test("applying the schema again is a no-op, and schema_version records each vers
   await applySchema(db);
   await applySchema(db);
   const { rows } = await db.query("SELECT version FROM schema_version ORDER BY version");
-  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }]);
+  assert.deepEqual(rows, [{ version: 1 }, { version: 2 }, { version: 3 }, { version: 4 }, { version: 5 }]);
 });
 
 test("concurrent applies on a fresh database all succeed", async () => {
@@ -97,7 +98,7 @@ test("concurrent applies on a fresh database all succeed", async () => {
   const fresh = await PGlite.create();
   await Promise.all([applySchema(fresh), applySchema(fresh), applySchema(fresh)]);
   const { rows } = await fresh.query("SELECT count(*)::int AS n FROM schema_version");
-  assert.equal(rows[0].n, 4);
+  assert.equal(rows[0].n, 5);
   await fresh.close();
 });
 
@@ -672,7 +673,7 @@ test("deleting a fit cascades to its votes, comments and evaluations", async () 
   await setVote(db, { fitId: fit.id, userId: "u1", voted: true });
   await createComment(db, { fitId: fit.id, authorUserId: "u1", authorName: "n", body: "x" });
   await db.query("DELETE FROM fits WHERE id = $1", [fit.id]);
-  for (const table of ["fit_votes", "fit_comments", "fit_evaluations"]) {
+  for (const table of ["fit_votes", "fit_comments", "fit_evaluations", "fit_revisions"]) {
     const { rows } = await db.query(`SELECT count(*)::int AS n FROM ${table}`);
     assert.equal(rows[0].n, 0, table);
   }
@@ -733,7 +734,7 @@ test("deleting a fit takes its votes, comments, evaluations and every report abo
   await createReport(db, { targetKind: "fit", targetId: other.id, reporterUserId: "user_alice", reason: "keep" });
   assert.equal(await deleteFit(db, { id: fit.id, authorUserId: "user_alice" }), true);
   assert.equal(await getFit(db, fit.id, { viewer: ADMIN }), null);
-  for (const table of ["fit_votes", "fit_comments", "fit_evaluations"]) {
+  for (const table of ["fit_votes", "fit_comments", "fit_evaluations", "fit_revisions"]) {
     const { rows } = await db.query(`SELECT count(*)::int AS n FROM ${table} WHERE fit_id = $1`, [fit.id]);
     assert.equal(rows[0].n, 0, table);
   }
@@ -798,4 +799,102 @@ test("a deleted comment can't be replied to and isn't counted", async () => {
   await rejects(createComment(db, { fitId: fit.id, parentId: top.id, authorUserId: "user_carol", authorName: "carol", body: "late" }), "invalid");
   assert.equal((await getFit(db, fit.id)).comments, 2, "the tombstone isn't counted, its reply is");
   await createComment(db, { fitId: fit.id, parentId: keep.id, authorUserId: "user_carol", authorName: "carol", body: "fine" });
+});
+
+// ---------------------------------------------------------------------------------------------------
+// Fit history
+
+const revisionsOf = async (id) => (await listRevisions(db, id)).map((r) => r.revision);
+
+test("publishing appends revision 1 with the words, content and build; a draft's saves leave no history", async () => {
+  const fit = await draft(ALICE, { title: "First words", tags: ["pvp"], description: "d" });
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Still a draft" });
+  assert.deepEqual(await revisionsOf(fit.id), []);
+  await publishFit(db, { id: fit.id, authorUserId: "user_alice", buildSha: SHA });
+  const revision = await getRevision(db, fit.id, 1);
+  assert.equal(revision.title, "Still a draft");
+  assert.equal(revision.description, "d");
+  assert.deepEqual(revision.tags, ["pvp"]);
+  assert.equal(revision.buildSha, SHA);
+  assert.equal(revision.note, null);
+  assert.equal(revision.hullItem, "1000");
+  assert.deepEqual(revision.fit, (await getFit(db, fit.id, { viewer: ALICE })).fit);
+  assert.equal(revision.matchesCurrent, true);
+});
+
+test("every save of a published fit appends the next revision with a trimmed note, empty stored as null", async () => {
+  const fit = await published();
+  const other = sampleFit("2000");
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", content: other, evaluation: { ...good, buildSha: SHA2 }, note: "  Swapped the hull  " });
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Renamed", note: "   " });
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", description: "more" });
+  assert.deepEqual(await revisionsOf(fit.id), [4, 3, 2, 1]);
+  const [r4, r3, r2, r1] = await Promise.all([4, 3, 2, 1].map((n) => getRevision(db, fit.id, n)));
+  assert.equal(r2.note, "Swapped the hull");
+  assert.equal(r2.buildSha, SHA2, "the build the new content was checked against");
+  assert.equal(r2.hullItem, "2000");
+  assert.equal(r3.note, null);
+  assert.equal(r3.buildSha, SHA2, "a words-only save keeps the previous revision's build");
+  assert.equal(r3.title, "Renamed");
+  assert.equal(r4.description, "more");
+  assert.equal(r1.hullItem, "1000", "an old revision keeps its own content");
+  assert.equal(r1.matchesCurrent, false);
+  assert.equal(r4.matchesCurrent, true);
+});
+
+test("the note is limited to 200 characters and one line, and a refused note changes nothing", async () => {
+  const fit = await published();
+  await rejects(updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Nope", note: "x".repeat(201) }), "invalid");
+  await rejects(updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Nope", note: "a\nb" }), "invalid");
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Fine", note: "x".repeat(200) });
+  assert.deepEqual(await revisionsOf(fit.id), [2, 1]);
+  assert.equal((await getFit(db, fit.id)).title, "Fine");
+});
+
+test("a refused save of a published fit leaves neither the change nor a revision", async () => {
+  const fit = await published();
+  await rejects(updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Broken", content: sampleFit("2000"), evaluation: bad }), "not_valid");
+  await rejects(updateFit(db, { id: fit.id, authorUserId: "user_bob", title: "Mine now" }), "forbidden");
+  assert.deepEqual(await revisionsOf(fit.id), [1]);
+  assert.equal((await getFit(db, fit.id)).title, "A fit");
+});
+
+test("publishing a published fit again adds nothing; publishing again after an unpublish appends a revision", async () => {
+  const fit = await published();
+  await publishFit(db, { id: fit.id, authorUserId: "user_alice", buildSha: SHA });
+  assert.deepEqual(await revisionsOf(fit.id), [1]);
+  assert.equal(await unpublishFit(db, { id: fit.id, authorUserId: "user_alice" }), true);
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Edited as a draft" });
+  assert.deepEqual(await revisionsOf(fit.id), [1], "draft saves still leave nothing");
+  await publishFit(db, { id: fit.id, authorUserId: "user_alice", buildSha: SHA, note: "Back again" });
+  assert.deepEqual(await revisionsOf(fit.id), [2, 1]);
+  assert.equal((await getRevision(db, fit.id, 2)).title, "Edited as a draft");
+  assert.equal((await getRevision(db, fit.id, 2)).note, "Back again");
+});
+
+test("a fit published before history existed starts its history at its next save", async () => {
+  const fit = await published();
+  await db.query("DELETE FROM fit_revisions WHERE fit_id = $1", [fit.id]);
+  assert.deepEqual(await revisionsOf(fit.id), []);
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "Next" });
+  assert.deepEqual(await revisionsOf(fit.id), [1]);
+  assert.equal((await getRevision(db, fit.id, 1)).buildSha, SHA, "falls back to the fit's own build");
+});
+
+test("getRevision refuses numbers that are not revisions of the fit", async () => {
+  const fit = await published();
+  const other = await published(BOB);
+  for (const n of [0, -1, 2, 1.5, Number.NaN, 2 ** 40]) assert.equal(await getRevision(db, fit.id, n), null, String(n));
+  assert.equal(await getRevision(db, "../../x", 1), null);
+  assert.deepEqual(await listRevisions(db, "../../x"), []);
+  assert.equal((await getRevision(db, other.id, 1)).title, "A fit");
+});
+
+test("deleting a fit deletes its revisions and only its own", async () => {
+  const fit = await published();
+  const other = await published(BOB);
+  await updateFit(db, { id: fit.id, authorUserId: "user_alice", title: "v2" });
+  assert.equal(await deleteFit(db, { id: fit.id, authorUserId: "user_alice" }), true);
+  assert.deepEqual(await revisionsOf(fit.id), []);
+  assert.deepEqual(await revisionsOf(other.id), [1]);
 });

@@ -20,6 +20,7 @@ import {
   type Viewer,
 } from "../fits/queries";
 import { getPilotProfile, type PilotProfile } from "../fits/pilots";
+import { getRevision, listRevisions, parseRevisionParam, type Revision, type RevisionSummary } from "../fits/revisions";
 import { shownEvaluation, standingOf, type Shown, type Standing } from "../fits/standing";
 import { buildGridModel, catalogLookups, type GridModel } from "#/components/grid/model";
 import { isEditableFit, isOpenFit } from "../engine/open-fit";
@@ -206,7 +207,17 @@ export type FitPageData =
       shown: Shown;
       grid: GridState;
       comments: CommentThread[];
+      /** Newest first; empty for a fit with no history (published before history existed, or still a draft). */
+      revisions: RevisionSummary[];
+      /**
+       * Set when the page shows one revision read-only (`?rev=N`): `fit` then carries that revision's words and
+       * content, and `statsShown` says whether `shown` describes it (only the latest revision has a verdict).
+       */
+      revision: { number: number; of: number; statsShown: boolean; note: string | null; createdAt: string } | null;
     };
+
+/** What `shown` holds for a revision that has no verdict of its own. */
+const NO_STATS: Shown = { standing: "unknown", reference: null, referenceIsOld: false, result: { stats: [], conduits: [], regaliaSets: [], sections: null }, issues: [] };
 
 export function gridFor(fit: FitDetail, catalog: Catalog | null, shown: Shown): GridState {
   const open = fit.fit;
@@ -223,7 +234,12 @@ export function gridFor(fit: FitDetail, catalog: Catalog | null, shown: Shown): 
   return { status: "ready", model };
 }
 
-export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer): Promise<FitPageData> {
+/**
+ * The fit page. `rev` is the raw `?rev=` value: absent shows the fit as it is now; a present value must be a
+ * revision number this fit has, or the page is not found (the same answer as for a fit the viewer can't see).
+ * A revision is read only after the fit itself passed getFit's visibility, so it follows the fit's own.
+ */
+export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer, rev?: unknown): Promise<FitPageData> {
   const engine = await pageEngine(deps);
   const db = databaseOf(deps);
   if (!db) return { status: "unavailable", engine };
@@ -234,22 +250,40 @@ export async function loadFitPage(deps: SiteDeps, id: string, viewer: Viewer): P
     return reachable ? { status: "not_found", engine } : { status: "unavailable", engine };
   }
   const comments = fit.status === "published" || viewer.isAdmin ? ((await guarded("comments", () => listComments(db, id, { viewer }))) ?? []) : [];
-  const shown = shownEvaluation(fit, engine.currentSha);
+  const revisions = (await guarded("revisions", () => listRevisions(db, id))) ?? [];
+  const current = shownEvaluation(fit, engine.currentSha);
+
+  let shownFit = fit;
+  let shown = current;
+  let revision: Extract<FitPageData, { status: "ok" }>["revision"] = null;
+  if (rev !== undefined) {
+    const number = parseRevisionParam(rev);
+    const wanted: Revision | null = number === null ? null : await guarded("revision", () => getRevision(db, id, number));
+    if (wanted === null || number === null) return { status: "not_found", engine };
+    const latest = revisions[0]?.revision ?? wanted.revision;
+    // The stored verdict is of the fit's present content: it describes this revision only if it is the latest and still current.
+    const statsShown = wanted.revision === latest && wanted.matchesCurrent;
+    shownFit = { ...fit, title: wanted.title, description: wanted.description, tags: wanted.tags, hullItem: wanted.hullItem, fit: wanted.fit };
+    shown = statsShown ? current : NO_STATS;
+    revision = { number: wanted.revision, of: latest, statsShown, note: wanted.note, createdAt: wanted.createdAt };
+  }
   return {
     status: "ok",
     engine,
-    fit,
-    hull: engine.catalog?.hulls.find((hull) => hull.def === fit.hullItem) ?? null,
+    fit: shownFit,
+    hull: engine.catalog?.hulls.find((hull) => hull.def === shownFit.hullItem) ?? null,
     shown,
-    grid: gridFor(fit, engine.catalog, shown),
+    grid: gridFor(shownFit, engine.catalog, shown),
     comments,
+    revisions,
+    revision,
   };
 }
 
 // ---------------------------------------------------------------------------------------------------
 // Builder
 
-/** Where the builder starts: an empty hull picker, a saved fit to edit, or a copy of someone's fit. */
+/** Where the builder starts: an empty hull picker, a saved fit to edit, or a copy of someone's fit (or of one of its revisions). */
 export type BuilderStart = {
   /** The saved fit being edited; null for a new fit. */
   fitId: string | null;
@@ -280,7 +314,7 @@ export const COPY_UNAVAILABLE = "THAT FIT CAN'T BE COPIED RIGHT NOW. START FROM 
  * the catalog); a copy reads a fit the viewer can see and keeps none of its words but its tags; an edit
  * is the author's alone.
  */
-export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { fitId?: string; copyFrom?: string }, viewer: Viewer): Promise<BuilderData> {
+export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { fitId?: string; copyFrom?: string; rev?: string }, viewer: Viewer): Promise<BuilderData> {
   if (!request.fitId && !request.copyFrom) return { status: "ok", start: NEW_START };
   const db = databaseOf(deps);
   if (request.fitId) {
@@ -297,11 +331,18 @@ export async function loadBuilder(deps: Pick<SiteDeps, "database">, request: { f
       start: { ...NEW_START, fitId: fit.id, fit: fit.fit, meta: { title: fit.title, description: fit.description, tags: fit.tags }, status: fit.status, updatedAt: fit.updatedAt },
     };
   }
+  // `copyFrom` stays the fit's id (the fork credit names the fit); `rev` picks one of its revisions to copy
+  // the content and tags from, after getFit has checked the viewer may see the fit at all.
   const source = db ? await guarded("builder copy", () => getFit(db, request.copyFrom!, { viewer })) : null;
-  if (!source || !isEditableFit(source.fit)) return { status: "ok", start: { ...NEW_START, note: COPY_UNAVAILABLE } };
+  let content: { fit: unknown; tags: string[] } | null = source;
+  if (source && request.rev !== undefined) {
+    const number = parseRevisionParam(request.rev);
+    content = number === null ? null : await guarded("builder copy revision", () => getRevision(db!, source.id, number));
+  }
+  if (!source || !content || !isEditableFit(content.fit)) return { status: "ok", start: { ...NEW_START, note: COPY_UNAVAILABLE } };
   return {
     status: "ok",
-    start: { ...NEW_START, fit: source.fit, meta: { title: "", description: "", tags: source.tags }, copiedFrom: { id: source.id, title: source.title } },
+    start: { ...NEW_START, fit: content.fit, meta: { title: "", description: "", tags: content.tags }, copiedFrom: { id: source.id, title: source.title } },
   };
 }
 

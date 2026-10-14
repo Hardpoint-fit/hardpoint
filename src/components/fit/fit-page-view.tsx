@@ -94,8 +94,38 @@ function Comments({ threads, fitId, viewer, open }: { threads: CommentThread[]; 
   );
 }
 
+/** The fit's revisions, newest first: each opens that revision read-only; the newest opens the fit itself. */
+function History({ fitId, revisions, viewing }: { fitId: string; revisions: Ready["revisions"]; viewing: number | null }) {
+  const latest = revisions[0]!.revision;
+  return (
+    <Panel title="HISTORY" aside={String(latest)}>
+      <ol className="history">
+        {revisions.map((entry) => {
+          const open = entry.revision === (viewing ?? latest);
+          return (
+            <li key={entry.revision} className="history__row" aria-current={open ? "true" : undefined}>
+              <Link className="link" href={entry.revision === latest ? `/fits/${encodeURIComponent(fitId)}` : `/fits/${encodeURIComponent(fitId)}?rev=${entry.revision}`}>
+                REVISION {entry.revision}
+              </Link>
+              <span className="note">
+                {formatDate(entry.createdAt)} · {buildLabel(entry.buildSha)}
+                {entry.revision === latest ? " · LATEST" : ""}
+                {open && viewing !== null ? " · VIEWING" : ""}
+              </span>
+              {entry.note && <span className="history__note">{entry.note.toUpperCase()}</span>}
+            </li>
+          );
+        })}
+      </ol>
+    </Panel>
+  );
+}
+
 export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer }) {
-  const { fit, shown, engine, grid } = data;
+  const { fit, shown, engine, grid, revision } = data;
+  // A revision with no verdict of its own has no stats to draw (only the latest does).
+  const statsShown = revision === null || revision.statsShown;
+  const fromHref = `/fits/new?from=${encodeURIComponent(fit.id)}${revision ? `&rev=${revision.number}` : ""}`;
   const published = fit.status === "published";
   const own = viewer.authEnabled && viewer.userId !== null && viewer.userId === fit.authorUserId;
   const hullName = data.hull?.name ?? "UNKNOWN HULL";
@@ -104,6 +134,20 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
   return (
     <main className="page">
       <EngineBanner engine={engine} />
+      {revision && (
+        <div className="banner" role="status">
+          <span>
+            REVISION {revision.number} OF {revision.of} ·{" "}
+            <Link className="link" href={`/fits/${encodeURIComponent(fit.id)}`}>
+              VIEW LATEST
+            </Link>
+          </span>
+          <small>
+            {formatDate(revision.createdAt)}
+            {revision.note ? ` · ${revision.note.toUpperCase()}` : ""}
+          </small>
+        </div>
+      )}
       <div className="page-title fit-head">
         <ItemIcon src={hullIcon} size={48} className="fit-head__icon" />
         <span className="eyebrow">
@@ -116,7 +160,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
             title="FIT"
             aside={
               <>
-                <StandingBadge standing={shown.standing} />
+                {statsShown && <StandingBadge standing={shown.standing} />}
                 {fit.status !== "published" && <span className={`badge badge--${fit.status}`}>{fit.status.toUpperCase()}</span>}
               </>
             }
@@ -153,10 +197,11 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               </div>
             )}
           </Panel>
+          {data.revisions.length > 0 && <History fitId={fit.id} revisions={data.revisions} viewing={revision?.number ?? null} />}
           <Comments threads={data.comments} fitId={fit.id} viewer={viewer} open={published} />
         </div>
         <aside className="fit-layout__side">
-          <Panel title="PILOT FIT" aside={rating !== null ? <span className="rating">RATING {rating}</span> : undefined}>
+          <Panel title="PILOT FIT" aside={statsShown && rating !== null ? <span className="rating">RATING {rating}</span> : undefined}>
             <h1 className="fit-title">{fit.title}</h1>
             <div className="note">
               BY{" "}
@@ -184,7 +229,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
             </div>
             {isOpenFit(fit.fit) && <CopyFitString fit={fit.fit} label="COPY FIT STRING" />}
             <span className="flex flex-wrap gap-2">
-              <Link className="btn btn--quiet" href={`/fits/new?from=${encodeURIComponent(fit.id)}`}>
+              <Link className="btn btn--quiet" href={fromHref}>
                 COPY FIT TO BUILDER
               </Link>
               {viewer.userId === fit.authorUserId && fit.status !== "hidden" && (
@@ -203,7 +248,12 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               <ReportButton targetKind="fit" targetId={fit.id} label="REPORT FIT" />
             )}
           </Panel>
-          <Panel
+          {!statsShown && (
+            <Panel title="STATS">
+              <p className="note">STATS ARE SHOWN FOR THE LATEST REVISION.</p>
+            </Panel>
+          )}
+          {statsShown && <Panel
             title="HULL SPECS"
             aside={shown.reference ? (shown.referenceIsOld ? `LAST VALID · ${buildLabel(shown.reference.buildSha)}` : buildLabel(shown.reference.buildSha)) : undefined}
           >
@@ -223,8 +273,8 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
                 )}
               </>
             )}
-          </Panel>
-          {shown.reference !== null && (
+          </Panel>}
+          {statsShown && shown.reference !== null && (
             <Panel title="MODIFIERS">
               <StatsTable stats={shown.result.stats} catalog={engine.catalog} />
             </Panel>

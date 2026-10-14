@@ -9,7 +9,7 @@ import type { EngineClient } from "#/lib/engine/client";
 import { isEditableFit } from "#/lib/engine/open-fit";
 import type { OpenFit } from "#/lib/engine/types";
 import { MAX_TAGS, normalizeTags } from "#/lib/fits/filters";
-import { DESCRIPTION_MAX, TITLE_MAX } from "#/lib/fits/limits";
+import { DESCRIPTION_MAX, REVISION_NOTE_MAX, TITLE_MAX } from "#/lib/fits/limits";
 import { NotConfigured, Panel } from "#/components/ui";
 import { fitStringProblem } from "#/components/fit/copy-fit-string";
 import { normalizeFitString } from "./fit-string";
@@ -114,13 +114,16 @@ export function FitDetails({
   const [tagText, setTagText] = useState(meta.tags.join(", "));
   const [problem, setProblem] = useState<Problem>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // "What changed?" belongs to one save of a published fit (its history entry), so it is not part of the
+  // fit's meta or its autosaved draft.
+  const [note, setNote] = useState("");
   const [pending, start] = useTransition();
   const published = saved.status === "published";
 
   const steps = {
     saved,
     dirty,
-    save: (fitId: string | null) => saveFitAction(fitId, meta, fit),
+    save: (fitId: string | null) => saveFitAction(fitId, published ? { ...meta, note } : meta, fit),
     publish: (fitId: string) => publishFitAction(fitId),
     onSaved,
     navigate,
@@ -132,6 +135,7 @@ export function FitDetails({
       const result = await flow();
       setProblem(result.problem);
       setNotice(result.notice);
+      if (result.problem === null) setNote("");
     });
   const onSave = () => run(() => saveFlow(steps));
   const onPublish = () => run(() => publishFlow(steps));
@@ -174,6 +178,19 @@ export function FitDetails({
             </span>
           ))}
         </div>
+      )}
+      {published && (
+        <label className="field">
+          WHAT CHANGED? (OPTIONAL)
+          <input
+            className="input"
+            value={note}
+            maxLength={REVISION_NOTE_MAX}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="SHOWN IN THIS FIT'S HISTORY"
+          />
+          <span className="note">{REVISION_NOTE_MAX - note.length} LEFT</span>
+        </label>
       )}
       <div className="details__actions">
         {!auth.enabled ? (

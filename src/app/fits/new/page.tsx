@@ -8,12 +8,14 @@ export const metadata: Metadata = { title: "New fit · hardpoint.fit", descripti
 
 type Search = Promise<Record<string, string | string[] | undefined>>;
 
-/** The builder for a new fit, from a hull, a pasted fit string, or `?from=<fit id>` (copy fit). */
+/** The builder for a new fit, from a hull, a pasted fit string, or `?from=<fit id>` (copy fit), with `&rev=N` to copy that revision. */
 export default async function NewFitPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams;
   const from = typeof params.from === "string" && /^[A-Za-z0-9]{1,40}$/.test(params.from) ? params.from : undefined;
+  // `rev` only means something beside `from`: it picks the revision of that fit to copy.
+  const rev = from !== undefined && typeof params.rev === "string" ? params.rev : undefined;
   const viewer = await pageViewer();
-  const data = await loadBuilder(siteDeps(), { copyFrom: from }, viewer);
+  const data = await loadBuilder(siteDeps(), { copyFrom: from, rev }, viewer);
   if (data.status !== "ok")
     return (
       <main className="page">

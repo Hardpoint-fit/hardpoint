@@ -6,7 +6,9 @@ import { createEngineClient } from "../engine/client.ts";
 import { startStubEngine } from "../engine/stub-engine.mjs";
 import { getFit, listComments, listOpenReports } from "../fits/queries.ts";
 import { createTestDb } from "../fits/test-db.mjs";
-import { addComment, deleteComment, deleteFit, editBio, editComment, follow, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { addComment, deleteComment, deleteFit, editBio, editComment, follow, publishFit, saveFit, unpublishFit, moderate, report, resolveReport, vote, DATABASE_DOWN_MESSAGE } from "./actions-core.ts";
+import { FIXTURES } from "../engine/stub-engine.mjs";
+import { listRevisions } from "../fits/revisions.ts";
 import { getPilotProfile } from "../fits/pilots.ts";
 import { WRITE_BUDGETS } from "../fits/write-limits.ts";
 import { ADMIN, ALICE, BOB, seedSite } from "./seed.mjs";
@@ -236,4 +238,31 @@ test("a bio edit changes only the signed-in pilot's bio and refuses what isn't p
   const long = await editBio(alice, { bio: "x".repeat(501) });
   assert.equal(long.status, 400);
   assert.match(long.message, /500/);
+});
+
+test("saving a published fit appends a revision with the note; a draft save and a publish record none of the note", async () => {
+  const alice = deps(authAs(ALICE.userId));
+  const created = await saveFit(alice, { fitId: null, title: "History", description: "", tags: [], fit: FIXTURES.fit, note: "ignored on a draft" });
+  assert.equal(created.ok, true);
+  const id = created.fit.fitId;
+  assert.deepEqual(await listRevisions(db, id), [], "a draft has no history");
+  assert.equal((await publishFit(alice, { fitId: id })).ok, true);
+  const saved = await saveFit(alice, { fitId: id, title: "History v2", description: "", tags: [], fit: FIXTURES.fit, note: "  Tuned the heat  " });
+  assert.equal(saved.ok, true);
+  const empty = await saveFit(alice, { fitId: id, title: "History v3", description: "", tags: [], fit: FIXTURES.fit });
+  assert.equal(empty.ok, true);
+  const revisions = await listRevisions(db, id);
+  assert.deepEqual(revisions.map((r) => [r.revision, r.note]), [[3, null], [2, "Tuned the heat"], [1, null]]);
+});
+
+test("a too-long note is refused as a value and saves nothing; another pilot's fit is not theirs to save", async () => {
+  const alice = deps(authAs(ALICE.userId));
+  const before = (await listRevisions(db, ids.showcase)).length;
+  const long = await saveFit(alice, { fitId: ids.showcase, title: "Nope", description: "", tags: [], fit: FIXTURES.fit, note: "x".repeat(201) });
+  assert.equal(long.ok, false);
+  assert.equal(long.status, 400);
+  const forged = await saveFit(deps(authAs(BOB.userId)), { fitId: ids.showcase, title: "Mine", description: "", tags: [], fit: FIXTURES.fit, note: "hi" });
+  assert.equal(forged.status, 403);
+  assert.equal((await listRevisions(db, ids.showcase)).length, before);
+  assert.equal((await getFit(db, ids.showcase)).title, "Scarab cipher brawler");
 });
