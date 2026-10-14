@@ -20,6 +20,7 @@ import {
   type Viewer,
 } from "../fits/queries";
 import { listBookmarks } from "../fits/bookmarks";
+import { countUnread, listNotifications, UNREAD_DISPLAY_CAP, type Notification } from "../fits/notifications";
 import { getForkInfo, type ForkInfo } from "../fits/forks";
 import { getPilotProfile, type PilotProfile } from "../fits/pilots";
 import { getRevision, listRevisions, parseRevisionParam, type Revision, type RevisionSummary } from "../fits/revisions";
@@ -173,6 +174,31 @@ export async function loadBookmarks(deps: SiteDeps, params: SearchParamsInput, u
   );
   if (!page) return { status: "unavailable", engine };
   return { status: "ok", engine, cards: page.fits.map((fit) => toCard(fit, engine.catalog, engine.currentSha)), nextCursor: page.nextCursor };
+}
+
+export type NotificationsData = Unavailable | { status: "ok"; engine: PageEngine; notifications: Notification[]; nextCursor: string | null };
+
+/** The signed-in pilot's notifications whose fit and comment are still visible, newest first. */
+export async function loadNotifications(deps: SiteDeps, params: SearchParamsInput, userId: string): Promise<NotificationsData> {
+  const engine = await pageEngine(deps);
+  const db = databaseOf(deps);
+  if (!db) return { status: "unavailable", engine };
+  const cursor = params instanceof URLSearchParams ? params.get("cursor") : params.cursor;
+  const page = await guarded("notifications", () => listNotifications(db, { userId, cursor: typeof cursor === "string" ? cursor : undefined }));
+  if (!page) return { status: "unavailable", engine };
+  return { status: "ok", engine, notifications: page.notifications, nextCursor: page.nextCursor };
+}
+
+/** The header bell's number: unread notifications, capped for display; 0 when the database can't answer (the header never fails). */
+export async function loadUnreadCount(deps: Pick<SiteDeps, "database">, userId: string): Promise<number> {
+  const db = databaseOf(deps);
+  if (!db) return 0;
+  return (await guarded("unread count", () => countUnread(db, userId))) ?? 0;
+}
+
+/** "3", or "99+" past the cap. */
+export function unreadLabel(count: number): string {
+  return count > UNREAD_DISPLAY_CAP ? `${UNREAD_DISPLAY_CAP}+` : String(count);
 }
 
 export type AuthorData =

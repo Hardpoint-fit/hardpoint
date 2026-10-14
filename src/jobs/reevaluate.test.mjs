@@ -263,3 +263,39 @@ test("workers that hit one rate limit share a single wait", async () => {
   assert.equal(summary.rateLimitWaits, 1);
   assert.equal(waits.length, 1);
 });
+
+const brokenFor = async (fitId) =>
+  (await db.query(`SELECT user_id, kind, build_sha FROM notifications WHERE fit_id = $1 ORDER BY id`, [fitId])).rows;
+/** The engine at `sha` finds fits marked `Breaks` invalid and every other fit valid. */
+const breaksAt = (sha) => (req, res, body) =>
+  json(res, 200, { ...(body.fit.Breaks ? FIXTURES.evaluateInvalid : FIXTURES.evaluateValid), buildSha: sha });
+
+test("a fit that was valid and is invalid on the new build tells its author once, however often the job runs", async () => {
+  const broken = await publishedFit("Soon broken", { Breaks: true });
+  const fine = await publishedFit("Still fine");
+  engineAt(NEW, breaksAt(NEW));
+  await run();
+  await run();
+  assert.deepEqual(await brokenFor(broken.id), [{ user_id: ALICE, kind: "fit_broken", build_sha: NEW }]);
+  assert.deepEqual(await brokenFor(fine.id), []);
+  // A later build that still fails it is not news; one that passes and then fails again is.
+  engineAt("0badc0de", breaksAt("0badc0de"));
+  await run();
+  assert.equal((await brokenFor(broken.id)).length, 1);
+});
+
+test("a fit that was already invalid on the earlier build tells nobody when the next build is invalid too", async () => {
+  const fit = await publishedFit("Always broken", { Breaks: true });
+  await db.query(`UPDATE fit_evaluations SET valid = false WHERE fit_id = $1`, [fit.id]);
+  engineAt(NEW, breaksAt(NEW));
+  await run();
+  assert.deepEqual(await brokenFor(fit.id), []);
+});
+
+test("a draft or hidden fit is not evaluated, so nothing is said about it", async () => {
+  const hidden = await publishedFit("Hidden", { Breaks: true });
+  await db.query(`UPDATE fits SET status = 'hidden' WHERE id = $1`, [hidden.id]);
+  engineAt(NEW, breaksAt(NEW));
+  await run();
+  assert.deepEqual(await brokenFor(hidden.id), []);
+});

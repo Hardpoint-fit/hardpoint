@@ -62,7 +62,7 @@ COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/
 # and use `pg` from the standalone node_modules. Start command: `node src/jobs/reevaluate.ts`.
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/jobs/reevaluate.ts ./src/jobs/
 COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/engine/client.ts /repo/js/projects/theorycrafting/src/lib/engine/types.ts ./src/lib/engine/
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/pool-db.ts /repo/js/projects/theorycrafting/src/lib/fits/queries.ts /repo/js/projects/theorycrafting/src/lib/fits/filters.ts /repo/js/projects/theorycrafting/src/lib/fits/limits.ts /repo/js/projects/theorycrafting/src/lib/fits/service.ts ./src/lib/fits/
+COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/pool-db.ts /repo/js/projects/theorycrafting/src/lib/fits/queries.ts /repo/js/projects/theorycrafting/src/lib/fits/filters.ts /repo/js/projects/theorycrafting/src/lib/fits/limits.ts /repo/js/projects/theorycrafting/src/lib/fits/service.ts /repo/js/projects/theorycrafting/src/lib/fits/notifications.ts ./src/lib/fits/
 # Fails the build if the job's import closure isn't all here (importing runs nothing: main() only runs
 # as the entry point). src/jobs/reevaluate-closure.test.mjs checks the same list from source.
 RUN node -e "import('./src/jobs/reevaluate.ts').then(() => console.log('job imports resolve'), (e) => { console.error(e); process.exit(1); })"

@@ -19,6 +19,7 @@ import {
   type BrowseQuery,
 } from "./filters.ts";
 import type { Db, Queryable } from "./db.ts";
+import { notifyBroken, notifyComment, notifyFollowers } from "./notifications.ts";
 import { COMMENT_MAX, DESCRIPTION_MAX, FIT_JSON_MAX_BYTES, REPORT_REASON_MAX, REVISION_NOTE_MAX, TITLE_MAX } from "./limits.ts";
 
 // ---------------------------------------------------------------------------------------------------
@@ -644,7 +645,10 @@ export async function publishFit(db: Db, input: { id: string; authorUserId: stri
       `UPDATE fits SET status = 'published', published_at = COALESCE(published_at, now()), updated_at = now() WHERE id = $1`,
       [input.id],
     );
-    if (current.status !== "published") await appendRevision(tx, { fitId: input.id, buildSha: input.buildSha, note });
+    if (current.status !== "published") {
+      await appendRevision(tx, { fitId: input.id, buildSha: input.buildSha, note });
+      await notifyFollowers(tx, { fitId: input.id, authorUserId: input.authorUserId });
+    }
     return (await getFit(tx, input.id, { viewer: { userId: input.authorUserId, isAdmin: false }, buildSha: input.buildSha }))!;
   });
 }
@@ -657,8 +661,12 @@ export async function publishFit(db: Db, input: { id: string; authorUserId: stri
  */
 export async function unpublishFit(db: Queryable, input: { id: string; authorUserId: string }): Promise<boolean> {
   const { rows } = await db.query(
-    `UPDATE fits SET status = 'draft', updated_at = now()
-     WHERE id = $1 AND author_user_id = $2 AND status = 'published' RETURNING id`,
+    `WITH gone AS (
+       UPDATE fits SET status = 'draft', updated_at = now()
+       WHERE id = $1 AND author_user_id = $2 AND status = 'published' RETURNING id
+     ),
+     told AS (DELETE FROM notifications WHERE fit_id IN (SELECT id FROM gone))
+     SELECT id FROM gone`,
     [input.id, input.authorUserId],
   );
   return rows.length > 0;
@@ -690,11 +698,16 @@ export async function deleteFit(db: Queryable, input: { id: string; authorUserId
   return rows.length > 0;
 }
 
-/** Moderation: hides a published fit from every public read, or restores a hidden one. False if nothing changed. */
+/**
+ * Moderation: hides a published fit from every public read, or restores a hidden one. False if nothing changed.
+ * Hiding deletes the fit's notifications in the same statement; restoring does not bring them back.
+ */
 export async function setFitHidden(db: Queryable, id: string, hidden: boolean): Promise<boolean> {
   const { rows } = await db.query(
     hidden
-      ? `UPDATE fits SET status = 'hidden' WHERE id = $1 AND status = 'published' RETURNING id`
+      ? `WITH hid AS (UPDATE fits SET status = 'hidden' WHERE id = $1 AND status = 'published' RETURNING id),
+           told AS (DELETE FROM notifications WHERE fit_id IN (SELECT id FROM hid))
+         SELECT id FROM hid`
       : `UPDATE fits SET status = 'published' WHERE id = $1 AND status = 'hidden' RETURNING id`,
     [id],
   );
@@ -789,12 +802,17 @@ export async function createComment(db: Db, input: CreateCommentInput): Promise<
   return db.transaction(async (tx) => {
     const { rows: fits } = await tx.query(`SELECT 1 FROM fits WHERE id = $1 AND status = 'published'`, [input.fitId]);
     if (fits.length === 0) throw new FitDataError("not_found", "No such fit.");
+    let parentAuthor: string | null = null;
     if (parentId !== null) {
-      const { rows } = await tx.query<Row>(`SELECT fit_id, parent_id, hidden, deleted_at FROM fit_comments WHERE id = $1::bigint`, [parentId]);
+      const { rows } = await tx.query<Row>(
+        `SELECT fit_id, parent_id, author_user_id, hidden, deleted_at FROM fit_comments WHERE id = $1::bigint`,
+        [parentId],
+      );
       const parent = rows[0];
       if (!parent || parent.fit_id !== input.fitId || parent.parent_id !== null || parent.hidden || parent.deleted_at) {
         invalid("That comment can't be replied to.");
       }
+      parentAuthor = parent.author_user_id;
     }
     await ensurePilot(tx, { userId: input.authorUserId, name: input.authorName });
     const { rows } = await tx.query<Row>(
@@ -802,7 +820,9 @@ export async function createComment(db: Db, input: CreateCommentInput): Promise<
        VALUES ($1, $2::bigint, $3, $4) RETURNING ${COMMENT_COLUMNS}`,
       [input.fitId, parentId, input.authorUserId, body],
     );
-    return mapComment(rows[0]!);
+    const comment = mapComment(rows[0]!);
+    await notifyComment(tx, { fitId: input.fitId, commentId: comment.id, actorUserId: input.authorUserId, parentAuthorUserId: parentAuthor });
+    return comment;
   });
 }
 
@@ -851,6 +871,8 @@ export async function deleteComment(db: Db, input: { id: string; authorUserId: s
     );
     if (tombstoned.length > 0) {
       await closeReports(input.id);
+      // The comment is gone from the page, and so is what it told anyone.
+      await tx.query(`DELETE FROM notifications WHERE comment_id = $1::bigint`, [input.id]);
       return "tombstoned" as const;
     }
     await tx.query(`DELETE FROM fit_comments WHERE id = $1::bigint AND author_user_id = $2`, [input.id, input.authorUserId]);
@@ -871,8 +893,15 @@ export async function deleteComment(db: Db, input: { id: string; authorUserId: s
 /** Moderation: hides a comment (and so its replies) from public reads, or restores it. The caller checks admin. */
 export async function setCommentHidden(db: Queryable, id: string, hidden: boolean): Promise<boolean> {
   if (!NUMERIC_ID.test(id)) return false;
+  // Hiding a comment hides its replies too, so the notifications about either go with it.
   const { rows } = await db.query(
-    `UPDATE fit_comments SET hidden = $2 WHERE id = $1::bigint AND hidden <> $2 RETURNING id`,
+    `WITH changed AS (UPDATE fit_comments SET hidden = $2 WHERE id = $1::bigint AND hidden <> $2 RETURNING id),
+     told AS (
+       DELETE FROM notifications
+       WHERE $2::boolean AND (comment_id IN (SELECT id FROM changed)
+          OR comment_id IN (SELECT r.id FROM fit_comments r WHERE r.parent_id IN (SELECT id FROM changed)))
+     )
+     SELECT id FROM changed`,
     [id, hidden],
   );
   return rows.length > 0;
@@ -1069,6 +1098,9 @@ export async function fitsNeedingEvaluation(db: Queryable, buildSha: string, lim
  * The fit row is read FOR SHARE: an edit in flight (updateFit holds the row FOR UPDATE) is waited for and
  * its revision is the one compared, and no edit can start until this verdict is stored. So a stale verdict
  * can't replace the fresh one an edit stored for the same build, on insert or on conflict.
+ *
+ * An invalid verdict on a published fit whose latest verdict on another build was valid tells its author
+ * (notifyBroken), in this transaction and once per build.
  */
 export async function recordEvaluation(
   db: Db,
@@ -1082,6 +1114,8 @@ export async function recordEvaluation(
     const current = rows[0];
     if (!current || (options.revision !== undefined && current.revision !== options.revision)) return false;
     await insertEvaluation(tx, fitId, evaluation);
+    // A published fit that was valid on another build and is not on this one: its author is told, once per build.
+    await notifyBroken(tx, { fitId, buildSha: evaluation.buildSha, valid: evaluation.valid });
     return true;
   });
 }

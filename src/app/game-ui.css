@@ -1250,3 +1250,60 @@ a.chip:hover {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* ---- Notifications ---------------------------------------------------------------------------- */
+
+.bell-count {
+  margin-left: var(--spacing-xs);
+  background: var(--accent-orange);
+  padding: 0 var(--spacing-xs);
+  color: #000;
+  font-size: var(--font-size-tiny);
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.notification {
+  border-bottom: 1px solid var(--rule);
+}
+
+.notification__open {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--spacing-xs) var(--spacing-md);
+  border: 0;
+  background: none;
+  padding: var(--spacing-md) var(--spacing-sm);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--font-size-normal);
+  letter-spacing: 0.1em;
+  text-align: left;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.notification__open:hover,
+.notification__open:focus-visible {
+  background: var(--surface-hover);
+  outline: none;
+}
+
+.notification--unread .notification__open {
+  border-left: 2px solid var(--accent-orange);
+  color: var(--text-primary);
+}
+
+.notification__text {
+  flex: 1 1 14rem;
+  min-width: 0;
+}

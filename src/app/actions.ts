@@ -4,6 +4,7 @@
 // actions-core function, which authenticates before it writes; a refusal comes back as a value the
 // control shows. Nothing here logs what was sent.
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { isEditableFit } from "#/lib/engine/open-fit";
 import { FIT_JSON_MAX_BYTES } from "#/lib/fits/limits";
 import * as core from "#/lib/site/actions-core";
@@ -144,4 +145,24 @@ export async function editBioAction(bio: unknown): Promise<core.ActionResult<{ b
   const result = await core.editBio(actionDeps(), { bio });
   if (result.ok) revalidatePath("/u/[userId]", "page");
   return result;
+}
+
+/**
+ * A notification's form: marks it read, then goes to what it is about (the fit, at the comment). A POST, so
+ * following a link elsewhere never marks anything. One that is gone or isn't theirs lands on the list.
+ */
+export async function openNotificationAction(id: unknown): Promise<void> {
+  if (!isId(id)) redirect("/notifications");
+  const result = await core.openNotification(actionDeps(), { id });
+  if (!result.ok && result.reason === "unauthenticated") redirect(`/auth/signin?${new URLSearchParams({ returnTo: "/notifications" })}`);
+  const target = result.ok ? result.target : null;
+  if (!target) redirect("/notifications");
+  revalidatePath("/", "layout");
+  redirect(`/fits/${target.fitId}${target.commentId ? `#comment-${target.commentId}` : ""}`);
+}
+
+/** MARK ALL READ: the list and the header's count refresh. */
+export async function markAllNotificationsReadAction(): Promise<void> {
+  const result = await core.markAllNotificationsRead(actionDeps());
+  if (result.ok) revalidatePath("/", "layout");
 }

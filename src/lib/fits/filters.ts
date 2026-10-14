@@ -241,3 +241,24 @@ export function decodeBookmarkCursor(text: string): BookmarkCursor | undefined {
     return undefined;
   }
 }
+
+/** The notifications page's cursor: the last row's (created at, id) in its newest-first order. */
+export type NotificationCursor = { at: string; id: string };
+
+export function encodeNotificationCursor(cursor: NotificationCursor): string {
+  return toBase64Url(JSON.stringify({ kind: "nt", ...cursor }));
+}
+
+export function decodeNotificationCursor(text: string): NotificationCursor | undefined {
+  if (!text || text.length > 300) return undefined;
+  try {
+    const value: unknown = JSON.parse(fromBase64Url(text));
+    if (typeof value !== "object" || value === null) return undefined;
+    const { kind, at, id } = value as Record<string, unknown>;
+    if (kind !== "nt" || typeof at !== "string" || !isPgTimestamp(at)) return undefined;
+    if (typeof id !== "string" || !/^[0-9]{1,18}$/.test(id)) return undefined;
+    return { at, id };
+  } catch {
+    return undefined;
+  }
+}

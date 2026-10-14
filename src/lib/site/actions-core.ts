@@ -12,6 +12,7 @@ import { slowDownMessage } from "../slow-down";
 import { publish as publishService, saveDraft, type Refusal } from "../fits/service";
 import { setBookmark } from "../fits/bookmarks";
 import { setBio, setFollow } from "../fits/pilots";
+import { markAllRead, openNotification as openNotificationRow, type OpenedNotification } from "../fits/notifications";
 import {
   FitDataError,
   createComment,
@@ -84,12 +85,14 @@ async function run<T extends object>(what: string, work: () => Promise<ActionRes
 
 /**
  * Runs a signed-in write: authenticates, then spends one from the author's `budget` (write-limits.ts)
- * before the work, so a refused write changes nothing. Moderation passes `admin` and no budget.
+ * before the work, so a refused write changes nothing. Moderation passes `admin` and no budget. `own` is for
+ * a pilot's marker on their own rows (reading a notification): signed in, no budget, and the work's SQL
+ * is scoped to the viewer.
  */
 async function withAuthor<T extends object>(
   deps: ActionDeps,
   what: string,
-  access: { budget: WriteAction } | { admin: true },
+  access: { budget: WriteAction } | { admin: true } | { own: true },
   work: (db: Db, author: Author) => Promise<ActionResult<T>>,
 ): Promise<ActionResult<T>> {
   return run(what, async () => {
@@ -106,6 +109,19 @@ async function withAuthor<T extends object>(
 
 export function vote(deps: ActionDeps, input: { fitId: string; voted: boolean }): Promise<ActionResult<{ voted: boolean; votes: number }>> {
   return withAuthor(deps, "vote", { budget: "vote" }, async (db, author) => ({ ok: true, ...(await setVote(db, { fitId: input.fitId, userId: author.userId, voted: input.voted })) }));
+}
+
+/** Marks one of the pilot's own notifications read and says where it points (null: not theirs, or gone). */
+export function openNotification(deps: ActionDeps, input: { id: string }): Promise<ActionResult<{ target: OpenedNotification | null }>> {
+  return withAuthor(deps, "notification open", { own: true }, async (db, author) => ({
+    ok: true,
+    target: await openNotificationRow(db, { userId: author.userId, id: input.id }),
+  }));
+}
+
+/** Marks all of the pilot's notifications read. */
+export function markAllNotificationsRead(deps: ActionDeps): Promise<ActionResult<{ marked: number }>> {
+  return withAuthor(deps, "notifications read", { own: true }, async (db, author) => ({ ok: true, marked: await markAllRead(db, author.userId) }));
 }
 
 /** Bookmarks or un-bookmarks a published fit for the signed-in pilot. Idempotent, like vote. */

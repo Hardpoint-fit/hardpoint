@@ -238,6 +238,31 @@ END $$;
 -- "N COPIES" counts published forks of a fit.
 CREATE INDEX IF NOT EXISTS fits_forked_from_idx ON fits (forked_from) WHERE forked_from IS NOT NULL;
 
+-- Notifications (notifications.ts). Each row is written in the transaction of the event that causes it
+-- (a comment, a publish, the re-evaluation cron) and deleted with what it points at: the fit and comment
+-- foreign keys cascade, and hiding or unpublishing a fit, or hiding or tombstoning a comment, deletes the
+-- rows in the same transaction. Readers also filter to visible targets, so a missed path leaks nothing.
+-- `build_sha` is set only for fit_broken, so the same fit breaking on a new build is a new notification.
+CREATE TABLE IF NOT EXISTS notifications (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id text NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('comment', 'reply', 'follow_fit', 'fit_broken')),
+  fit_id text NOT NULL REFERENCES fits (id) ON DELETE CASCADE,
+  comment_id bigint REFERENCES fit_comments (id) ON DELETE CASCADE,
+  actor_user_id text,
+  build_sha text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  read_at timestamptz
+);
+
+-- A retried write cannot duplicate a row. NULLs never conflict in a plain UNIQUE, hence the COALESCEs.
+CREATE UNIQUE INDEX IF NOT EXISTS notifications_unique_idx
+  ON notifications (user_id, kind, fit_id, COALESCE(comment_id, 0), COALESCE(build_sha, ''));
+CREATE INDEX IF NOT EXISTS notifications_inbox_idx ON notifications (user_id, read_at, created_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_page_idx ON notifications (user_id, created_at DESC, id DESC);
+CREATE INDEX IF NOT EXISTS notifications_comment_idx ON notifications (comment_id) WHERE comment_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS notifications_fit_idx ON notifications (fit_id);
+
 INSERT INTO schema_version (version) VALUES (1) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (2) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (3) ON CONFLICT DO NOTHING;
@@ -245,3 +270,4 @@ INSERT INTO schema_version (version) VALUES (4) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (5) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (6) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (7) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (8) ON CONFLICT DO NOTHING;
