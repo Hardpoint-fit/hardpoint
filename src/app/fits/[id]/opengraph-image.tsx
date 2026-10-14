@@ -67,7 +67,9 @@ async function hullArt(url: string | null): Promise<string | null> {
     const { default: sharp } = await import("sharp");
     const png = await sharp(join(process.cwd(), "public", art2x(url))).png().toBuffer();
     return `data:image/png;base64,${png.toString("base64")}`;
-  } catch {
+  } catch (error) {
+    // The card goes out without the art; say why, so a missing sharp build or image shows in the logs.
+    console.warn(`share card: hull art ${url} could not be converted: ${error instanceof Error ? error.message : String(error)}`);
     return null;
   }
 }
