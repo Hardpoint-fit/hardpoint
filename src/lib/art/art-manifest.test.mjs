@@ -14,8 +14,7 @@ const NO_ART = new Set();
 test("every module and hull in the catalog fixture has art or is listed as having none", () => {
   const withArt = [];
   const without = [];
-  // The fixture predates the catalog's `path`; the display name finds the same prefab (art-key.ts).
-  for (const entry of [...catalog.items, ...catalog.hulls]) (findModuleArt(entry.path ?? entry.name) ? withArt : without).push(entry.name);
+  for (const entry of [...catalog.items, ...catalog.hulls]) (findModuleArt(entry.path) ? withArt : without).push(entry.name);
   console.log(`art coverage: ${withArt.length} with art, ${without.length} without (${[...new Set(without)].join(", ") || "none"})`);
   assert.deepEqual([...new Set(without)].filter((name) => !NO_ART.has(name)), [], "items without art that are not listed");
   for (const name of NO_ART) assert.ok(without.includes(name), `${name} now has art; drop it from NO_ART`);

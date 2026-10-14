@@ -55,6 +55,17 @@ test("import and export round-trip through the engine's shapes", async () => {
   assert.deepEqual(ok(await client.importFitString(exported.fitString)).fit, FIXTURES.imported.fit);
 });
 
+test("item facts post the rolled item and return the engine's rows; an unknown item is rejected", async () => {
+  assert.deepEqual(ok(await client.itemFacts(FIXTURES.itemFactsRequest.item)), FIXTURES.itemFacts);
+  assert.deepEqual(stub.requests.at(-1).body, FIXTURES.itemFactsRequest);
+  const unknown = err(await client.itemFacts({ ...FIXTURES.itemFactsRequest.item, def: "1" }));
+  assert.equal(unknown.kind, "rejected");
+  assert.match(unknown.message, /not a fittable item/);
+  const controller = new AbortController();
+  controller.abort();
+  assert.equal(err(await client.itemFacts(FIXTURES.itemFactsRequest.item, { signal: controller.signal })).kind, "cancelled");
+});
+
 test("a 400 is rejected with the engine's message", async () => {
   const e = err(await client.importFitString("nonsense"));
   assert.equal(e.kind, "rejected");
