@@ -373,15 +373,15 @@
    "invertedSign": false
   },
   {
-   "id": "TurretCritCooldown",
-   "label": "PENETRATION COOLDOWN",
+   "id": "TurretReloadTime",
+   "label": "TURRET RELOAD TIME",
    "lowerIsBetter": true,
    "integer": false,
    "invertedSign": false
   },
   {
-   "id": "TurretReloadTime",
-   "label": "TURRET RELOAD TIME",
+   "id": "TurretAbilityCooldown",
+   "label": "TURRET ABILITY COOLDOWN",
    "lowerIsBetter": true,
    "integer": false,
    "invertedSign": false
