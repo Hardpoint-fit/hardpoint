@@ -6,6 +6,7 @@ import { cellKey, type Cell } from "#/components/grid/geometry";
 import type { OpenFit, OpenItem, OpenModule, OpenRoll } from "#/lib/engine/types";
 import { allocate, selectThreshold, setLevel } from "#/components/affinity/affinity";
 import { dropPreview, firstOpenCell, gridOf, type Held } from "./placement";
+import { withCellSlot } from "./grid-mods";
 import * as edits from "./roll-edits";
 import { ammoOptions, hullSubject, moduleSubject, patinaMax, type BuilderCatalog, type RollSubject, type Slot } from "./rules";
 
@@ -77,6 +78,13 @@ export type BuilderAction =
   | { type: "release" }
   | { type: "cancel" }
   | { type: "remove"; index: number }
+  /**
+   * A grid consumable's result, as the engine's grid-mods answer gave it, written into the slot overrides:
+   * `cell` (row * cols + col) becomes `slotType`. The engine judges the grid after, as for any edit.
+   */
+  | { type: "modifyCell"; cell: number; slotType: string }
+  /** REVERT: a modified cell back to the hull's layout. Whatever relied on it is the engine's to flag. */
+  | { type: "revertCell"; cell: number }
   | { type: "roll"; target: Target; edit: RollEdit }
   | { type: "patina"; target: Target; value: number }
   | { type: "ammo"; index: number; ammoType: string | null }
@@ -278,6 +286,14 @@ export function reduce(cat: BuilderCatalog, state: BuilderState, action: Builder
     case "remove": {
       if (!fit.modules[action.index]) return state;
       return { ...withFit(state, removeModule(fit, action.index)), selected: null, held: null };
+    }
+    case "modifyCell":
+    case "revertCell": {
+      const hull = cat.hulls.get(fit.hull.def);
+      if (!hull) return state;
+      const slotType = action.type === "revertCell" ? (hull.slots[action.cell] ?? "None") : action.slotType;
+      const slotOverrides = withCellSlot(hull.slots, fit.slotOverrides, action.cell, slotType);
+      return slotOverrides === fit.slotOverrides ? state : { ...withFit(state, { ...fit, slotOverrides }), held: null };
     }
     case "roll": {
       const subject = subjectFor(cat, fit, action.target);

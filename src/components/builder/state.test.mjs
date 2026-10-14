@@ -287,3 +287,49 @@ test("newFit refuses an unknown hull", () => {
   assert.equal(newFit(cat, "1"), null);
   assert.ok(newFit(cat, SCARAB));
 });
+
+// MODIFY GRID: the engine's grid-mods answer for fit.json (SCARAB) names the cells; the reducer writes them.
+const gridOption = (name) => {
+  const def = catalog.gridConsumables.find((entry) => entry.name === name).def;
+  return FIXTURES.gridMods.consumables.find((option) => option.def === def);
+};
+
+test("modifyCell writes a grid consumable's result into the slot overrides, listed by cell", () => {
+  const loaded = run(initialState(), { type: "load", fit: FIXTURES.fit });
+  const extender = gridOption("BROKKR SLOT").targets.at(-1).results[0];
+  const converter = gridOption("ANDVARI COIL").targets.find((target) => target.cell !== 0).results[0];
+  const state = run(loaded, { type: "modifyCell", ...extender }, { type: "modifyCell", ...converter });
+  const cells = state.fit.slotOverrides.map((entry) => entry.cell);
+  assert.deepEqual(cells, [...cells].sort((a, b) => a - b));
+  assert.deepEqual(state.fit.slotOverrides, [...FIXTURES.fit.slotOverrides, converter, extender].sort((a, b) => a.cell - b.cell));
+  assert.equal(state.revision, loaded.revision + 2);
+  // A converted cell that is already an override (cell 0's added Core) is rewritten, not listed twice.
+  const onAdded = run(state, { type: "modifyCell", cell: 0, slotType: "Battery" });
+  assert.deepEqual(onAdded.fit.slotOverrides.filter((entry) => entry.cell === 0), [{ cell: 0, slotType: "Battery" }]);
+  // SKULD's destroyed hardpoint is an override to None.
+  const skuld = gridOption("SKULD OMEN").targets[0];
+  const destroyed = run(loaded, { type: "modifyCell", cell: skuld.cell, slotType: "None" });
+  assert.ok(destroyed.fit.slotOverrides.some((entry) => entry.cell === skuld.cell && entry.slotType === "None"));
+});
+
+test("modifyCell ignores a cell off the grid and a result the cell already has", () => {
+  const loaded = run(initialState(), { type: "load", fit: FIXTURES.fit });
+  assert.equal(run(loaded, { type: "modifyCell", cell: 15 * 15, slotType: "Core" }), loaded);
+  assert.equal(run(loaded, { type: "modifyCell", cell: -1, slotType: "Core" }), loaded);
+  assert.equal(run(loaded, { type: "modifyCell", cell: 0, slotType: "Core" }), loaded, "cell 0 is already an added Core");
+  assert.equal(run(initialState(), { type: "modifyCell", cell: 0, slotType: "Core" }).fit, null);
+});
+
+test("revertCell puts a modified cell back as the hull has it, and leaves an unmodified one alone", () => {
+  const loaded = run(initialState(), { type: "load", fit: FIXTURES.fit });
+  const reverted = run(loaded, { type: "revertCell", cell: 0 });
+  assert.deepEqual(reverted.fit.slotOverrides, []);
+  assert.equal(reverted.revision, loaded.revision + 1);
+  assert.equal(run(reverted, { type: "revertCell", cell: 0 }), reverted);
+  const unmodified = gridOption("ANDVARI COIL").targets.find((target) => target.cell !== 0).cell;
+  assert.equal(run(loaded, { type: "revertCell", cell: unmodified }), loaded);
+  // Setting a cell to its layout type is the same as reverting it.
+  const converted = run(loaded, { type: "modifyCell", cell: unmodified, slotType: "Battery" });
+  assert.deepEqual(run(converted, { type: "modifyCell", cell: unmodified, slotType: "Core" }).fit.slotOverrides, FIXTURES.fit.slotOverrides);
+  assert.deepEqual(run(converted, { type: "revertCell", cell: unmodified }).fit.slotOverrides, FIXTURES.fit.slotOverrides);
+});

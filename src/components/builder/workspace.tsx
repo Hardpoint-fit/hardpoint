@@ -8,17 +8,19 @@
 // autosaves to this browser; saving to the site needs sign-in.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
-import { FittingGrid, gridBounds } from "#/components/grid/fitting-grid";
+import { FittingGrid, ModifiedCellsLegend, gridBounds } from "#/components/grid/fitting-grid";
 import { buildGridModel, type GridModule } from "#/components/grid/model";
 import { Panel, buildLabel } from "#/components/ui";
 import { StatsTable } from "#/components/fit/stats-table";
 import { HullSpecs } from "#/components/fit/hull-specs";
-import type { EvaluationResponse } from "#/lib/engine/types";
+import type { EvaluationResponse, GridModResult } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
 import { CopyFitString } from "#/components/fit/copy-fit-string";
 import type { BuilderStart } from "#/lib/site/loaders";
 import { AffinityPanel } from "./affinity-panel";
 import { autosave, bootDraft, browserStorage, clearDraft, draftSlot } from "./draft-storage";
+import { GridModPanel, REVERT, type GridModChoice, type GridTool } from "./grid-mod-panel";
+import { createGridModsFetcher, currentAnswer, targetsOf, type GridModsFetcher, type GridModsState } from "./grid-mods";
 import { FitDetails, ImportFit, type BuilderAuth, type Navigate, type SavedState } from "./fit-details";
 import { HullPicker } from "./hull-picker";
 import { Inspector } from "./inspector";
@@ -63,6 +65,11 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   // replaces what was copied, so either one drops the credit.
   const [copiedFrom, setCopiedFrom] = useState(start.copiedFrom);
   const [ghost, setGhost] = useState<{ x: number; y: number; name: string } | null>(null);
+  // MODIFY GRID: the mode, its tool and a SKULD use waiting for its outcome. Presentation only: what a
+  // tool may do comes from the engine (gridMods), what it did goes into the fit through the reducer.
+  const [modifying, setModifying] = useState(false);
+  const [tool, setTool] = useState<GridTool | null>(null);
+  const [choice, setChoice] = useState<GridModChoice | null>(null);
 
   const fit = state.fit;
   const current = snapshot(state);
@@ -89,6 +96,21 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
     evaluator.current?.request(fit);
   }, [fit, engine]);
   const key = useMemo(() => (fit ? fitKey(fit) : null), [fit]);
+
+  // ---- MODIFY GRID: the engine's answer for the fit as it is now -------------------------------
+  const [gridMods, setGridMods] = useState<GridModsState>({ status: "idle" });
+  const gridModsFetcher = useRef<GridModsFetcher | null>(null);
+  useEffect(() => {
+    const created = createGridModsFetcher({ ask: (sent, signal) => engine.gridMods(sent, { signal }), onChange: setGridMods });
+    gridModsFetcher.current = created;
+    return () => created.dispose();
+  }, [engine]);
+  useEffect(() => {
+    gridModsFetcher.current?.request(modifying ? fit : null);
+    setChoice(null);
+  }, [fit, modifying, engine]);
+  const gridAnswer = modifying ? currentAnswer(gridMods, fit) : null;
+  const gridConsumables = cat.catalog.gridConsumables ?? [];
   const result = evaluation.result && evaluation.result.key === key ? evaluation.result.response : null;
 
   // ---- The grid ---------------------------------------------------------------------------------
@@ -104,11 +126,45 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   const held = state.held;
   const heldItem = fit && held ? heldDef(fit, held) : null;
   const targets = useMemo(() => (fit && held && heldItem ? hardpointTargets(cat, fit, heldItem, heldModule(held)) : []), [cat, fit, held, heldItem]);
+  const toolTargets = useMemo(() => (tool && tool !== REVERT ? targetsOf(gridAnswer, tool) : new Map()), [gridAnswer, tool]);
+  const gridCols = hull?.cols ?? 1;
+  const asCell = (index: number) => ({ row: Math.floor(index / gridCols), col: index % gridCols });
+  const lit = !modifying
+    ? targets
+    : choice
+      ? choice.results.map((result) => asCell(result.cell))
+      : tool === REVERT
+        ? (model?.modified ?? []).map(asCell)
+        : [...toolTargets.keys()].map(asCell);
+  /** A click on a grid cell while MODIFY GRID is open: apply the tool there, or ask SKULD's outcome. */
+  const modifyAt = (cell: { row: number; col: number }) => {
+    const index = cell.row * gridCols + cell.col;
+    if (tool === REVERT) {
+      if (model?.modified.includes(index)) dispatch({ type: "revertCell", cell: index });
+      return;
+    }
+    const target = toolTargets.get(index);
+    if (!target) return setChoice(null);
+    if (target.results.length === 1) dispatch({ type: "modifyCell", cell: target.results[0]!.cell, slotType: target.results[0]!.slotType });
+    else setChoice({ cell: index, results: target.results });
+  };
+  const chooseOutcome = (result: GridModResult) => {
+    setChoice(null);
+    dispatch({ type: "modifyCell", cell: result.cell, slotType: result.slotType });
+  };
+  const toggleModifying = () => {
+    if (!modifying) dispatch({ type: "cancel" });
+    setModifying(!modifying);
+    setTool(null);
+    setChoice(null);
+  };
   const moduleName = useCallback((index: number) => (model?.modules[index]?.name ?? null), [model]);
 
   const gridRef = useRef<HTMLDivElement>(null);
-  const live = useRef({ model, held: state.held, selected: state.selected, drag: null as Drag | null });
+  const live = useRef({ model, held: state.held, selected: state.selected, drag: null as Drag | null, modifying, choice: choice !== null });
   live.current.model = model;
+  live.current.modifying = modifying;
+  live.current.choice = choice !== null;
   live.current.held = state.held;
   live.current.selected = state.selected;
 
@@ -170,6 +226,11 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
       if (event.key === "r" || event.key === "R") {
         dispatch({ type: "rotate" });
         event.preventDefault();
+      } else if (event.key === "Escape" && live.current.choice) {
+        setChoice(null);
+      } else if (event.key === "Escape" && live.current.modifying && !held) {
+        setModifying(false);
+        setTool(null);
       } else if (event.key === "Escape") {
         dispatch({ type: "cancel" });
       } else if (held && arrows[event.key]) {
@@ -193,12 +254,19 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
 
   const onPalettePointer = (def: string, event: ReactPointerEvent<HTMLElement>) => {
     event.preventDefault();
+    setModifying(false);
     live.current.drag = { mode: "palette" };
     dispatch({ type: "pickUp", def });
     setGhost({ x: event.clientX, y: event.clientY, name: cat.items.get(def)?.name ?? "" });
   };
   const onModulePointerDown = (module: GridModule, event: ReactPointerEvent<HTMLElement>) => {
     if (event.button !== 0 || state.held) return;
+    if (modifying) {
+      // A module lies over its cells: in MODIFY GRID a click on it is a click on the cell beneath.
+      const cell = cellAt(event.clientX, event.clientY);
+      if (cell) modifyAt(cell);
+      return;
+    }
     dispatch({ type: "select", target: module.index });
     live.current.drag = { mode: "pending", index: module.index, x: event.clientX, y: event.clientY, cell: cellAt(event.clientX, event.clientY) };
   };
@@ -296,12 +364,45 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
             heldDef={state.held ? heldDef(fit, state.held) : null}
             holding={state.held !== null}
             onPointerPick={onPalettePointer}
-            onKeyboardPick={(def) => dispatch({ type: "pickUp", def, cursor: null })}
+            onKeyboardPick={(def) => {
+              setModifying(false);
+              dispatch({ type: "pickUp", def, cursor: null });
+            }}
           />
         </div>
 
         <div className="builder-layout__main">
-          <Panel title="FIT" aside={<span className={`badge badge--${status.badge}`}>{status.label}</span>}>
+          <Panel
+            title="FIT"
+            aside={
+              <>
+                {gridConsumables.length > 0 && (
+                  <button type="button" className={`btn btn--quiet btn--small ${modifying ? "btn--on" : ""}`} onClick={toggleModifying} aria-pressed={modifying}>
+                    {modifying ? "DONE MODIFYING" : "MODIFY GRID"}
+                  </button>
+                )}
+                <span className={`badge badge--${status.badge}`}>{status.label}</span>
+              </>
+            }
+          >
+            {modifying && (
+              <GridModPanel
+                consumables={gridConsumables}
+                state={gridMods}
+                answer={gridAnswer}
+                tool={tool}
+                modified={model?.modified.length ?? 0}
+                cols={gridCols}
+                slotAt={(cell) => model?.slots[cell] ?? "None"}
+                choice={choice}
+                onTool={(next) => {
+                  setTool(next);
+                  setChoice(null);
+                }}
+                onChoose={chooseOutcome}
+                onCancelChoice={() => setChoice(null)}
+              />
+            )}
             {evaluation.outage === "down" && (
               <div className="banner" role="status">
                 <span>CAN&apos;T EVALUATE RIGHT NOW.</span>
@@ -350,7 +451,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
                 <FittingGrid
                   model={model}
                   selected={typeof state.selected === "number" ? state.selected : null}
-                  highlight={targets}
+                  highlight={lit}
                   drop={
                     preview
                       ? preview.verdict.ok
@@ -358,15 +459,17 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
                         : { cells: preview.verdict.cells, valid: false, offending: preview.verdict.offending, reason: preview.verdict.reason }
                       : null
                   }
-                  tooltip={state.held ? () => null : undefined}
+                  tooltip={state.held || modifying ? () => null : undefined}
                   onModulePointerDown={onModulePointerDown}
                   onModuleContextMenu={(module, event) => {
                     event.preventDefault();
+                    if (modifying) return;
                     dispatch({ type: "remove", index: module.index });
                   }}
                   onCellPointerDown={(cell, event) => {
                     if (event.button !== 0) return;
-                    if (state.held && !live.current.drag) {
+                    if (modifying) modifyAt(cell);
+                    else if (state.held && !live.current.drag) {
                       dispatch({ type: "hover", cell });
                       dispatch({ type: "drop" });
                     } else if (!state.held) dispatch({ type: "select", target: null });
@@ -375,8 +478,13 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
                 />
               )}
             </div>
+            {model && <ModifiedCellsLegend cells={model.modified.length} />}
             <p className="builder__keys note" aria-live="polite">
-              {state.held
+              {modifying
+                ? choice
+                  ? "PICK THE OUTCOME ABOVE · ESC CANCELS"
+                  : "CLICK A LIT CELL · ESC LEAVES MODIFY GRID"
+                : state.held
                 ? preview
                   ? preview.verdict.ok
                     ? "RELEASE OR ENTER PLACES IT · R ROTATES · ESC CANCELS"

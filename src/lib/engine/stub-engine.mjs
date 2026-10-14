@@ -27,6 +27,8 @@ export const FIXTURES = {
   /** A rolled module from fit.json, and the engine's facts for it. */
   itemFactsRequest: fixture("item-facts-request.json"),
   itemFacts: fixture("item-facts.json"),
+  /** The engine's /v1/grid-mods answer for fit.json. */
+  gridMods: fixture("grid-mods.json"),
 };
 
 const MAX_BODY = 262_144;
@@ -115,6 +117,12 @@ export async function startStubEngine(overrides = {}, port = 0) {
       // Any other known item answers with its catalog facts (the plainest roll's); an unknown one is refused.
       const known = FIXTURES.catalog.items.find((entry) => entry.def === item.def);
       return known ? send(res, 200, { facts: known.facts }) : send(res, 400, { error: "item: not a fittable item in this build" });
+    }
+    if (req.method === "POST" && path === "/v1/grid-mods") {
+      // The recorded answer is fit.json's; any other fit gets it too, as the stub doesn't run the rules.
+      if (!body.json?.fit) return send(res, 400, { error: "Body must be { fit }." });
+      if (body.json.fit.version !== 1) return send(res, 400, { error: "version: expected 1" });
+      return send(res, 200, FIXTURES.gridMods);
     }
     if (req.method === "POST" && path === "/v1/fits/import") {
       return body.json?.fitString === FIXTURES.exported.fitString

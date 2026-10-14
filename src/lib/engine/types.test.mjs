@@ -88,6 +88,7 @@ const cases = [
   ["error.json", "ErrorBody"],
   ["item-facts-request.json", "ItemBody"],
   ["item-facts.json", "FactsBody"],
+  ["grid-mods.json", "GridModsResponse"],
 ];
 const byName = {
   "health.json": FIXTURES.health,
@@ -104,6 +105,7 @@ const byName = {
   "error.json": FIXTURES.error,
   "item-facts-request.json": FIXTURES.itemFactsRequest,
   "item-facts.json": FIXTURES.itemFacts,
+  "grid-mods.json": FIXTURES.gridMods,
 };
 
 for (const [file, typeName] of cases) {

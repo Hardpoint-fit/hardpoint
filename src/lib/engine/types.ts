@@ -162,6 +162,23 @@ export type Catalog = {
   qualities: CatalogQuality[];
   /** Where an item of each slot type may sit on a fitting grid, read from the game's FittingSlotRules. */
   placement: CatalogSlotPlacement[];
+  /** The consumables that modify a fitting grid (GridMods.cs), by GUID. */
+  gridConsumables: CatalogGridConsumable[];
+};
+
+/**
+ * A grid consumable (FittingGridConsumableRules.TryResolveSpec). `kind` is "FittingGridExtender" (BROKKR SLOT
+ * adds a Core beside the grid) or "FittingCoreSlotTransformer"; `behavior` is "FixedTarget" (a converter
+ * turns a Core into `fixedTargetSlotType`) or "RandomCorrupt" (SKULD retypes or destroys a hardpoint, or adds
+ * a Core beside it). `fixedTargetSlotType` is null for all but the converters. `path` keys its art.
+ */
+export type CatalogGridConsumable = {
+  def: string;
+  name: string;
+  path: string;
+  kind: string;
+  behavior: string;
+  fixedTargetSlotType: string | null;
 };
 
 /**
@@ -355,3 +372,27 @@ export type CatalogAffinityBonus = {
 
 export type CatalogAffinityTier = { tier: number; requiredPoints: number; choices: CatalogAffinityChoice[] };
 export type CatalogAffinityChoice = { option: number; name: string; description: string };
+
+// ---- Grid modification (GridMods.cs: POST /v1/grid-mods {fit}) -------------------------------------
+
+/**
+ * What each grid consumable can do to a fit's grid as it is now, answered by the game's own rules.
+ * `refusal` says why nothing applies (a mirrored hull). Cells are row * cols + col, as in slot overrides.
+ */
+export type GridModsResponse = {
+  buildSha: string;
+  refusal: string | null;
+  budget: GridModBudget;
+  consumables: GridModOption[];
+};
+
+/** Grid extender cells used out of `maxExpansions`, and the hardpoint types whose one converter is spent. */
+export type GridModBudget = { expansions: number; maxExpansions: number; convertersSpent: string[] };
+
+export type GridModOption = { def: string; targets: GridModTarget[] };
+
+/** A cell the consumable can be used on, and every change a use can make: one, or SKULD's several. */
+export type GridModTarget = { cell: number; results: GridModResult[] };
+
+/** The cell a use changes and the slot type it leaves there ("None" for a destroyed cell). */
+export type GridModResult = { cell: number; slotType: string };

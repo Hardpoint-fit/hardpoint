@@ -274,6 +274,18 @@ export function applySlotOverrides(slots: readonly string[], overrides: readonly
   return result;
 }
 
+/**
+ * The cells an open fit's slot overrides change from the hull's layout, ascending: what grid consumables
+ * made of the grid (a cell added beside it, a Core converted, a hardpoint retyped or destroyed). An
+ * override that repeats the layout changes nothing and isn't one.
+ */
+export function modifiedCells(slots: readonly string[], overrides: readonly { cell: number; slotType: string }[]): number[] {
+  return overrides
+    .filter(({ cell, slotType }) => cell >= 0 && cell < slots.length && slots[cell] !== slotType)
+    .map(({ cell }) => cell)
+    .sort((a, b) => a - b);
+}
+
 export type Point = { x: number; y: number };
 
 /**

@@ -86,7 +86,23 @@ const iconBoxOf = (cells: readonly Cell[]) => iconBox(cells, CELL, INSET);
 /** The part of the grid drawn: cropped bounds that also take in every module cell. */
 export function gridBounds(model: GridModel, crop = true): Bounds {
   if (!crop) return { minRow: 0, minCol: 0, rows: model.rows, cols: model.cols };
-  return visibleBounds(model.slots, model, model.modules.flatMap(moduleCells));
+  // A destroyed cell is None but still drawn, so the crop keeps it.
+  const changed = model.modified.map((cell) => ({ row: Math.floor(cell / model.cols), col: cell % model.cols }));
+  return visibleBounds(model.slots, model, [...model.modules.flatMap(moduleCells), ...changed]);
+}
+
+/**
+ * The key to the cells grid consumables changed: shown under a grid that has any. `cells` is the count. A
+ * server component, like the grid.
+ */
+export function ModifiedCellsLegend({ cells }: { cells: number }) {
+  if (cells === 0) return null;
+  return (
+    <p className="fg-legend note">
+      <span className="fg-legend__swatch" aria-hidden="true" />
+      MODIFIED CELL{cells === 1 ? "" : "S"} ({cells}): CHANGED FROM THE HULL&apos;S LAYOUT BY A GRID CONSUMABLE. A STRUCK-OUT CELL WAS DESTROYED.
+    </p>
+  );
 }
 
 function HardpointIcon({ slot }: { slot: string }) {
@@ -297,6 +313,7 @@ export function FittingGrid({
   const dropCells = new Set((drop?.cells ?? []).map(cellKey));
   const blamed = new Set((drop?.offending ?? []).map(cellKey));
   const occupied = new Set(model.modules.flatMap(moduleCells).map(cellKey));
+  const modified = new Set(model.modified.map((cell) => `${Math.floor(cell / model.cols)},${cell % model.cols}`));
   const colors = ART.colors;
   const style = {
     // The one scale: scale.ts's cell size for this grid's span, evaluated by the browser (fitting-grid.css).
@@ -320,12 +337,14 @@ export function FittingGrid({
       const slot = model.slots[row * model.cols + col] ?? "None";
       const key = `${row},${col}`;
       const dropped = dropCells.has(key);
-      if (slot === "None" && !dropped && !highlighted.has(key)) continue;
+      const changed = modified.has(key);
+      if (slot === "None" && !dropped && !highlighted.has(key) && !changed) continue;
       const hardpoint = slot in ART.hardpoints;
       const cell = { row, col };
       const classes = [
         "fg-cell",
         hardpoint ? "fg-cell--hardpoint" : "",
+        changed ? (slot === "None" ? "fg-cell--destroyed" : "fg-cell--modified") : "",
         highlighted.has(key) ? "fg-cell--highlight" : "",
         dropped ? (drop!.valid ? "fg-cell--drop-valid" : "fg-cell--drop-invalid") : "",
         dropped && blamed.has(key) ? "fg-cell--drop-blame" : "",
@@ -343,6 +362,7 @@ export function FittingGrid({
         >
           <div className="fg-cell__slot" />
           {hardpoint && !occupied.has(key) && <HardpointIcon slot={slot} />}
+          {changed && <span className="fg-cell__mark" aria-hidden="true" />}
         </div>,
       );
     }

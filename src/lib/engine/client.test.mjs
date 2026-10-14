@@ -66,6 +66,37 @@ test("item facts post the rolled item and return the engine's rows; an unknown i
   assert.equal(err(await client.itemFacts(FIXTURES.itemFactsRequest.item, { signal: controller.signal })).kind, "cancelled");
 });
 
+test("grid mods post the fit and return what each grid consumable can do; an unreadable fit is rejected", async () => {
+  const answer = ok(await client.gridMods(FIXTURES.fit));
+  assert.deepEqual(answer, FIXTURES.gridMods);
+  const sent = stub.requests.at(-1);
+  assert.deepEqual([sent.method, sent.path, sent.body], ["POST", "/v1/grid-mods", { fit: FIXTURES.fit }]);
+  // Each listed consumable is one the catalog names, and every target carries at least one result.
+  const defs = new Set(FIXTURES.catalog.gridConsumables.map((entry) => entry.def));
+  for (const option of answer.consumables) {
+    assert.ok(defs.has(option.def), option.def);
+    for (const target of option.targets) assert.ok(target.results.length > 0);
+  }
+  const rejected = err(await client.gridMods({ ...FIXTURES.fit, version: 2 }));
+  assert.equal(rejected.kind, "rejected");
+  assert.match(rejected.message, /version/);
+  stub.fail(429);
+  assert.equal(err(await client.gridMods(FIXTURES.fit)).kind, "rateLimited");
+  stub.fail(null);
+  const controller = new AbortController();
+  controller.abort();
+  assert.equal(err(await client.gridMods(FIXTURES.fit, { signal: controller.signal })).kind, "cancelled");
+  stub.route("POST /v1/grid-mods", (req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ hello: "world" }));
+  });
+  try {
+    assert.equal(err(await client.gridMods(FIXTURES.fit)).kind, "unavailable");
+  } finally {
+    stub.route("POST /v1/grid-mods", undefined);
+  }
+});
+
 test("a 400 is rejected with the engine's message", async () => {
   const e = err(await client.importFitString("nonsense"));
   assert.equal(e.kind, "rejected");
@@ -98,6 +129,7 @@ test("an engine that is down is unavailable, never a throw", async () => {
     await down.evaluate(FIXTURES.fit),
     await down.importFitString("x"),
     await down.exportFitString(FIXTURES.fit),
+    await down.gridMods(FIXTURES.fit),
   ]) {
     assert.equal(err(result).kind, "unavailable");
   }

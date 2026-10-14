@@ -5,7 +5,7 @@ import type { Comment, CommentThread } from "#/lib/fits/queries";
 import { renderMarkdown } from "#/lib/fits/markdown";
 import type { FitPageData } from "#/lib/site/loaders";
 import type { PageViewer } from "#/lib/site/server";
-import { FittingGrid } from "#/components/grid/fitting-grid";
+import { FittingGrid, ModifiedCellsLegend } from "#/components/grid/fitting-grid";
 import type { GridModule } from "#/components/grid/model";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
 import { BookmarkButton, CommentForm, DeleteComment, DeleteFitButton, EditComment, HideToggle, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
@@ -291,9 +291,12 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
               </ul>
             )}
             {grid.status === "ready" ? (
-              <div className="fg-scroll">
-                <FittingGrid model={grid.model} />
-              </div>
+              <>
+                <div className="fg-scroll">
+                  <FittingGrid model={grid.model} />
+                </div>
+                <ModifiedCellsLegend cells={grid.model.modified.length} />
+              </>
             ) : (
               <div className="empty-state">
                 <span>{GRID_NOTES[grid.status]}</span>

@@ -1,0 +1,512 @@
+{
+ "buildSha": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "refusal": null,
+ "budget": {
+  "expansions": 1,
+  "maxExpansions": 2,
+  "convertersSpent": []
+ },
+ "consumables": [
+  {
+   "def": "1271244689970087494",
+   "targets": [
+    {
+     "cell": 97,
+     "results": [
+      {
+       "cell": 97,
+       "slotType": "None"
+      },
+      {
+       "cell": 97,
+       "slotType": "Subsystem"
+      },
+      {
+       "cell": 97,
+       "slotType": "Propulsion"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "def": "1300562256569024070",
+   "targets": [
+    {
+     "cell": 1,
+     "results": [
+      {
+       "cell": 1,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 15,
+     "results": [
+      {
+       "cell": 15,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 36,
+     "results": [
+      {
+       "cell": 36,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 38,
+     "results": [
+      {
+       "cell": 38,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 50,
+     "results": [
+      {
+       "cell": 50,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 52,
+     "results": [
+      {
+       "cell": 52,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 54,
+     "results": [
+      {
+       "cell": 54,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 65,
+     "results": [
+      {
+       "cell": 65,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 69,
+     "results": [
+      {
+       "cell": 69,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 80,
+     "results": [
+      {
+       "cell": 80,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 84,
+     "results": [
+      {
+       "cell": 84,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 95,
+     "results": [
+      {
+       "cell": 95,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 99,
+     "results": [
+      {
+       "cell": 99,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 109,
+     "results": [
+      {
+       "cell": 109,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 115,
+     "results": [
+      {
+       "cell": 115,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 123,
+     "results": [
+      {
+       "cell": 123,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 131,
+     "results": [
+      {
+       "cell": 131,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 139,
+     "results": [
+      {
+       "cell": 139,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 145,
+     "results": [
+      {
+       "cell": 145,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 155,
+     "results": [
+      {
+       "cell": 155,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 159,
+     "results": [
+      {
+       "cell": 159,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 171,
+     "results": [
+      {
+       "cell": 171,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 173,
+     "results": [
+      {
+       "cell": 173,
+       "slotType": "Core"
+      }
+     ]
+    },
+    {
+     "cell": 187,
+     "results": [
+      {
+       "cell": 187,
+       "slotType": "Core"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "def": "1307464005327200117",
+   "targets": [
+    {
+     "cell": 0,
+     "results": [
+      {
+       "cell": 0,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 124,
+     "results": [
+      {
+       "cell": 124,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 126,
+     "results": [
+      {
+       "cell": 126,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 129,
+     "results": [
+      {
+       "cell": 129,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 130,
+     "results": [
+      {
+       "cell": 130,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 140,
+     "results": [
+      {
+       "cell": 140,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 141,
+     "results": [
+      {
+       "cell": 141,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 156,
+     "results": [
+      {
+       "cell": 156,
+       "slotType": "Battery"
+      }
+     ]
+    },
+    {
+     "cell": 158,
+     "results": [
+      {
+       "cell": 158,
+       "slotType": "Battery"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "def": "1390159403341153497",
+   "targets": [
+    {
+     "cell": 0,
+     "results": [
+      {
+       "cell": 0,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 124,
+     "results": [
+      {
+       "cell": 124,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 126,
+     "results": [
+      {
+       "cell": 126,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 129,
+     "results": [
+      {
+       "cell": 129,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 130,
+     "results": [
+      {
+       "cell": 130,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 140,
+     "results": [
+      {
+       "cell": 140,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 141,
+     "results": [
+      {
+       "cell": 141,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 156,
+     "results": [
+      {
+       "cell": 156,
+       "slotType": "Subsystem"
+      }
+     ]
+    },
+    {
+     "cell": 158,
+     "results": [
+      {
+       "cell": 158,
+       "slotType": "Subsystem"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "def": "1429554554519939890",
+   "targets": [
+    {
+     "cell": 0,
+     "results": [
+      {
+       "cell": 0,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 124,
+     "results": [
+      {
+       "cell": 124,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 126,
+     "results": [
+      {
+       "cell": 126,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 129,
+     "results": [
+      {
+       "cell": 129,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 130,
+     "results": [
+      {
+       "cell": 130,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 140,
+     "results": [
+      {
+       "cell": 140,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 141,
+     "results": [
+      {
+       "cell": 141,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 156,
+     "results": [
+      {
+       "cell": 156,
+       "slotType": "Propulsion"
+      }
+     ]
+    },
+    {
+     "cell": 158,
+     "results": [
+      {
+       "cell": 158,
+       "slotType": "Propulsion"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

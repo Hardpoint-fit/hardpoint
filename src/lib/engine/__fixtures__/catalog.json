@@ -6077,5 +6077,47 @@
    ],
    "hardpoint": null
   }
+ ],
+ "gridConsumables": [
+  {
+   "def": "1271244689970087494",
+   "name": "SKULD OMEN",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/SKULD OmenEntityPrototype",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "RandomCorrupt",
+   "fixedTargetSlotType": null
+  },
+  {
+   "def": "1300562256569024070",
+   "name": "BROKKR SLOT",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/BROKKR SlotEntityPrototype",
+   "kind": "FittingGridExtender",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": null
+  },
+  {
+   "def": "1307464005327200117",
+   "name": "ANDVARI COIL",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/ANDVARI CoilEntityPrototype",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": "Battery"
+  },
+  {
+   "def": "1390159403341153497",
+   "name": "EITRI ARC",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/EITRI ArcEntityPrototype",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": "Subsystem"
+  },
+  {
+   "def": "1429554554519939890",
+   "name": "VOLUNDR JET",
+   "path": "Content/SessionDestinations/Shared/Quantum/Modules/Materials/Consumables/VOLUNDR JetEntityPrototype",
+   "kind": "FittingCoreSlotTransformer",
+   "behavior": "FixedTarget",
+   "fixedTargetSlotType": "Propulsion"
+  }
  ]
 }

@@ -14,7 +14,7 @@ import type {
 } from "#/lib/engine/types";
 import { itemIcon } from "#/lib/art/item-icon";
 import { catalogFacts, type CatalogFacts } from "#/lib/engine/item-facts";
-import { applySlotOverrides, occupiedCells, placeFootprint, type Cell, type Footprint, type PlacedPort } from "./geometry";
+import { applySlotOverrides, modifiedCells, occupiedCells, placeFootprint, type Cell, type Footprint, type PlacedPort } from "./geometry";
 
 /** The game's tier palettes (--tier-<key>-surface-* tokens). */
 export type TierKey = "standard" | "augmented" | "prototype" | "artifact" | "regalia" | "harmonic" | "heretical";
@@ -86,6 +86,8 @@ export type GridModel = {
   cols: number;
   /** Row-major slot types with the fit's slot overrides applied. */
   slots: string[];
+  /** Cells (row * cols + col) whose slot type the fit's overrides changed from the hull's layout, ascending. */
+  modified: number[];
   modules: GridModule[];
   /** Issues about the fit as a whole (moduleIndex -1) or a module the fit doesn't have. */
   fitIssues: EvaluationIssue[];
@@ -164,6 +166,7 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
     rows: hull.rows,
     cols: hull.cols,
     slots: applySlotOverrides(hull.slots, fit.slotOverrides),
+    modified: modifiedCells(hull.slots, fit.slotOverrides),
     modules,
     fitIssues: issues.filter((issue) => issue.moduleIndex < 0 || issue.moduleIndex >= fit.modules.length),
   };

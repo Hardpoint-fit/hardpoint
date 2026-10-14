@@ -89,6 +89,44 @@
   background: rgba(255, 64, 64, 0.12);
 }
 
+/* A cell a grid consumable changed: a corner cut in the accent blue. A destroyed cell keeps its outline,
+   dashed and struck through, where the hardpoint was. */
+.fg-cell__mark {
+  position: absolute;
+  top: var(--fg-inset);
+  right: var(--fg-inset);
+  width: calc(var(--fg-u) * 10);
+  height: calc(var(--fg-u) * 10);
+  background: var(--accent-blue);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  pointer-events: none;
+}
+
+.fg-cell--destroyed .fg-cell__slot {
+  border-style: dashed;
+  border-color: rgba(107, 122, 122, 0.5);
+  background: linear-gradient(to top right, transparent calc(50% - 1px), rgba(107, 122, 122, 0.5) 50%, transparent calc(50% + 1px));
+}
+
+.fg-cell--destroyed.fg-cell--highlight .fg-cell__slot {
+  border-color: rgba(255, 153, 0, 0.6);
+}
+
+.fg-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+}
+
+.fg-legend__swatch {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  background: var(--accent-blue);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
 /* The cells a refused drop is blamed on: outside the grid, on a cell nothing fits on, or under another module. */
 .fg-cell--drop-blame .fg-cell__slot {
   border-color: var(--fg-invalid);

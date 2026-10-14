@@ -733,3 +733,54 @@
   font-size: var(--font-size-small);
   letter-spacing: 0.45em;
 }
+
+/* ---- MODIFY GRID ------------------------------------------------------------------------------ */
+
+.grid-mods {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--accent-muted);
+  padding-bottom: var(--spacing-md);
+}
+
+.grid-mods__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+.grid-mods__tools {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 3px;
+}
+
+.grid-mod {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--spacing-sm);
+  min-height: 40px;
+  padding: 4px var(--spacing-sm);
+}
+
+.grid-mod__text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grid-mod__name {
+  color: var(--text-primary);
+  font-size: var(--font-size-small);
+}
+
+.grid-mods__choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}

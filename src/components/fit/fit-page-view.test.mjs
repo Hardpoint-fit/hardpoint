@@ -69,6 +69,14 @@ test("the grid draws every module, the cipher cell, port notches, conduit and re
   assert.doesNotMatch(html, /<script>alert/, "the description is sanitized");
 });
 
+test("a cell a grid consumable changed is marked on the grid, with the legend under it", async () => {
+  // fit-showcase.json carries one slot override: a Core added at cell 0.
+  const html = await renderFit(stub.url, ids.showcase, anonymous(false));
+  assert.equal(count(html, "fg-cell--modified"), 1);
+  assert.equal(count(html, 'class="fg-cell__mark"'), 1);
+  assert.match(html, /MODIFIED CELL \(1\): CHANGED FROM THE HULL&#x27;S LAYOUT BY A GRID CONSUMABLE/);
+});
+
 test("the fit page shows the hull's art, every module's art, descriptions, fact rows and the stored hull specs", async () => {
   const html = await renderFit(stub.url, ids.showcase, anonymous(false));
   assert.match(html, /class="item-icon fit-head__icon" src="\/art\/[0-9a-f]{32}\.[0-9a-f]{16}\.webp"/, "the hull's art in the header");
