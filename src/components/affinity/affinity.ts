@@ -177,10 +177,30 @@ export function affinityTypeLabel(affinity: CatalogAffinity | null, moduleType: 
   return (found?.optionName || found?.name || moduleType.replace(/([a-z0-9])([A-Z])/g, "$1 $2")).toUpperCase();
 }
 
-/** The small tag on a card: "<TYPE> <LEVEL>", or just the type when no catalog can turn XP into a level; null with no affinity type. */
-export function affinityTag(affinity: CatalogAffinity | null, type: string | null, xp: number | null): string | null {
-  if (!type || type === NO_TYPE) return null;
-  const label = affinityTypeLabel(affinity, type);
+/** The module type holding the most allocated points; ties go to the one earlier in the layout's order. Null with no points. */
+export function topPointsType(points: readonly number[]): string | null {
+  const progression = { affinityType: NO_TYPE, affinityXp: 0, allocatedPoints: [...points], thresholdSelections: [] };
+  let best: string | null = null;
+  let bestPoints = 0;
+  for (const [moduleType] of Object.entries(LAYOUT.moduleTypes).sort((x, y) => x[1] - y[1])) {
+    const held = typePoints(progression, moduleType);
+    if (held > bestPoints) {
+      best = moduleType;
+      bestPoints = held;
+    }
+  }
+  return best;
+}
+
+/**
+ * The small tag on a card: "<TYPE> <LEVEL>" (just the type when no catalog turns XP into a level). The type
+ * is the display focus when set (it never limits allocation), else the type with the most points. Null when
+ * the fit has neither a focus nor any points: that is no affinity.
+ */
+export function affinityTag(affinity: CatalogAffinity | null, type: string | null, xp: number | null, points: readonly number[] | null): string | null {
+  const shown = type && type !== NO_TYPE ? type : points ? topPointsType(points) : null;
+  if (!shown) return null;
+  const label = affinityTypeLabel(affinity, shown);
   return affinity && xp !== null ? `${label} ${levelOf(affinity, xp)}` : label;
 }
 

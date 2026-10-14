@@ -78,6 +78,8 @@ export type FitSummary = {
   affinityType: string | null;
   /** `progression.affinityXp`, null when the JSON has none; a card turns it into a level with the catalog. */
   affinityXp: number | null;
+  /** `progression.allocatedPoints` when it is a short array of whole numbers (the layout has 44 slots), else null: the card names the type holding the most. */
+  affinityPoints: number[] | null;
 };
 
 /** The parts of a fitted module's item that pick its icon (art/item-icon.ts). */
@@ -306,6 +308,9 @@ const AFFINITY_TYPE_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinit
 const AFFINITY_XP_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,affinityXp}') = 'number'
     AND (f.fit #>> '{progression,affinityXp}')::numeric BETWEEN 0 AND 1000000000 THEN (f.fit #>> '{progression,affinityXp}')::float8 END`;
 
+const AFFINITY_POINTS_SQL = `CASE WHEN jsonb_typeof(f.fit #> '{progression,allocatedPoints}') = 'array'
+    AND jsonb_array_length(f.fit #> '{progression,allocatedPoints}') <= 64 THEN f.fit #> '{progression,allocatedPoints}' END`;
+
 export function summaryColumns(shaRef: string, viewerRef: string): string {
   return `f.id, f.author_user_id, p.name AS author_name, f.title, f.hull_item, f.tags, f.status,
     f.created_at, f.updated_at, f.published_at,
@@ -318,7 +323,8 @@ export function summaryColumns(shaRef: string, viewerRef: string): string {
        ORDER BY e.evaluated_at DESC, e.build_sha DESC LIMIT 1) AS last_valid_evaluation,
     ${MODULE_ITEMS_SQL} AS module_items,
     ${AFFINITY_TYPE_SQL} AS affinity_type,
-    ${AFFINITY_XP_SQL} AS affinity_xp`;
+    ${AFFINITY_XP_SQL} AS affinity_xp,
+    ${AFFINITY_POINTS_SQL} AS affinity_points`;
 }
 
 function mapModuleItems(value: unknown): ModuleItemRef[] {
@@ -364,6 +370,7 @@ export function mapSummary(row: Row): FitSummary {
     moduleItems: mapModuleItems(row.module_items),
     affinityType: typeof row.affinity_type === "string" ? row.affinity_type : null,
     affinityXp: row.affinity_xp === null || row.affinity_xp === undefined ? null : Number(row.affinity_xp),
+    affinityPoints: Array.isArray(row.affinity_points) && row.affinity_points.every((each: unknown) => Number.isInteger(each)) ? row.affinity_points : null,
   };
 }
 

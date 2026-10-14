@@ -108,7 +108,7 @@ export type FitCard = {
   rating: number | null;
   /** The fit's modules, one per item kind in mount order, with how many it fits and the icon its roll shows. */
   modules: CardModule[];
-  /** The small affinity tag, "<TYPE> <LEVEL>" (level from the catalog's XP table); null when the fit has no affinity type. */
+  /** The small affinity tag, "<TYPE> <LEVEL>" (level from the catalog's XP table); the focus type, else the type with most points; null with neither. */
   affinity: string | null;
 };
 
@@ -167,7 +167,7 @@ export function toCard(fit: FitSummary, catalog: Catalog | null, currentSha: str
     standing,
     rating,
     modules: cardModules(fit, catalog),
-    affinity: affinityTag(catalog?.affinity ?? null, fit.affinityType, fit.affinityXp),
+    affinity: affinityTag(catalog?.affinity ?? null, fit.affinityType, fit.affinityXp, fit.affinityPoints),
   };
 }
 

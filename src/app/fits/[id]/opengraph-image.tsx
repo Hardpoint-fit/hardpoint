@@ -129,7 +129,7 @@ export default async function FitCard({ params }: { params: Params }) {
   const moduleArt = grid.status === "ready" ? [...new Set(grid.model.modules.flatMap((module) => (module.icon ? [module.icon] : [])))] : [];
   const icons = new Map((await Promise.all(moduleArt.map(async (url) => [url, await artPng(url)] as const))).flatMap(([url, png]) => (png ? [[url, png] as const] : [])));
   const rating = shown.reference?.rating ?? null;
-  const affinity = data.progression ? affinityTag(data.engine.catalog?.affinity ?? null, data.progression.affinityType, data.progression.affinityXp) : null;
+  const affinity = data.progression ? affinityTag(data.engine.catalog?.affinity ?? null, data.progression.affinityType, data.progression.affinityXp, data.progression.allocatedPoints) : null;
   const standing = shown.standing === "outdated" ? { text: "OUTDATED", color: T["state-negative"] } : shown.standing === "current" ? { text: "WORKS ON CURRENT BUILD", color: T["state-positive"] } : null;
   return new ImageResponse(
     <div style={{ ...frame, padding: 56, gap: 56 }}>

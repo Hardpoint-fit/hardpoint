@@ -445,9 +445,19 @@ test("browse cards and the share card tag the affinity type and level, and only 
   assert.ok(count(cards, ">TURRET 5<") >= 1, "the tag is on the card");
   assert.doesNotMatch(cards, />NONE \d|>NONE</, "a fit without a type has no tag");
   const page = await loadFitPage(deps(stub.url), id, anonymous(false));
-  assert.equal(affinityTag(page.engine.catalog.affinity, page.progression.affinityType, page.progression.affinityXp), "TURRET 5", "what the share card prints");
-  assert.equal(affinityTag(null, "Turret", 2164), "TURRET", "no catalog, no level");
-  assert.equal(affinityTag(page.engine.catalog.affinity, "None", 2164), null);
+  assert.equal(affinityTag(page.engine.catalog.affinity, page.progression.affinityType, page.progression.affinityXp, page.progression.allocatedPoints), "TURRET 5", "what the share card prints");
+  const catalog = page.engine.catalog.affinity;
+  assert.equal(affinityTag(null, "Turret", 2164, []), "TURRET", "no catalog, no level");
+  assert.equal(affinityTag(catalog, "None", 2164, []), null, "no focus and no points is no affinity");
+  assert.equal(affinityTag(catalog, "None", 2164, [0, 0, 0, 0, 3, 2]), "TURRET 5", "no focus: the type with most points");
+  assert.equal(affinityTag(catalog, "Shield", 2164, [0, 0, 0, 0, 3, 2]), "SHIELD 5", "the focus names the tag, whatever holds the points");
+  assert.equal(affinityTag(catalog, "Shield", 2164, []), "SHIELD 5", "a focus alone is enough");
+  assert.equal(affinityTag(catalog, "None", 2164, [0, 0, 0, 0, 1, 0, 0, 0, 1]), "TURRET 5", "a tie goes to the earlier type in the layout (Turret=1, Shield=2)");
+  assert.equal(affinityTag(catalog, "None", 2164, [0, 0, 0, 0, 1, 0, 0, 0, 2]), "SHIELD 5");
+  // A builder fit: focus None, points spent.
+  const builder = await publishWith({ ...TURRET_PROGRESSION, affinityType: "None" }, "Builder style affinity");
+  const again = await loadBrowse(deps(stub.url), {}, anonymous(false));
+  assert.equal(again.cards.find((card) => card.id === builder).affinity, "TURRET 5");
 });
 
 test("compare lines up affinity type, level and points per node", async () => {
