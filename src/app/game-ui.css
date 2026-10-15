@@ -703,6 +703,12 @@ a.chip:hover {
   color: var(--text-primary-muted);
 }
 
+/* A module's own line under its stacked source (HullSpecsModifierRow's part rows). */
+.plate__row--part {
+  padding-left: var(--spacing-md);
+  opacity: 0.75;
+}
+
 .stats__tip {
   top: 0;
   right: calc(100% + 8px);

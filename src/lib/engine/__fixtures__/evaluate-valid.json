@@ -951,7 +951,8 @@
        "raw": 0.22000122,
        "ratio": 1,
        "effective": 0.22000122,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -968,7 +969,8 @@
        "raw": -0.05999756,
        "ratio": 1,
        "effective": -0.05999756,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -985,7 +987,8 @@
        "raw": -0.039993286,
        "ratio": 1,
        "effective": -0.039993286,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1002,7 +1005,8 @@
        "raw": 0.02999878,
        "ratio": 1,
        "effective": 0.02999878,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     }
@@ -1025,7 +1029,8 @@
        "raw": 0.27000427,
        "ratio": 1,
        "effective": 0.27000427,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1042,7 +1047,8 @@
        "raw": 0.25,
        "ratio": 1,
        "effective": 0.25,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1059,7 +1065,8 @@
        "raw": 0.13999939,
        "ratio": 1,
        "effective": 0.13999939,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1076,7 +1083,8 @@
        "raw": 0.1000061,
        "ratio": 1,
        "effective": 0.1000061,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1093,7 +1101,8 @@
        "raw": 0.099990845,
        "ratio": 1,
        "effective": 0.099990845,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     }
@@ -1116,7 +1125,19 @@
        "raw": 0.21998596,
        "ratio": 1,
        "effective": 0.21998596,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": [
+        {
+         "kind": "RegaliaPiece",
+         "asset": "359734331002714082",
+         "raw": 0.1499939
+        },
+        {
+         "kind": "RegaliaPiece",
+         "asset": "359734331002714082",
+         "raw": 0.069992065
+        }
+       ]
       },
       {
        "kind": "Module",
@@ -1125,7 +1146,8 @@
        "raw": 0.1499939,
        "ratio": 0.95799255,
        "effective": 0.14369202,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1134,7 +1156,8 @@
        "raw": -0.08000183,
        "ratio": 1,
        "effective": -0.08000183,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1143,7 +1166,8 @@
        "raw": -0.070007324,
        "ratio": 0.95799255,
        "effective": -0.06706238,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1160,7 +1184,8 @@
        "raw": 0.039993286,
        "ratio": 1,
        "effective": 0.039993286,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     }
@@ -1183,7 +1208,19 @@
        "raw": 0.099990845,
        "ratio": 1,
        "effective": 0.099990845,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": [
+        {
+         "kind": "RegaliaPiece",
+         "asset": "376835473569659020",
+         "raw": 0.020004272
+        },
+        {
+         "kind": "RegaliaPiece",
+         "asset": "376835473569659020",
+         "raw": 0.07998657
+        }
+       ]
       },
       {
        "kind": "Module",
@@ -1192,7 +1229,8 @@
        "raw": 0.070007324,
        "ratio": 0.95799255,
        "effective": 0.06706238,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1201,7 +1239,8 @@
        "raw": 0.020004272,
        "ratio": 0.8410034,
        "effective": 0.016830444,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1218,7 +1257,8 @@
        "raw": 0.08000183,
        "ratio": 1,
        "effective": 0.08000183,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1235,7 +1275,8 @@
        "raw": -0.05999756,
        "ratio": 1,
        "effective": -0.05999756,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1244,7 +1285,8 @@
        "raw": -0.040008545,
        "ratio": 0.95799255,
        "effective": -0.038330078,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1253,7 +1295,8 @@
        "raw": 0.02999878,
        "ratio": 1,
        "effective": 0.02999878,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "RegaliaPiece",
@@ -1262,7 +1305,8 @@
        "raw": 0.020004272,
        "ratio": 0.95799255,
        "effective": 0.019165039,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1271,7 +1315,8 @@
        "raw": -0.020004272,
        "ratio": 0.8410034,
        "effective": -0.016830444,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     }
@@ -1294,7 +1339,8 @@
        "raw": 0.17999268,
        "ratio": 1,
        "effective": 0.17999268,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1311,7 +1357,8 @@
        "raw": -0.17999268,
        "ratio": 1,
        "effective": -0.17999268,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "Module",
@@ -1320,7 +1367,8 @@
        "raw": 0.1000061,
        "ratio": 1,
        "effective": 0.1000061,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1337,7 +1385,8 @@
        "raw": 0.07998657,
        "ratio": 1,
        "effective": 0.07998657,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     }
@@ -1360,7 +1409,8 @@
        "raw": 0.07998657,
        "ratio": 1,
        "effective": 0.07998657,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     },
@@ -1377,7 +1427,8 @@
        "raw": -4,
        "ratio": 1,
        "effective": -4,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       },
       {
        "kind": "RegaliaPiece",
@@ -1386,7 +1437,8 @@
        "raw": -2,
        "ratio": 1,
        "effective": -2,
-       "isStackingExempt": false
+       "isStackingExempt": false,
+       "parts": []
       }
      ]
     }

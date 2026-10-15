@@ -104,8 +104,25 @@ export type ModifierRow = {
   label: string;
   operation: string;
   total: number;
-  sources: StatSource[];
+  sources: ModifierSource[];
 };
+
+/**
+ * A source of a modifier row. The game stacks a fitted module's lines on one stat as one source; `parts`
+ * lists each line (empty when the source is its module's only line, or isn't a module's).
+ */
+export type ModifierSource = {
+  kind: string;
+  asset: string | null;
+  affinityType: string;
+  raw: number;
+  ratio: number;
+  effective: number;
+  isStackingExempt: boolean;
+  parts: ModifierPart[];
+};
+
+export type ModifierPart = { kind: string; asset: string | null; raw: number };
 
 export type StatSource = {
   kind: string;

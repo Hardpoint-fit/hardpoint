@@ -2,7 +2,8 @@
 // hover or focus. `Modifiers` draws the engine's `modifierGroups`, the game's MODIFIERS list: a header per
 // category, one row per stat with its stages combined. A verdict stored before the engine sent them has
 // only `stats`, a line per stat and stage, which `StatsTable` lists until the next check fills them in.
-import type { Catalog, ModifierGroup, StatLine, StatSource } from "#/lib/engine/types";
+import { Fragment } from "react";
+import type { Catalog, ModifierGroup, ModifierPart, StatLine, StatSource } from "#/lib/engine/types";
 import { describeSource, formatStatValue, sourceNames, statLabel, statTone, statWords, type StatWords } from "#/lib/fits/stat-format";
 
 type RowProps = {
@@ -10,7 +11,7 @@ type RowProps = {
   stat: string;
   operation: string;
   total: number;
-  sources: readonly StatSource[];
+  sources: readonly (StatSource & { parts?: readonly ModifierPart[] })[];
   words: StatWords;
   names: ReadonlyMap<string, string>;
 };
@@ -32,16 +33,31 @@ function StatRow({ label, stat, operation, total, sources, words, names }: RowPr
           {sources.map((source, j) => {
             const row = describeSource(words, { stat, operation }, source, names);
             return (
-              <div key={j} className="plate__row">
-                <span>
-                  {row.name}
-                  <span className="tone-neutral"> · {row.kind}</span>
-                </span>
-                <b className={`tone-${row.tone.toLowerCase()}`}>
-                  {row.value}
-                  {row.stacking && <span className="plate__tier-badge">{row.stacking}</span>}
-                </b>
-              </div>
+              <Fragment key={j}>
+                <div className="plate__row">
+                  <span>
+                    {row.name}
+                    <span className="tone-neutral"> · {row.kind}</span>
+                  </span>
+                  <b className={`tone-${row.tone.toLowerCase()}`}>
+                    {row.value}
+                    {row.stacking && <span className="plate__tier-badge">{row.stacking}</span>}
+                  </b>
+                </div>
+                {/* A module's own lines, stacked as the source above: each at its raw value. */}
+                {source.parts?.map((part, k) => {
+                  const line = describeSource(words, { stat, operation }, { ...part, affinityType: "None", ratio: 1, effective: part.raw, isStackingExempt: true }, names);
+                  return (
+                    <div key={k} className="plate__row plate__row--part">
+                      <span>
+                        {line.name}
+                        <span className="tone-neutral"> · {line.kind}</span>
+                      </span>
+                      <b className={`tone-${line.tone.toLowerCase()}`}>{line.value}</b>
+                    </div>
+                  );
+                })}
+              </Fragment>
             );
           })}
           <div className="plate__divider" />
