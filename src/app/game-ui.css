@@ -659,6 +659,29 @@ a.chip:hover {
   list-style: none;
 }
 
+/* The MODIFIERS list by category (HullSpecsModifierGroups: a category's name and row count). */
+.stats-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.stats-group__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  border-bottom: 1px solid rgba(83, 96, 96, 0.25);
+  padding: 1px 0 3px;
+  color: rgba(178, 189, 189, 0.55);
+  font-size: var(--font-size-small);
+  letter-spacing: 0.45em;
+}
+
+.stats-group__count {
+  letter-spacing: 0.15em;
+}
+
 .stats__row {
   display: flex;
   justify-content: space-between;

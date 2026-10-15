@@ -357,7 +357,7 @@ export function brokenOnBuild(fit: Pick<FitDetail, "status" | "fit">, shown: Pic
 }
 
 /** What `shown` holds for a revision that has no verdict of its own. */
-const NO_STATS: Shown = { standing: "unknown", reference: null, referenceIsOld: false, result: { stats: [], conduits: [], regaliaSets: [], sections: null }, issues: [] };
+const NO_STATS: Shown = { standing: "unknown", reference: null, referenceIsOld: false, result: { stats: [], conduits: [], regaliaSets: [], sections: null, modifierGroups: null }, issues: [] };
 
 export function gridFor(fit: FitDetail, catalog: Catalog | null, shown: Shown): GridState {
   const open = fit.fit;

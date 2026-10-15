@@ -13,9 +13,9 @@ export const BOB = { userId: "user_bob", name: "BOB" };
 export const ADMIN = { userId: "user_admin", name: "WARDEN" };
 
 const at = (sha, response) => ({ ...toEvaluationInput(response), buildSha: sha });
-/** A verdict stored before the engine sent hull specs: its stats carry no `sections`. */
+/** A verdict stored before the engine sent hull specs or modifier groups: its stats carry neither key. */
 const beforeSpecs = (verdict) => {
-  const { sections, ...stats } = verdict.stats;
+  const { sections, modifierGroups, ...stats } = verdict.stats;
   return { ...verdict, stats };
 };
 
@@ -42,7 +42,7 @@ async function published(db, author, { title, description = "", tags = [], fit, 
  *  - removed: BOB's fit whose module 2 is an item the current build doesn't have: valid on OLD_SHA,
  *    UnknownItem on the current build (outdated);
  *  - pending: BOB's fit checked only on OLD_SHA (the current build hasn't evaluated it yet), by an
- *    engine that didn't yet send hull specs;
+ *    engine that didn't yet send hull specs or modifier groups;
  *  - draft: ALICE's unpublished draft.
  */
 export async function seedSite(db) {

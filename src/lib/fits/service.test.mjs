@@ -42,14 +42,24 @@ test("toEvaluationInput keeps the verdict and the computed stats, and drops the 
   const valid = toEvaluationInput(FIXTURES.evaluateValid);
   assert.equal(valid.valid, true);
   assert.equal(valid.rating, FIXTURES.evaluateValid.rating);
-  assert.deepEqual(Object.keys(valid.stats).sort(), ["conduits", "regaliaSets", "sections", "stats"]);
+  assert.deepEqual(Object.keys(valid.stats).sort(), ["conduits", "modifierGroups", "regaliaSets", "sections", "stats"]);
   assert.deepEqual(valid.stats.sections, FIXTURES.evaluateValid.sections, "hull specs are kept for the fit page");
   assert.ok(valid.stats.sections.length > 0);
+  assert.deepEqual(valid.stats.modifierGroups, FIXTURES.evaluateValid.modifierGroups, "modifier groups are kept for the fit page");
+  assert.ok(valid.stats.modifierGroups.length > 0);
   const invalid = toEvaluationInput(FIXTURES.evaluateInvalid);
   assert.equal(invalid.valid, false);
   assert.equal(invalid.rating, null);
   assert.equal(invalid.issues[0].kind, "Overlap");
   assert.deepEqual(invalid.stats.sections, [], "an invalid fit has none, and still records that it was asked");
+  assert.deepEqual(invalid.stats.modifierGroups, []);
+});
+
+test("an engine that sends no modifier groups is stored as null, so the page lists the stats instead", () => {
+  const { modifierGroups: _, ...older } = FIXTURES.evaluateValid;
+  const stored = toEvaluationInput(older);
+  assert.equal(stored.stats.modifierGroups, null);
+  assert.ok("modifierGroups" in stored.stats, "the key is there, so the re-evaluation job doesn't ask that engine again");
 });
 
 test("saveDraft stores the fit with the engine's verdict", async () => {

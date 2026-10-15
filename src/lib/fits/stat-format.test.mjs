@@ -50,3 +50,12 @@ test("sources are named from the catalog, with the stacking share they kept", ()
   assert.equal(describeSource(words, set, set.sources[0], names).name, "KASSIK'S SEVERANCE");
   assert.equal(describeSource(words, set, { ...set.sources[0], asset: "1" }, names).name, "UNKNOWN SOURCE");
 });
+
+test("an affinity source is named for its type, from the catalog when it can be", () => {
+  const speed = { stat: "MaxSpeed", operation: "Multiply" };
+  const source = { kind: "AffinityClass", asset: null, affinityType: "Propulsion", raw: 0.02, ratio: 1, effective: 0.02, isStackingExempt: true };
+  const named = describeSource(words, speed, source, sourceNames(FIXTURES.catalog));
+  assert.deepEqual(named, { name: "AGILITY AFFINITY", kind: "AFFINITY", value: "+2%", tone: "Positive", stacking: null });
+  assert.equal(describeSource(words, speed, source, new Map()).name, "PROPULSION AFFINITY");
+  assert.equal(describeSource(words, speed, { ...source, kind: "AffinitySpecialization" }, new Map()).kind, "SPECIALIZATION");
+});

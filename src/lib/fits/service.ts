@@ -4,7 +4,7 @@
 // server actions of Task 5) must pass the id of the authenticated session user, never one from the request.
 
 import { ENGINE_FAILED_MESSAGE, type EngineClient, type EngineError } from "../engine/client.ts";
-import type { EvaluationIssue, EvaluationResponse, OpenFit } from "../engine/types.ts";
+import type { EvaluationIssue, EvaluationResponse, ModifierGroup, OpenFit } from "../engine/types.ts";
 import {
   FitDataError,
   createFit,
@@ -27,10 +27,14 @@ export type FitServiceDeps = {
 
 /**
  * What is stored in a fit's evaluation `stats` column: everything the engine computed except the verdict,
- * hull specs included, so a fit page draws them with the engine down. A row stored before the engine sent
- * `sections` lacks the key; the re-evaluation job asks again for those (queries.ts fitsNeedingEvaluation).
+ * hull specs and modifier groups included, so a fit page draws them with the engine down. A row stored
+ * before the engine sent `sections` or `modifierGroups` lacks the key; the re-evaluation job asks again
+ * for those (queries.ts fitsNeedingEvaluation). `modifierGroups` is null when the engine didn't send it, so
+ * the job doesn't ask an engine that can't answer over and over; the page then lists `stats`.
  */
-export type StoredStats = Pick<EvaluationResponse, "stats" | "conduits" | "regaliaSets" | "sections">;
+export type StoredStats = Pick<EvaluationResponse, "stats" | "conduits" | "regaliaSets" | "sections"> & {
+  modifierGroups: ModifierGroup[] | null;
+};
 
 /** The engine's answer as the database stores it. A fit that fails has no rating. */
 export function toEvaluationInput(response: EvaluationResponse): EvaluationInput {
@@ -39,6 +43,7 @@ export function toEvaluationInput(response: EvaluationResponse): EvaluationInput
     conduits: response.conduits,
     regaliaSets: response.regaliaSets,
     sections: Array.isArray(response.sections) ? response.sections : [],
+    modifierGroups: Array.isArray(response.modifierGroups) ? response.modifierGroups : null,
   };
   return {
     buildSha: response.buildSha,

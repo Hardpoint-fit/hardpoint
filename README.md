@@ -88,6 +88,8 @@ It runs from the site's own image, with no build step: Node strips the types, an
 - Cron schedule: `*/15 * * * *`
 - Variables: `DATABASE_URL` (same database) and `GAME_DATA_API_INTERNAL_URL` (the API's private-network URL, so it uses the private bucket).
 
+It also asks again for a valid verdict stored before the API sent `sections` or `modifierGroups` (the stored stats lack the key), so a field the API adds reaches every fit page within a few runs. Until then the page shows what it has: a missing `sections` reads "STATS APPEAR AFTER THE NEXT CHECK.", and a missing `modifierGroups` lists MODIFIERS from `stats`, one line per stat and stage, as the site did before. A verdict the job stores from an API that doesn't send `modifierGroups` keeps the key as null, so the job doesn't ask that API again in a loop; such a fit keeps the per-stage list until the next build, so deploy the API before the site. An outdated fit's last valid verdict is never asked again, so it keeps the per-stage list.
+
 Locally: `DATABASE_URL=... GAME_DATA_API_INTERNAL_URL=http://localhost:8080 node src/jobs/reevaluate.ts`. Keep the job's imports to erasable TypeScript with explicit `.ts` paths and nothing from Next.
 
 ## Docker

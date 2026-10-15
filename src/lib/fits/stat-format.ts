@@ -63,32 +63,40 @@ export function statTone(words: StatWords, stat: string, value: number): Tone {
   return value > 0 === higherIsBetter ? "Positive" : "Negative";
 }
 
-/** Every catalog name an evaluation source can point at, by definition GUID. */
-export function sourceNames(catalog: Pick<Catalog, "hulls" | "items" | "regaliaSets" | "regalia" | "artifacts" | "ciphers" | "harmonicSets" | "hereticalSpecials">): Map<string, string> {
+/**
+ * Every catalog name an evaluation source can point at, by definition GUID, and each affinity's name by
+ * `affinity:<ModuleType>` (an affinity source names its type, not a definition).
+ */
+export function sourceNames(
+  catalog: Pick<Catalog, "hulls" | "items" | "regaliaSets" | "regalia" | "artifacts" | "ciphers" | "harmonicSets" | "hereticalSpecials"> & Partial<Pick<Catalog, "affinity">>,
+): Map<string, string> {
   const names = new Map<string, string>();
   for (const list of [catalog.hulls, catalog.items, catalog.regaliaSets, catalog.regalia, catalog.artifacts, catalog.ciphers, catalog.harmonicSets, catalog.hereticalSpecials]) {
     for (const entry of list) names.set(entry.def, entry.name);
   }
+  for (const type of catalog.affinity?.types ?? []) names.set(`affinity:${type.moduleType}`, type.name);
   return names;
 }
 
 const KIND_LABELS: Record<string, string> = {
   Module: "MODULE",
-  Hull: "HULL",
   RegaliaPiece: "REGALIA",
   RegaliaSet: "SET BONUS",
-  Affinity: "AFFINITY",
+  AffinityClass: "AFFINITY",
+  AffinitySpecialization: "SPECIALIZATION",
 };
+
+const AFFINITY_KINDS = new Set(["AffinityClass", "AffinitySpecialization"]);
 
 export type SourceRow = { name: string; kind: string; value: string; tone: Tone; stacking: string | null };
 
 /** One source of a stat line, named from the catalog when it can be. */
 export function describeSource(words: StatWords, line: Pick<StatLine, "stat" | "operation">, source: StatSource, names: ReadonlyMap<string, string>): SourceRow {
   const kind = KIND_LABELS[source.kind] ?? statLabel(words, source.kind);
-  const fromCatalog = source.asset ? names.get(source.asset) : undefined;
+  const affinity = AFFINITY_KINDS.has(source.kind) && source.affinityType !== "None";
+  const fromCatalog = source.asset ? names.get(source.asset) : affinity ? names.get(`affinity:${source.affinityType}`) : undefined;
   const name =
-    fromCatalog?.toUpperCase() ??
-    (source.kind === "Affinity" && source.affinityType !== "None" ? `${statLabel(words, source.affinityType)} AFFINITY` : source.asset ? "UNKNOWN SOURCE" : kind);
+    fromCatalog?.toUpperCase() ?? (affinity ? `${statLabel(words, source.affinityType)} AFFINITY` : source.asset ? "UNKNOWN SOURCE" : kind);
   return {
     name,
     kind,

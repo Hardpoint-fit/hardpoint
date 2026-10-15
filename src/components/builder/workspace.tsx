@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type Poi
 import { FittingGrid, ModifiedCellsLegend, gridBounds } from "#/components/grid/fitting-grid";
 import { buildGridModel, type GridModule } from "#/components/grid/model";
 import { Panel, buildLabel } from "#/components/ui";
-import { StatsTable } from "#/components/fit/stats-table";
+import { Modifiers } from "#/components/fit/stats-table";
 import { HullSpecs } from "#/components/fit/hull-specs";
 import type { EvaluationResponse, GridModResult } from "#/lib/engine/types";
 import { useEngine } from "#/lib/engine/use-engine";
@@ -623,7 +623,7 @@ function StatsPanel({
               ))}
             </ul>
           )}
-          <StatsTable stats={shown.stats} catalog={cat.catalog} />
+          <Modifiers groups={Array.isArray(shown.modifierGroups) ? shown.modifierGroups : null} stats={shown.stats} catalog={cat.catalog} />
           <span className="note">{buildLabel(shown.buildSha)}</span>
         </>
       )}

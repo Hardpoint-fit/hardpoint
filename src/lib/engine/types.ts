@@ -76,6 +76,8 @@ export type EvaluationResponse = {
   rating: number;
   /** The game's Hull Specs panel for the fit; empty when the fit is invalid. */
   sections: SpecSection[];
+  /** The game's MODIFIERS list: `stats` with each stat's stages combined. Empty when the fit is invalid. */
+  modifierGroups: ModifierGroup[];
 };
 
 /** `moduleIndex` is -1 for the hull and for fit-wide issues. */
@@ -88,6 +90,18 @@ export type RegaliaGroup = { set: string; fittedCount: number; moduleIndices: nu
 export type StatLine = {
   stat: string;
   stage: string;
+  operation: string;
+  total: number;
+  sources: StatSource[];
+};
+
+/** A category of the MODIFIERS list (HullSpecModifierGroup), in the game's order; rows largest first. */
+export type ModifierGroup = { category: string; label: string; rows: ModifierRow[] };
+
+/** One stat and operation with every calculation stage combined (HullSpecModifierRow); sources largest first. */
+export type ModifierRow = {
+  stat: string;
+  label: string;
   operation: string;
   total: number;
   sources: StatSource[];

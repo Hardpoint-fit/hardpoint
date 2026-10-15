@@ -43,7 +43,7 @@ const HULLS = new Map([
   ["3000", { hullClass: "Frigate", role: "Damage" }],
 ]);
 
-const good = { buildSha: SHA, valid: true, rating: 10, stats: { speed: 3, sections: [] }, issues: [] };
+const good = { buildSha: SHA, valid: true, rating: 10, stats: { speed: 3, sections: [], modifierGroups: [] }, issues: [] };
 const bad = { buildSha: SHA, valid: false, rating: null, stats: {}, issues: [{ code: "removed_item" }] };
 
 let db;
@@ -584,6 +584,12 @@ test("a valid verdict stored before the engine sent hull specs is asked about ag
   assert.ok(needing, "an old row without sections is re-checked");
   await recordEvaluation(db, fit.id, good, { revision: needing.revision });
   assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id), "the re-check filled it in");
+  // A row with hull specs but stored before the engine sent modifier groups is asked about again too.
+  await recordEvaluation(db, fit.id, { ...good, stats: { speed: 3, sections: [] } });
+  assert.ok((await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id), "an old row without modifier groups is re-checked");
+  // Null says the engine was asked and didn't send them: asking it again in the same run would loop.
+  await recordEvaluation(db, fit.id, { ...good, stats: { speed: 3, sections: [], modifierGroups: null } });
+  assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id));
   // An invalid verdict has no specs to fill in: it isn't asked about again.
   await recordEvaluation(db, fit.id, bad);
   assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id));

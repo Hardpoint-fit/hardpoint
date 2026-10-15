@@ -1134,7 +1134,8 @@ export async function getFitForEvaluation(db: Queryable, id: string): Promise<Fi
 
 /**
  * Published fits with no verdict stored for `buildSha`, oldest first, and those whose valid verdict was
- * stored before the engine sent hull specs (no `sections` in its stats), so the next run fills them in.
+ * stored before the engine sent hull specs or modifier groups (no `sections` or `modifierGroups` key in
+ * its stats), so the next run fills them in.
  * Record a verdict for every one you evaluate, failures included (valid: false), or the next call returns
  * it again.
  */
@@ -1144,7 +1145,8 @@ export async function fitsNeedingEvaluation(db: Queryable, buildSha: string, lim
      FROM fits f
      WHERE f.status = 'published'
        AND NOT EXISTS (SELECT 1 FROM fit_evaluations e WHERE e.fit_id = f.id AND e.build_sha = $1
-                         AND (NOT e.valid OR e.stats -> 'sections' IS NOT NULL))
+                         AND (NOT e.valid OR (e.stats -> 'sections' IS NOT NULL
+                                              AND e.stats -> 'modifierGroups' IS NOT NULL)))
      ORDER BY f.published_at, f.id
      LIMIT ${pageSize(limit)}`,
     [buildSha],

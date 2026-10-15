@@ -10,7 +10,7 @@ import type { GridModule } from "#/components/grid/model";
 import { EngineBanner, NotConfigured, Panel, StandingBadge, buildLabel, count, formatDate } from "#/components/ui";
 import { BookmarkButton, CommentForm, DeleteComment, DeleteFitButton, EditComment, HideToggle, ReplyToggle, ReportButton, UnpublishButton, VoteButton } from "./controls";
 import { ReverifyLink } from "#/components/moderation";
-import { StatsTable } from "./stats-table";
+import { Modifiers } from "./stats-table";
 import { HullSpecs, SPECS_PENDING } from "./hull-specs";
 import { ItemIcon } from "#/components/item-text";
 import { itemIcon } from "#/lib/art/item-icon";
@@ -408,7 +408,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
           )}
           {statsShown && shown.reference !== null && (
             <Panel title="MODIFIERS">
-              <StatsTable stats={shown.result.stats} catalog={engine.catalog} />
+              <Modifiers groups={shown.result.modifierGroups} stats={shown.result.stats} catalog={engine.catalog} />
             </Panel>
           )}
         </aside>

@@ -112,6 +112,25 @@ test("a verdict stored before the engine sent hull specs says the stats come wit
   assert.doesNotMatch(html, /data-spec=/);
 });
 
+test("MODIFIERS lists the engine's modifier groups under the game's category headers", async () => {
+  const html = await renderFit(stub.url, ids.showcase, anonymous(false));
+  const modifiers = html.slice(html.indexOf('aria-label="Modifiers"'));
+  assert.ok(modifiers.length < html.length, "the groups are drawn");
+  const categories = [...modifiers.matchAll(/data-category="(\w+)"/g)].map((match) => match[1]);
+  assert.deepEqual(categories, FIXTURES.evaluateShowcase.modifierGroups.map((group) => group.category));
+  assert.match(modifiers, /<span class="stats-group__title">AGILITY<\/span>/);
+  assert.equal(count(modifiers, 'class="stats__row'), FIXTURES.evaluateShowcase.modifierGroups.reduce((sum, group) => sum + group.rows.length, 0));
+  assert.doesNotMatch(html, /aria-label="Stats"/, "not the per-stage list");
+});
+
+test("a verdict stored before the engine sent modifier groups lists its stats a line per stage until the next check", async () => {
+  const html = await renderFit(stub.url, ids.pending, anonymous(false));
+  assert.match(html, /<span>MODIFIERS<\/span>/);
+  assert.match(html, /aria-label="Stats"/);
+  assert.doesNotMatch(html, /aria-label="Modifiers"/);
+  assert.equal(count(html, 'class="stats__row'), FIXTURES.evaluateValid.stats.length);
+});
+
 test("a removed item is drawn as UNKNOWN ITEM with its issue, and the fit reads as outdated (Review Focus #2)", async () => {
   const html = await renderFit(stub.url, ids.removed, anonymous(false));
   const removed = html.slice(html.indexOf('data-module="2"') - 400, html.indexOf('data-module="3"'));

@@ -25,7 +25,7 @@ test("an outdated fit shows its last valid stats and the current build's issues"
 
 test("odd stored rows read as empty, never throw", () => {
   const shown = shownEvaluation({ evaluation: verdict("new", true, { stats: "nonsense", issues: null }), lastValidEvaluation: null }, "new");
-  assert.deepEqual(shown.result, { stats: [], conduits: [], regaliaSets: [], sections: null });
+  assert.deepEqual(shown.result, { stats: [], conduits: [], regaliaSets: [], sections: null, modifierGroups: null });
   assert.deepEqual(shown.issues, []);
 });
 
@@ -35,4 +35,14 @@ test("stored hull specs come back; a row from before the engine sent them reads 
   assert.deepEqual(withSpecs.result.sections, sections);
   const older = shownEvaluation({ evaluation: verdict("new", true), lastValidEvaluation: null }, "new");
   assert.equal(older.result.sections, null);
+});
+
+test("stored modifier groups come back; a row from before the engine sent them reads as null, not empty", () => {
+  const modifierGroups = [{ category: "Agility", label: "AGILITY", rows: [] }];
+  const withGroups = shownEvaluation({ evaluation: verdict("new", true, { stats: { stats: [], conduits: [], regaliaSets: [], modifierGroups } }), lastValidEvaluation: null }, "new");
+  assert.deepEqual(withGroups.result.modifierGroups, modifierGroups);
+  const older = shownEvaluation({ evaluation: verdict("new", true), lastValidEvaluation: null }, "new");
+  assert.equal(older.result.modifierGroups, null);
+  const unsent = shownEvaluation({ evaluation: verdict("new", true, { stats: { stats: [], conduits: [], regaliaSets: [], modifierGroups: null } }), lastValidEvaluation: null }, "new");
+  assert.equal(unsent.result.modifierGroups, null);
 });
