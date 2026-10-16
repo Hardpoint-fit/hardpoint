@@ -9,7 +9,7 @@ const row = (id, text, unit = "", label = id.toUpperCase()) => ({
   secondary: null,
   primaryTone: "Neutral",
   secondaryTone: "Neutral",
-  help: { title: "", text: "" },
+  help: { title: "", text: "", statLabel: null, statValue: null },
 });
 const section = (id, ...rows) => ({ id, label: id.toUpperCase(), rows });
 

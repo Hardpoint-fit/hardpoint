@@ -158,7 +158,8 @@ export type SpecRow = {
 /** `text` then `unit` is what the game shows; `number` is the shown number in that unit, null for a word (STABLE, ∞). */
 export type SpecValue = { text: string; unit: string; number: number | null };
 
-export type SpecHelp = { title: string; text: string };
+/** `statLabel` / `statValue` are a stat the game shows over the help text (a DPS row's BURST DPS), or null. */
+export type SpecHelp = { title: string; text: string; statLabel: string | null; statValue: string | null };
 
 // ---- Item facts (ItemFacts.cs) -------------------------------------------------------------------
 

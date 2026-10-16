@@ -850,6 +850,21 @@ a.chip:hover {
   letter-spacing: 0.12em;
 }
 
+/* A stat of the ship over the help text, as the game's card shows it (a DPS row's BURST DPS). */
+.hint__stat {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: rgba(178, 189, 189, 0.65);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.08em;
+}
+
+.hint__stat b {
+  color: rgba(226, 232, 232, 0.88);
+  font-weight: inherit;
+}
+
 .hint__text {
   color: rgba(178, 189, 189, 0.65);
   font-size: var(--font-size-tiny);

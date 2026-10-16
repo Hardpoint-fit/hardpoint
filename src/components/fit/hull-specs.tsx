@@ -51,6 +51,11 @@ function Row({ row }: { row: SpecRow }) {
         <div className="tip specs__tip">
           <div className="hint">
             <span className="hint__title">{row.help.title}</span>
+            {row.help.statLabel && (
+              <span className="hint__stat">
+                {row.help.statLabel} <b>{row.help.statValue}</b>
+              </span>
+            )}
             <span className="hint__text">{row.help.text}</span>
           </div>
         </div>

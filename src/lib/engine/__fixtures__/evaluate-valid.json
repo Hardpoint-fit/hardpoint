@@ -461,7 +461,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "EFFECTIVE HEALTH",
-      "text": "COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE."
+      "text": "COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -477,7 +479,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX ARMOR",
-      "text": "TOTAL ARMOR HIT POINTS WHEN FULLY REPAIRED. ARMOR ABSORBS DAMAGE BEFORE HULL HP IS TOUCHED."
+      "text": "TOTAL ARMOR HIT POINTS WHEN FULLY REPAIRED. ARMOR ABSORBS DAMAGE BEFORE HULL HP IS TOUCHED.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -493,7 +497,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX HULL",
-      "text": "STRUCTURAL INTEGRITY OF THE SHIP. WHEN HULL REACHES ZERO, THE SHIP IS DESTROYED."
+      "text": "STRUCTURAL INTEGRITY OF THE SHIP. WHEN HULL REACHES ZERO, THE SHIP IS DESTROYED.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -509,7 +515,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "ARMOR REPAIR",
-      "text": "RATE AT WHICH ARMOR IS RESTORED PER SECOND DURING COMBAT."
+      "text": "RATE AT WHICH ARMOR IS RESTORED PER SECOND DURING COMBAT.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -525,7 +533,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SUSTAIN",
-      "text": "COMBINED DEFENSIVE RECOVERY PER SECOND FROM ARMOR REPAIR AND BARRIER REGENERATION."
+      "text": "COMBINED DEFENSIVE RECOVERY PER SECOND FROM ARMOR REPAIR AND BARRIER REGENERATION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -545,7 +555,9 @@
      "secondaryTone": "Negative",
      "help": {
       "title": "KINETIC RESIST",
-      "text": "PERCENT OF INCOMING KINETIC DAMAGE PREVENTED BY ARMOR."
+      "text": "PERCENT OF INCOMING KINETIC DAMAGE PREVENTED BY ARMOR.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -561,7 +573,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "EXPLOSIVE RESIST",
-      "text": "PERCENT OF INCOMING EXPLOSIVE DAMAGE PREVENTED BY ARMOR."
+      "text": "PERCENT OF INCOMING EXPLOSIVE DAMAGE PREVENTED BY ARMOR.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -577,7 +591,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "ACID RESIST",
-      "text": "PERCENT OF INCOMING ACID DAMAGE PREVENTED BY ARMOR."
+      "text": "PERCENT OF INCOMING ACID DAMAGE PREVENTED BY ARMOR.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -599,7 +615,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "DPS",
-      "text": "TOTAL DAMAGE PER SECOND FROM ALL FITTED OFFENSIVE SOURCES."
+      "text": "DAMAGE PER SECOND FROM ALL FITTED WEAPONS AND DRONES, KEPT UP THROUGH RELOADS. BURST IS THE RATE WHILE EVERY MAGAZINE LASTS.",
+      "statLabel": "BURST DPS",
+      "statValue": "0"
      }
     }
    ]
@@ -621,7 +639,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "TIME TO SCRAM",
-      "text": "HOW LONG UNTIL THE REACTOR OVERHEATS AND SHUTS DOWN UNDER FULL LOAD. STABLE MEANS DISSIPATION EXCEEDS GENERATION."
+      "text": "HOW LONG UNTIL THE REACTOR OVERHEATS AND SHUTS DOWN UNDER FULL LOAD. STABLE MEANS DISSIPATION EXCEEDS GENERATION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -637,7 +657,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX HEAT CAPACITY",
-      "text": "TOTAL HEAT THE REACTOR CAN ABSORB BEFORE TRIGGERING A SCRAM. HIGHER CAPACITY GIVES MORE TIME UNDER HEAVY LOAD."
+      "text": "TOTAL HEAT THE REACTOR CAN ABSORB BEFORE TRIGGERING A SCRAM. HIGHER CAPACITY GIVES MORE TIME UNDER HEAVY LOAD.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -653,7 +675,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "HEAT DISSIPATION",
-      "text": "HEAT VENTED PER SECOND. IF THIS EXCEEDS HEAT GENERATION, THE REACTOR IS THERMALLY STABLE."
+      "text": "HEAT VENTED PER SECOND. IF THIS EXCEEDS HEAT GENERATION, THE REACTOR IS THERMALLY STABLE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -669,7 +693,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "HEAT GENERATION",
-      "text": "HEAT PRODUCED PER SECOND BY FITTED MODULES WHEN ACTIVE. IT MUST STAY BELOW HEAT DISSIPATION TO AVOID EVENTUAL SCRAM."
+      "text": "HEAT PRODUCED PER SECOND BY FITTED MODULES WHEN ACTIVE. IT MUST STAY BELOW HEAT DISSIPATION TO AVOID EVENTUAL SCRAM.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -685,7 +711,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "NET HEAT",
-      "text": "HEAT GENERATED PER SECOND AFTER DISSIPATION UNDER FULL FITTED LOAD."
+      "text": "HEAT GENERATED PER SECOND AFTER DISSIPATION UNDER FULL FITTED LOAD.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -707,7 +735,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MASS",
-      "text": "TOTAL MASS OF HULL PLUS FITTED MODULES. HIGHER MASS REDUCES ACCELERATION AND TURN RATE FOR THE SAME THRUST AND TORQUE."
+      "text": "TOTAL MASS OF HULL PLUS FITTED MODULES. HIGHER MASS REDUCES ACCELERATION AND TURN RATE FOR THE SAME THRUST AND TORQUE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -723,7 +753,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "THRUST",
-      "text": "FORWARD FORCE PRODUCED BY PROPULSION MODULES. COMBINED WITH MASS TO DETERMINE ACCELERATION."
+      "text": "FORWARD FORCE PRODUCED BY PROPULSION MODULES. COMBINED WITH MASS TO DETERMINE ACCELERATION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -739,7 +771,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "ACCELERATION",
-      "text": "HOW QUICKLY THE SHIP REACHES MAX VELOCITY. DERIVED FROM THRUST DIVIDED BY MASS."
+      "text": "HOW QUICKLY THE SHIP REACHES MAX VELOCITY. DERIVED FROM THRUST DIVIDED BY MASS.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -755,7 +789,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "TURN ACCELERATION",
-      "text": "HOW QUICKLY STEERING CHANGES THE SHIP'S TURN RATE."
+      "text": "HOW QUICKLY STEERING CHANGES THE SHIP'S TURN RATE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -771,7 +807,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "TURN RATE",
-      "text": "THE AUTHORED STEERING ANGULAR-SPEED CAP. COLLISION IMPULSES ARE NOT CLAMPED TO IT."
+      "text": "THE AUTHORED STEERING ANGULAR-SPEED CAP. COLLISION IMPULSES ARE NOT CLAMPED TO IT.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -787,7 +825,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX VELOCITY",
-      "text": "TOP SPEED THE SHIP CAN REACH UNDER NORMAL PROPULSION."
+      "text": "TOP SPEED THE SHIP CAN REACH UNDER NORMAL PROPULSION.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -809,7 +849,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SENSOR RANGE",
-      "text": "MAXIMUM DISTANCE AT WHICH A CONTACT WITH CLEAR LINE OF SIGHT IS IDENTIFIED AND CAN BE TARGETED."
+      "text": "MAXIMUM DISTANCE AT WHICH A CONTACT WITH CLEAR LINE OF SIGHT IS IDENTIFIED AND CAN BE TARGETED.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -825,7 +867,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SIGNATURE RADIUS",
-      "text": "YOUR SHIP'S TARGETING PROFILE. LARGER SIGNATURES ARE EASIER FOR HOSTILE TURRETS TO TRACK."
+      "text": "YOUR SHIP'S TARGETING PROFILE. LARGER SIGNATURES ARE EASIER FOR HOSTILE TURRETS TO TRACK.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -847,7 +891,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "BATTERY HARDPOINTS",
-      "text": "NUMBER OF TURRET SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF TURRET SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -863,7 +909,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SUBSYSTEM HARDPOINTS",
-      "text": "NUMBER OF SUBSYSTEM MODULE SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF SUBSYSTEM MODULE SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -879,7 +927,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "PROPULSION HARDPOINTS",
-      "text": "NUMBER OF PROPULSION MODULE SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF PROPULSION MODULE SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -895,7 +945,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "CORE SLOTS",
-      "text": "NUMBER OF CORE MODULE SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF CORE MODULE SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -911,7 +963,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SAFETY HOLD SLOTS",
-      "text": "NUMBER OF CARGO SLOTS PROTECTED FROM LOSS ON DESTRUCTION."
+      "text": "NUMBER OF CARGO SLOTS PROTECTED FROM LOSS ON DESTRUCTION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -927,7 +981,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SALVAGE LUCK",
-      "text": "MULTIPLIER AFFECTING THE QUALITY AND QUANTITY OF SALVAGE FROM WRECKS."
+      "text": "MULTIPLIER AFFECTING THE QUALITY AND QUANTITY OF SALVAGE FROM WRECKS.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
