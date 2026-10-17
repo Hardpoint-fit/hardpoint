@@ -28,13 +28,25 @@ export type FitServiceDeps = {
 /**
  * What is stored in a fit's evaluation `stats` column: everything the engine computed except the verdict,
  * hull specs and modifier groups included, so a fit page draws them with the engine down. A row stored
- * before the engine sent `sections` or `modifierGroups` lacks the key; the re-evaluation job asks again
- * for those (queries.ts fitsNeedingEvaluation). `modifierGroups` is null when the engine didn't send it, so
- * the job doesn't ask an engine that can't answer over and over; the page then lists `stats`.
+ * before the engine sent `sections` or `modifierGroups`, or its sources' `parts`, lacks the key; the
+ * re-evaluation job asks again for those (queries.ts fitsNeedingEvaluation). `modifierGroups` is null, and a
+ * source's `parts` empty, when the engine didn't send them, so the job doesn't ask an engine that can't
+ * answer over and over; the page then lists `stats`, or the source without its lines.
  */
 export type StoredStats = Pick<EvaluationResponse, "stats" | "conduits" | "regaliaSets" | "sections"> & {
   modifierGroups: ModifierGroup[] | null;
 };
+
+/** A modifier group with `parts` on every source: empty where the engine sent none. */
+function withParts(group: ModifierGroup): ModifierGroup {
+  return {
+    ...group,
+    rows: group.rows.map((row) => ({
+      ...row,
+      sources: row.sources.map((source) => ({ ...source, parts: Array.isArray(source.parts) ? source.parts : [] })),
+    })),
+  };
+}
 
 /** The engine's answer as the database stores it. A fit that fails has no rating. */
 export function toEvaluationInput(response: EvaluationResponse): EvaluationInput {
@@ -43,7 +55,7 @@ export function toEvaluationInput(response: EvaluationResponse): EvaluationInput
     conduits: response.conduits,
     regaliaSets: response.regaliaSets,
     sections: Array.isArray(response.sections) ? response.sections : [],
-    modifierGroups: Array.isArray(response.modifierGroups) ? response.modifierGroups : null,
+    modifierGroups: Array.isArray(response.modifierGroups) ? response.modifierGroups.map(withParts) : null,
   };
   return {
     buildSha: response.buildSha,

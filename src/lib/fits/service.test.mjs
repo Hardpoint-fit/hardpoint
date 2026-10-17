@@ -263,3 +263,19 @@ test("publish tells an unreachable engine, a failing engine and a refusing engin
   assert.match(refusing.message, /modules\[1\]: no such port/);
   assert.equal((await read(fit.id)).status, "draft");
 });
+
+const withSources = (sources) => ({
+  ...FIXTURES.evaluateValid,
+  modifierGroups: [{ category: "Weapons", label: "WEAPONS", rows: [{ stat: "Damage", label: "DAMAGE", operation: "Multiply", total: 0.1, sources }] }],
+});
+
+test("a source the engine sent without stacked lines is stored with empty parts, so it isn't asked about again", () => {
+  const stored = toEvaluationInput(withSources([{ kind: "Module", raw: 0.1 }]));
+  assert.deepEqual(stored.stats.modifierGroups[0].rows[0].sources[0].parts, []);
+});
+
+test("a source's stacked lines are stored as the engine sent them", () => {
+  const parts = [{ kind: "Cipher", asset: "1", raw: 0.05 }, { kind: "Roll", asset: null, raw: 0.05 }];
+  const stored = toEvaluationInput(withSources([{ kind: "Module", raw: 0.1, parts }]));
+  assert.deepEqual(stored.stats.modifierGroups[0].rows[0].sources[0].parts, parts);
+});

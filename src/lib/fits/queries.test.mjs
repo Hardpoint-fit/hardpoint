@@ -590,6 +590,14 @@ test("a valid verdict stored before the engine sent hull specs is asked about ag
   // Null says the engine was asked and didn't send them: asking it again in the same run would loop.
   await recordEvaluation(db, fit.id, { ...good, stats: { speed: 3, sections: [], modifierGroups: null } });
   assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id));
+  // A row whose modifier sources predate their stacked lines (no `parts`) is asked about again.
+  const groups = (parts) => [
+    { category: "Weapons", label: "WEAPONS", rows: [{ stat: "Damage", label: "DAMAGE", operation: "Multiply", total: 0.1, sources: [{ kind: "Module", raw: 0.1, ...parts }] }] },
+  ];
+  await recordEvaluation(db, fit.id, { ...good, stats: { speed: 3, sections: [], modifierGroups: groups({}) } });
+  assert.ok((await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id), "an old row without parts is re-checked");
+  await recordEvaluation(db, fit.id, { ...good, stats: { speed: 3, sections: [], modifierGroups: groups({ parts: [] }) } });
+  assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id), "empty parts are complete");
   // An invalid verdict has no specs to fill in: it isn't asked about again.
   await recordEvaluation(db, fit.id, bad);
   assert.ok(!(await fitsNeedingEvaluation(db, SHA)).some((f) => f.id === fit.id));
