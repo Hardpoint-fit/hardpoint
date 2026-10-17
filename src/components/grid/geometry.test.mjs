@@ -20,10 +20,8 @@ import {
 const catalog = FIXTURES.catalog;
 const items = new Map(catalog.items.map((item) => [item.def, item]));
 const hull = catalog.hulls[0];
-// The game's own rotation tables, exported from ModuleShapeMask for the UI prototype.
-const unity = JSON.parse(
-  readFileSync(new URL("../../../../../../src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/Panels/Fitting/UI/FittingPanel.fixture.json", import.meta.url), "utf8"),
-);
+// The game's own rotation tables, exported from ModuleShapeMask for the UI prototype (scripts/sync-unity.mjs).
+const unity = JSON.parse(readFileSync(new URL("./rotation-tables.generated.json", import.meta.url), "utf8"));
 
 const footprintOf = (module) => {
   const item = items.get(module.item.def);

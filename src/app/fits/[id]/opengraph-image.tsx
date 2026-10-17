@@ -19,7 +19,7 @@ export const alt = "A Citadel ship fit";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Copied from the Unity tree by scripts/prepare-design-tokens.mjs; next.config.ts traces it into this route.
+// Synced from the Unity tree by scripts/sync-unity.mjs; next.config.ts traces it into this route.
 const FONT = join(process.cwd(), "src/app/fonts/VCROSDNEUE.ttf");
 // The design tokens' values (the card's renderer can't read CSS variables), from the same script.
 const T = card.tokens;

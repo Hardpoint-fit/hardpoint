@@ -1,0 +1,51 @@
+{
+ "tokens": {
+  "panel-bg": "rgba(0, 0, 0, 0.98)",
+  "header-bg": "rgba(25, 29, 29, 0.90)",
+  "text-primary": "rgb(217, 217, 217)",
+  "text-primary-muted": "rgba(217, 217, 217, 0.75)",
+  "text-secondary": "rgb(83, 96, 96)",
+  "accent-orange": "rgb(255, 153, 0)",
+  "accent-muted": "rgb(83, 96, 96)",
+  "state-positive": "rgb(0, 255, 111)",
+  "state-negative": "rgb(255, 68, 68)",
+  "state-quantity": "rgb(250, 198, 20)"
+ },
+ "tiers": {
+  "standard": {
+   "bg": "rgb(34, 36, 40)",
+   "border": "rgb(70, 74, 80)",
+   "base": "rgb(153, 153, 153)"
+  },
+  "augmented": {
+   "bg": "rgb(12, 30, 34)",
+   "border": "rgb(0, 72, 82)",
+   "base": "rgb(0, 164, 185)"
+  },
+  "prototype": {
+   "bg": "rgb(28, 12, 42)",
+   "border": "rgb(78, 0, 116)",
+   "base": "rgb(170, 0, 255)"
+  },
+  "artifact": {
+   "bg": "rgb(56, 39, 17)",
+   "border": "rgb(100, 68, 28)",
+   "base": "rgb(255, 178, 51)"
+  },
+  "regalia": {
+   "bg": "rgb(10, 32, 18)",
+   "border": "rgb(0, 76, 36)",
+   "base": "rgb(0, 176, 80)"
+  },
+  "harmonic": {
+   "bg": "rgb(30, 24, 10)",
+   "border": "rgb(62, 50, 18)",
+   "base": "rgb(139, 112, 37)"
+  },
+  "heretical": {
+   "bg": "rgb(40, 8, 14)",
+   "border": "rgb(96, 10, 30)",
+   "base": "rgb(204, 20, 60)"
+  }
+ }
+}

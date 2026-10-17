@@ -1,7 +1,5 @@
-# Build from the REPO ROOT, so the Unity files the site derives its design tokens and font from are in the
-# context (Dockerfile.dockerignore lists them). Game data is not among them: the game data API serves it.
-#   docker build -f js/projects/theorycrafting/Dockerfile -t citadel-theorycrafting .
-# Run: docker run --rm -p 3000:3000 -e PORT=3000 citadel-theorycrafting
+# Build from this repo's root: docker build -t hardpoint .
+# Run: docker run --rm -p 3000:3000 -e PORT=3000 hardpoint
 # Environment (all optional) is read at run time: see the README.
 
 FROM node:24-alpine AS base
@@ -9,20 +7,15 @@ ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH CI=true NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable
 
 FROM base AS deps
-WORKDIR /repo/js/projects/theorycrafting
-COPY js/projects/theorycrafting/package.json js/projects/theorycrafting/pnpm-lock.yaml js/projects/theorycrafting/pnpm-workspace.yaml ./
+WORKDIR /build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # No cache mount: Railway's builder refuses one whose id lacks its per-service prefix.
 RUN pnpm install --frozen-lockfile
 
 FROM base AS build
-WORKDIR /repo
-# The Unity files the prepare script derives the design tokens and font from
-# (scripts/prepare-design-tokens.mjs SOURCES), kept at their repo paths: it finds them by walking up.
-COPY src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/ src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/
-COPY src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf
-WORKDIR /repo/js/projects/theorycrafting
-COPY --from=deps /repo/js/projects/theorycrafting/node_modules ./node_modules
-COPY js/projects/theorycrafting/ ./
+WORKDIR /build
+COPY --from=deps /build/node_modules ./node_modules
+COPY . ./
 RUN pnpm build
 
 FROM node:24-alpine AS run
@@ -30,19 +23,19 @@ FROM node:24-alpine AS run
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=:: PORT=3000
 WORKDIR /app
 RUN addgroup -S -g 1001 app && adduser -S -u 1001 -G app app
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/standalone ./
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/.next/static ./.next/static
+COPY --from=build --chown=app:app /build/.next/standalone ./
+COPY --from=build --chown=app:app /build/.next/static ./.next/static
 # The standalone output does not include public/.
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/public ./public
+COPY --from=build --chown=app:app /build/public ./public
 # The schema and its apply script run before the server. migrate.mjs needs `pg`, which the standalone
 # trace includes because the pages import src/lib/fits/db.ts (checked by building and running this image).
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/migrate.mjs /repo/js/projects/theorycrafting/src/lib/fits/schema.sql ./src/lib/fits/
+COPY --from=build --chown=app:app /build/src/lib/fits/migrate.mjs /build/src/lib/fits/schema.sql ./src/lib/fits/
 # The re-evaluation job (src/jobs/reevaluate.ts) runs from this same image as a cron service. Node strips
 # the types itself, so there is no compile step: just the job's own files, which import nothing from Next
 # and use `pg` from the standalone node_modules. Start command: `node src/jobs/reevaluate.ts`.
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/jobs/reevaluate.ts ./src/jobs/
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/engine/client.ts /repo/js/projects/theorycrafting/src/lib/engine/catalog-resources.ts /repo/js/projects/theorycrafting/src/lib/engine/types.ts ./src/lib/engine/
-COPY --from=build --chown=app:app /repo/js/projects/theorycrafting/src/lib/fits/pool-db.ts /repo/js/projects/theorycrafting/src/lib/fits/queries.ts /repo/js/projects/theorycrafting/src/lib/fits/filters.ts /repo/js/projects/theorycrafting/src/lib/fits/limits.ts /repo/js/projects/theorycrafting/src/lib/fits/service.ts /repo/js/projects/theorycrafting/src/lib/fits/notifications.ts ./src/lib/fits/
+COPY --from=build --chown=app:app /build/src/jobs/reevaluate.ts ./src/jobs/
+COPY --from=build --chown=app:app /build/src/lib/engine/client.ts /build/src/lib/engine/catalog-resources.ts /build/src/lib/engine/types.ts ./src/lib/engine/
+COPY --from=build --chown=app:app /build/src/lib/fits/pool-db.ts /build/src/lib/fits/queries.ts /build/src/lib/fits/filters.ts /build/src/lib/fits/limits.ts /build/src/lib/fits/service.ts /build/src/lib/fits/notifications.ts ./src/lib/fits/
 # Fails the build if the job's import closure isn't all here (importing runs nothing: main() only runs
 # as the entry point). src/jobs/reevaluate-closure.test.mjs checks the same list from source.
 RUN node -e "import('./src/jobs/reevaluate.ts').then(() => console.log('job imports resolve'), (e) => { console.error(e); process.exit(1); })"

@@ -1,19 +1,16 @@
 {
-  "name": "theorycrafting",
+  "name": "hardpoint",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "prepare:design-tokens": "node scripts/prepare-design-tokens.mjs",
-    "predev": "pnpm run prepare:design-tokens",
     "dev": "next dev",
-    "prebuild": "pnpm run prepare:design-tokens",
     "build": "next build",
     "start": "next start",
     "test": "node --import ./scripts/node-hooks.mjs --test",
     "typecheck": "tsc --noEmit",
-    "pretest": "pnpm run prepare:design-tokens",
-    "smoke": "node --import ./scripts/node-hooks.mjs scripts/smoke.mjs"
+    "smoke": "node --import ./scripts/node-hooks.mjs scripts/smoke.mjs",
+    "sync:unity": "node scripts/sync-unity.mjs"
   },
   "dependencies": {
     "jose": "6.2.12",
