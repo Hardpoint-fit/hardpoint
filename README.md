@@ -1,6 +1,6 @@
-# Citadel theorycrafting site
+# hardpoint.fit
 
-A standalone Next.js 16 app (App Router, Tailwind 3, TypeScript) where players build, publish and compare ship fits. It is independent of `client-site` and has its own `pnpm-workspace.yaml` and lockfile. Design: `docs/superpowers/specs/2026-10-13-theorycrafting-design.md`.
+The Citadel theorycrafting site: a Next.js 16 app (App Router, Tailwind 3, TypeScript) where players build, publish and compare ship fits. It lives in its own repo, outside the Citadel monorepo. The site reads game data from the Citadel game data API, which stays in the monorepo (`tools/game-data-api`). Its design spec is `docs/superpowers/specs/2026-10-13-theorycrafting-design.md` in the monorepo.
 
 ## Commands
 
@@ -13,7 +13,7 @@ pnpm typecheck
 SMOKE_DATABASE_URL=postgres://... pnpm smoke   # after pnpm build; truncates that database
 ```
 
-`pnpm build`, `pnpm dev` and `pnpm test` first run `scripts/prepare-design-tokens.mjs`, which reads the design tokens and font from the Unity tree and so needs the whole repo checkout, not only this folder.
+Nothing here needs the monorepo, except re-syncing the files the site copies from its Unity tree (next section).
 
 `pnpm smoke` seeds the fixture fits (`src/lib/site/seed.mjs`) into a throwaway Postgres, serves the game data API fixtures from `src/lib/engine/stub-engine.mjs`, and starts the standalone server with the API up, with it down, and with no database, fetching every route. The "up" run names a public API address nothing listens on and reaches the stub on the internal one, so it also proves art URLs use the first and the share card's art fetch the second. Add `--serve` (`node --import ./scripts/node-hooks.mjs scripts/smoke.mjs --serve`) to leave the seeded site running for a look. For a database: `docker run --rm -e POSTGRES_PASSWORD=smoke -p 127.0.0.1:55437:5432 postgres:17-alpine`.
 
@@ -31,13 +31,19 @@ Pages read through `src/lib/site/loaders.ts` and write through the server action
 
 ## Design tokens and font
 
-The Unity files own these; the site holds no copy of their values. They are visual style, so the site build reads them; everything that is game data comes from the game data API (next section).
+The Unity files in the Citadel monorepo own these. They are visual style, so the site carries a synced copy, committed here so builds need nothing from the monorepo. Everything that is game data comes from the game data API (next section). When the Unity tokens or font change, re-sync from a monorepo checkout and commit the outputs:
 
-- `src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/tokens.{color,typography,spacing,sizing,components}.uss`: the sheets `ui-prototype/src/main.tsx` imports. The prepare script strips the Unity-only declarations (`-unity-*`, `resource()`) and writes `src/app/game-tokens.generated.css`, and the colour values the share card draws with (next/og can't read CSS variables, so the card, tier and text colours are resolved) to `src/app/card-tokens.generated.json`.
+```
+pnpm sync:unity /path/to/monorepo
+```
+
+Each output names the monorepo commit it came from. The same command copies the game's rotation tables (`rotations`, `origins`, `shapes` and `footprints` from `Assets/Scripts/Runtime/ArenaUI/Panels/Fitting/UI/FittingPanel.fixture.json`) to `src/components/grid/rotation-tables.generated.json`, which the grid tests check `geometry.ts` against.
+
+- `src/Citadel.Unity/Assets/Scripts/Runtime/ArenaUI/DesignSystem/tokens/tokens.{color,typography,spacing,sizing,components}.uss`: the sheets `ui-prototype/src/main.tsx` imports. `scripts/sync-unity.mjs` strips the Unity-only declarations (`-unity-*`, `resource()`) and writes `src/app/game-tokens.generated.css`, and the colour values the share card draws with (next/og can't read CSS variables, so the card, tier and text colours are resolved) to `src/app/card-tokens.generated.json`.
 - `src/Citadel.Unity/ui-prototype/public/fonts/VCROSDNEUE.ttf`: copied to `src/app/fonts/` and loaded with `next/font/local`.
 - Not derived here, but read with the catalog from the API: item art (`/v1/art/...`, each entity's `art` URLs), stat wording (`/v1/stats`: labels, whole-number, lower-is-better and inverted-sign rules), where an open fit's progression keeps each affinity point and threshold choice (`/v1/affinity`'s `layout`), and how the game draws its fitting grid (`/v1/ui/fitting-grid`, the game's UI style rather than game data: the 48px cell, slot inset, port notches, hardpoint icons and state colours). An older API without the grid style or the affinity layout leaves those parts of the site showing a note instead of the grid or the affinity points.
 
-All outputs are git-ignored. Change the Unity files, never the outputs. `globals.css` binds `--font-family` to the loaded font; `game-ui.css` holds the game-UI primitives (chamfered panel, tooltip plate, buttons, tier accents).
+Never edit the outputs: change the Unity files and sync again. `globals.css` binds `--font-family` to the loaded font; `game-ui.css` holds the game-UI primitives (chamfered panel, tooltip plate, buttons, tier accents).
 
 ## The game data API and item art
 
