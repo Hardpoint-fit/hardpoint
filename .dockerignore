@@ -1,0 +1,10 @@
+# Everything but the app's sources: the image installs its own node_modules and builds .next itself.
+.git
+node_modules
+.next
+*.tsbuildinfo
+.env*.local
+Dockerfile
+.dockerignore
+.github
+deploy

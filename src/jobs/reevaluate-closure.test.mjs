@@ -46,7 +46,7 @@ function copied() {
     const parts = line.split(/\s+/).slice(2).filter((part) => !part.startsWith("--"));
     const dest = parts.pop();
     for (const source of parts) {
-      const local = source.replace("/repo/js/projects/theorycrafting/", "");
+      const local = source.replace("/build/", "");
       if (!local.startsWith("src/") || !local.endsWith(".ts")) continue;
       files.add(join(dest.replace(/^\.\//, ""), local.split("/").pop()));
     }

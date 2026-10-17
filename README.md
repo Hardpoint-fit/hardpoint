@@ -100,13 +100,13 @@ Locally: `DATABASE_URL=... GAME_DATA_API_INTERNAL_URL=http://localhost:8080 node
 
 ## Docker
 
-The build context is the **repo root**, because the build reads the Unity tokens, font and the few other files listed above (about 100 KB beside the app; no item art):
+The build context is this repo's root:
 
 ```
-docker build -f js/projects/theorycrafting/Dockerfile -t citadel-theorycrafting .
-docker run --rm -p 3000:3000 citadel-theorycrafting
+docker build -t hardpoint .
+docker run --rm -p 3000:3000 hardpoint
 ```
 
-`Dockerfile.dockerignore` (picked up by BuildKit) limits the context to this app and those Unity files, so no repo-root `.dockerignore` is needed. The image runs `node server.js` from Next's standalone output as a non-root user and honours `PORT`. `GET /healthz` is the liveness check; it touches no dependency.
+`.dockerignore` keeps the local `node_modules`, `.next` and `.git` out of the context. The image runs `node server.js` from Next's standalone output as a non-root user and honours `PORT`. `GET /healthz` is the liveness check; it touches no dependency.
 
 `pnpm start` runs `next start`, which Next warns about under `output: "standalone"`; production uses the container.
