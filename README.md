@@ -115,7 +115,18 @@ Railway builds `site` and `reevaluate` from GitHub: every push to `main` deploys
 
 - `deploy/deploy.sh setup` reconciles the services, their settings, variables and domains, and is safe to re-run. The game data API's deploy script creates the project and owns `api`, and neither script touches the other's services.
 - `deploy/deploy.sh dns` prints the DNS records the custom domains need. `hardpoint.fit` is registered on Namecheap. The `thecitadel.com` zone is in Vercel (team `thecitadelgame`).
-- `deploy/deploy.sh oauth <client_id>` turns on "Sign in with Citadel". It takes the Clerk OAuth app's client id as its argument and reads the client secret from the clipboard.
+- `deploy/deploy.sh oauth <client_id>` turns on "Sign in with Citadel" (next section).
+
+`setup` sets these variables. `site` gets `PORT=3000`, `SITE_URL=https://hardpoint.fit`, `GAME_DATA_API_URL=https://api.thecitadel.com`, `GAME_DATA_API_INTERNAL_URL` (the API's private domain and port, `http://engine.railway.internal:8080`) and `DATABASE_URL=${{Postgres.DATABASE_URL}}`. `reevaluate` gets the same `GAME_DATA_API_INTERNAL_URL` and `DATABASE_URL`. Change them in the script and re-run it, not in the dashboard.
+
+### Enable sign-in
+
+Until sign-in is configured the site is read-only. Browsing, building, evaluating and copying fit strings work. Saving, publishing, commenting, voting and reporting say "Sign-in isn't configured on this site yet".
+
+1. **The OAuth app.** In the Clerk dashboard (The Citadel → Production → Configure → OAuth applications → Citadel Fits), add the redirect URI `https://hardpoint.fit/auth/callback`. It is the only one needed: a sign-in started on `www.hardpoint.fit`, `fits.alpha.thecitadel.com` or the Railway domain moves to `hardpoint.fit` first. The app is confidential (it has a client secret), its scopes include `openid`, `profile` and `public_metadata`, and its consent screen is on.
+2. **The site.** Copy the app's client secret to the clipboard, alone (no spaces or newline), and run `deploy/deploy.sh oauth <client_id>`. It sets `CITADEL_OAUTH_CLIENT_ID` and `CITADEL_OAUTH_CLIENT_SECRET` on `site`. It generates `SESSION_SECRET` if the site has none, and keeps an existing one, since replacing it signs everyone out. It sets `SITE_URL` and deletes the old `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` if present. Secrets reach Railway through `--stdin` and are never printed. The clipboard is cleared once the secret is set. The site then redeploys with sign-in on.
+
+Optionally, set `SITE_ADMIN_USER_IDS` on `site` for moderators besides the Clerk `admin` role. `railway variable list -s site --json | jq keys` shows which variables are set.
 
 ## Docker
 
