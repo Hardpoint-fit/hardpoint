@@ -1,6 +1,6 @@
 # hardpoint.fit
 
-The Citadel theorycrafting site: a Next.js 16 app (App Router, Tailwind 3, TypeScript) where players build, publish and compare ship fits. It lives in its own repo, outside the Citadel monorepo. The site reads game data from the Citadel game data API, which stays in the monorepo (`tools/game-data-api`). Its design spec is `docs/superpowers/specs/2026-10-13-theorycrafting-design.md` in the monorepo.
+The Citadel theorycrafting site: a Next.js 16 app (App Router, Tailwind 3, TypeScript) where players build, publish and compare ship fits. It lives in its own repo, outside the Citadel monorepo. The site reads game data from the Citadel game data API, which lives in the monorepo (`tools/game-data-api`). Its design spec is `docs/superpowers/specs/2026-10-13-theorycrafting-design.md` in the monorepo.
 
 ## Commands
 
@@ -88,7 +88,7 @@ Tests run the whole flow against a local fake provider (`src/lib/fake-idp.mjs`),
 
 When the game data API ships a new build, every published fit needs a fresh verdict. `src/jobs/reevaluate.ts` does that: it reads the build from the API's `/v1/status`, evaluates published (not hidden) fits that have no verdict for it in batches of 50 with at most 4 requests in flight, and stores each one through the same revision guard the site uses, so a fit edited meanwhile keeps its newer content. It is idempotent, logs counts only (never fit contents), waits out an API 429 (`Retry-After`, at most 5 waits), stops quietly if the API is down or erroring (exit 0; the next run continues), stops after 10 minutes, and exits 1 only when the database fails or `DATABASE_URL` / `GAME_DATA_API_INTERNAL_URL` is missing.
 
-It runs from the site's own image, with no build step: Node strips the types, and the image carries the job's few files next to the standalone `node_modules` (`pg`). On Railway add a second service from the same repo and Dockerfile, with:
+It runs from the site's own image, with no build step: Node strips the types, and the image carries the job's few files next to the standalone `node_modules` (`pg`). On Railway it is the `reevaluate` service, built from the same repo and Dockerfile (Deploy, below), with:
 
 - Start command: `node src/jobs/reevaluate.ts`
 - Cron schedule: `*/15 * * * *`
@@ -97,6 +97,25 @@ It runs from the site's own image, with no build step: Node strips the types, an
 It also asks again for a valid verdict stored before the API sent `sections` or `modifierGroups` (the stored stats lack the key), so a field the API adds reaches every fit page within a few runs. Until then the page shows what it has: a missing `sections` reads "STATS APPEAR AFTER THE NEXT CHECK.", and a missing `modifierGroups` lists MODIFIERS from `stats`, one line per stat and stage, as the site did before. A verdict the job stores from an API that doesn't send `modifierGroups` keeps the key as null, so the job doesn't ask that API again in a loop; such a fit keeps the per-stage list until the next build, so deploy the API before the site. An outdated fit's last valid verdict is never asked again, so it keeps the per-stage list.
 
 Locally: `DATABASE_URL=... GAME_DATA_API_INTERNAL_URL=http://localhost:8080 node src/jobs/reevaluate.ts`. Keep the job's imports to erasable TypeScript with explicit `.ts` paths and nothing from Next.
+
+## Deploy
+
+The site runs on Railway in project `citadel-game-data` (workspace `Martino`, environment `production`, region US East), beside the game data API:
+
+| Service | What |
+| --- | --- |
+| `site` | This repo's Dockerfile, port 3000, health check `/healthz`. https://hardpoint.fit is canonical; `www.hardpoint.fit` redirects to it, and `fits.alpha.thecitadel.com` and https://site-production-ed67.up.railway.app serve the same site. |
+| `reevaluate` | The same image as a cron, every 15 minutes (Re-evaluation job, above). |
+| `Postgres` | The fits database. Only the site and the cron reach it, over the private network. |
+| `api` | The game data API at https://api.thecitadel.com. It is deployed from the Citadel monorepo (`tools/game-data-api/deploy/deploy.sh`), never from here. |
+
+Railway builds `site` and `reevaluate` from GitHub: every push to `main` deploys both once CI (`.github/workflows/ci.yml`) passes on the commit. So `main` holds only what should be live. A site change that needs a newer API waits on another branch until that API is deployed, because the site reads the API's fields.
+
+`deploy/deploy.sh` owns the Railway settings for the site's services. It needs a logged-in `railway` CLI and `jq`:
+
+- `deploy/deploy.sh setup` reconciles the services, their settings, variables and domains, and is safe to re-run. The game data API's deploy script creates the project and owns `api`, and neither script touches the other's services.
+- `deploy/deploy.sh dns` prints the DNS records the custom domains need. `hardpoint.fit` is registered on Namecheap. The `thecitadel.com` zone is in Vercel (team `thecitadelgame`).
+- `deploy/deploy.sh oauth <client_id>` turns on "Sign in with Citadel". It takes the Clerk OAuth app's client id as its argument and reads the client secret from the clipboard.
 
 ## Docker
 
