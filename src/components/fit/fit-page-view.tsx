@@ -12,6 +12,8 @@ import { BookmarkButton, CommentForm, DeleteComment, DeleteFitButton, EditCommen
 import { ReverifyLink } from "#/components/moderation";
 import { Modifiers } from "./stats-table";
 import { HullSpecs, SPECS_PENDING } from "./hull-specs";
+import { SetBonusList } from "#/components/grid/module-special";
+import { setSummaries } from "#/components/grid/specials";
 import { ItemIcon } from "#/components/item-text";
 import { itemIcon } from "#/lib/art/item-icon";
 import { CopyFitString } from "./copy-fit-string";
@@ -214,15 +216,17 @@ function FitAffinity({ progression, catalog }: { progression: Ready["progression
 function ModuleList({ modules }: { modules: GridModule[] }) {
   const distinct = new Map<string, { module: GridModule; count: number }>();
   for (const module of modules) {
-    const entry = distinct.get(module.def);
+    // A regalia piece or an artifact goes by its own name, so it is listed apart from its plain module.
+    const key = `${module.def}:${module.name}`;
+    const entry = distinct.get(key);
     if (entry) entry.count += 1;
-    else distinct.set(module.def, { module, count: 1 });
+    else distinct.set(key, { module, count: 1 });
   }
   return (
     <Panel title="MODULES">
       <ul className="module-list">
         {[...distinct.values()].map(({ module, count: n }) => (
-          <li key={module.def} className="module-list__row">
+          <li key={`${module.def}:${module.name}`} className="module-list__row">
             <ItemIcon src={module.icon} size={24} />
             <span className="module-list__name">
               {n > 1 ? `${module.name} ×${n}` : module.name}
@@ -246,6 +250,7 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
   const own = viewer.authEnabled && viewer.userId !== null && viewer.userId === fit.authorUserId;
   const hullName = data.hull?.name ?? "UNKNOWN HULL";
   const rating = shown.reference?.rating ?? null;
+  const sets = grid.status === "ready" ? setSummaries(grid.model.modules.map((module) => module.special)) : [];
   const hullIcon = data.hull ? itemIcon({ art: data.hull.art, category: "Ship" }, isOpenFit(fit.fit) ? fit.fit.hull.roll : { rarity: "Normal", isIdentified: true }) : null;
   return (
     <main className="page">
@@ -404,6 +409,11 @@ export function FitPageView({ data, viewer }: { data: Ready; viewer: PageViewer 
                   )}
                 </>
               )}
+            </Panel>
+          )}
+          {sets.length > 0 && (
+            <Panel title="REGALIA SETS" aside={String(sets.length)}>
+              <SetBonusList sets={sets} />
             </Panel>
           )}
           {statsShown && shown.reference !== null && (

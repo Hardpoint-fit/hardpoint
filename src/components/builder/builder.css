@@ -540,6 +540,13 @@
   gap: var(--spacing-xs);
 }
 
+.inspector__special {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: var(--spacing-sm);
+}
+
 .inspector__name {
   font-size: var(--font-size-normal);
   letter-spacing: 0.25em;

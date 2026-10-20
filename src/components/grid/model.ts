@@ -16,6 +16,7 @@ import type {
 import { itemIcon } from "#/lib/art/item-icon";
 import { catalogFacts, type CatalogFacts } from "#/lib/engine/item-facts";
 import { applySlotOverrides, modifiedCells, occupiedCells, placeFootprint, type Cell, type Footprint, type PlacedPort } from "./geometry";
+import { rollSpecial, specialLookups, specialName, type RollSpecial, type SpecialLookups } from "./specials";
 
 /** The game's tier palettes (--tier-<key>-surface-* tokens). */
 export type TierKey = "standard" | "augmented" | "prototype" | "artifact" | "regalia" | "harmonic" | "heretical";
@@ -49,7 +50,10 @@ export type GridModule = {
   item: OpenItem;
   /** False when the current catalog has no such item (removed by a patch): drawn as UNKNOWN ITEM. */
   known: boolean;
+  /** The game's name for the rolled item: a regalia piece's or an artifact's own, else the module's. */
   name: string;
+  /** The module's own name. */
+  baseName: string;
   category: string | null;
   slotType: string | null;
   moduleType: string | null;
@@ -70,6 +74,8 @@ export type GridModule = {
   /** Conduit links the engine found for this module, or null when it reported none. */
   conduitConnections: number | null;
   regalia: { set: string; setName: string; fittedCount: number; pieces: number } | null;
+  /** The regalia piece, artifact, harmonic set or heretical special the roll names (specials.ts); null for none. */
+  special: RollSpecial | null;
   /** The image the game shows for this roll (art/item-icon.ts), or null for the no-art placeholder. */
   icon: string | null;
   /** The catalog's description: plain text. */
@@ -109,6 +115,8 @@ export type GridCatalog = {
   artifacts?: ReadonlyMap<string, { name: string; art: ArtKeys | null }>;
   /** Cipher def to its name, which finds its icon. */
   ciphers?: ReadonlyMap<string, { name: string; art: ArtKeys | null }>;
+  /** What a regalia piece, artifact, harmonic set or heretical special adds; without them a module has no special. */
+  specials?: SpecialLookups;
 };
 
 export const UNKNOWN_ITEM_NAME = "UNKNOWN ITEM";
@@ -127,12 +135,18 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
     const group = evaluation?.regaliaSets?.find((set) => set.moduleIndices.includes(index));
     const setInfo = group ? catalog.regaliaSets?.get(group.set) : undefined;
     const artifactArt = roll.artifact ? (catalog.artifacts?.get(roll.artifact)?.art ?? null) : null;
+    const linked = group
+      ? { linkedCount: group.fittedCount, linkedPieces: group.moduleIndices.flatMap((each) => fit.modules[each]?.item.roll.regalia ?? []) }
+      : null;
+    const special = catalog.specials ? rollSpecial(catalog.specials, roll, linked) : null;
+    const baseName = item?.name ?? UNKNOWN_ITEM_NAME;
     return {
       index,
       def: module.item.def,
       item: module.item,
       known: item !== undefined,
-      name: item?.name ?? UNKNOWN_ITEM_NAME,
+      name: item ? specialName(special, baseName) : baseName,
+      baseName,
       category: item?.category ?? null,
       slotType: item?.slotType ?? null,
       moduleType: roll.moduleTypeOverride ?? item?.moduleType ?? null,
@@ -151,6 +165,7 @@ export function buildGridModel(catalog: GridCatalog, fit: OpenFit, evaluation: G
       regalia: group
         ? { set: group.set, setName: setInfo?.name ?? "REGALIA SET", fittedCount: group.fittedCount, pieces: setInfo?.pieces ?? group.fittedCount }
         : null,
+      special,
       icon: item ? itemIcon({ art: item.art, category: item.category }, roll, artifactArt) : null,
       description: item?.description ?? null,
       facts: item ? catalogFacts(item) : { facts: [], rarity: roll.rarity },
@@ -179,16 +194,12 @@ export function moduleCells(module: GridModule): Cell[] {
 }
 
 /** The catalog lookups the model needs, built once per catalog. */
-export function catalogLookups(catalog: {
-  items: readonly CatalogItem[];
-  regaliaSets: readonly { def: string; name: string; pieces: readonly string[] }[];
-  artifacts: readonly { def: string; name: string; art: ArtKeys | null }[];
-  ciphers: readonly { def: string; name: string; art: ArtKeys | null }[];
-}): Omit<GridCatalog, "hull"> & { items: Map<string, CatalogItem> } {
+export function catalogLookups(catalog: Parameters<typeof specialLookups>[0]): Omit<GridCatalog, "hull"> & { items: Map<string, CatalogItem> } {
   return {
     items: new Map(catalog.items.map((item) => [item.def, item])),
     regaliaSets: new Map(catalog.regaliaSets.map((set) => [set.def, { name: set.name, pieces: set.pieces.length }])),
     artifacts: new Map(catalog.artifacts.map((artifact) => [artifact.def, artifact])),
     ciphers: new Map(catalog.ciphers.map((cipher) => [cipher.def, cipher])),
+    specials: specialLookups(catalog),
   };
 }

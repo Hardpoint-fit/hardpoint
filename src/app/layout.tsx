@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import { SiteHeader } from "#/components/site-header";
+import { TipPlacement } from "#/components/tip-placement";
 import { PublicConfigProvider } from "#/lib/public-config";
 import { getConfig, getPublicConfig } from "#/lib/site-config";
 import "./game-tokens.generated.css";
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <PublicConfigProvider config={config}>
           <SiteHeader />
           {children}
+          <TipPlacement />
         </PublicConfigProvider>
       </body>
     </html>

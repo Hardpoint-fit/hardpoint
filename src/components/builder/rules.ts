@@ -24,6 +24,7 @@ import type {
   OpenRoll,
 } from "#/lib/engine/types";
 import { isIntegerValued, statWords, type StatWords } from "#/lib/fits/stat-format";
+import { specialLookups, type SpecialLookups } from "#/components/grid/specials";
 
 /** FP's 1.0 as a raw value (16 fractional bits). */
 export const FP_ONE = 65536;
@@ -49,6 +50,8 @@ export type BuilderCatalog = {
   placement: Map<string, CatalogSlotPlacement> | null;
   /** How the game words each stat (stat-format.ts). */
   words: StatWords;
+  /** What regalia pieces, artifacts, harmonic sets and heretical specials add, as the grid model reads it. */
+  specials: SpecialLookups;
 };
 
 const byDef = <T extends { def: string }>(list: readonly T[]) => new Map(list.map((entry) => [entry.def, entry]));
@@ -73,6 +76,7 @@ export function indexCatalog(catalog: Catalog): BuilderCatalog {
     regaliaSets: new Map(catalog.regaliaSets.map((set) => [set.def, { name: set.name, pieces: set.pieces.length }])),
     placement: placementRules(catalog),
     words: statWords(catalog.stats),
+    specials: specialLookups(catalog),
   };
 }
 

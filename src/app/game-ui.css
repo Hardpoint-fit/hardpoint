@@ -60,6 +60,13 @@
   isolation: isolate;
 }
 
+/* Each panel is its own stacking context, so a later panel would paint over a tooltip that runs out of an
+   earlier one: lift the panel whose tooltip is open. */
+.panel:has(.tip-anchor:hover),
+.panel:has(.tip-anchor:focus-within) {
+  z-index: 10;
+}
+
 .panel::before,
 .panel::after {
   position: absolute;
@@ -402,6 +409,91 @@ a.chip:hover {
 .plate__row b {
   font-weight: 400;
   white-space: nowrap;
+}
+
+/* A tooltip takes its content's width up to the cap, not the width of the module it hangs off (which would
+   squeeze it to its narrowest and wrap every label). */
+.tip > .plate {
+  width: max-content;
+  max-width: 320px;
+}
+
+/* ---- A rolled item's special: regalia set, artifact ability, harmonic set (module-special.tsx) ------ */
+
+.special__head {
+  margin-top: 2px;
+}
+
+.special__piece {
+  opacity: 0.4;
+}
+
+.special__piece--on {
+  opacity: 1;
+}
+
+/* A set bonus: the linked count it needs in a badge, then its lines. Dim until that many are linked. */
+.bonus-tier {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  opacity: 0.45;
+}
+
+.bonus-tier--on {
+  opacity: 1;
+}
+
+.bonus-tier__count {
+  flex: none;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--tooltip-badge-border);
+  background: var(--tooltip-badge-bg);
+  color: rgba(255, 255, 255, 0.55);
+  font-size: var(--font-size-tiny);
+  line-height: 12px;
+  text-align: center;
+}
+
+.bonus-tier--on .bonus-tier__count {
+  border-color: var(--tier-regalia-base);
+  color: var(--tier-regalia-base);
+}
+
+.bonus-tier__lines {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bonus-tier__effect {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: var(--font-size-tiny);
+  letter-spacing: 0.08em;
+  line-height: 1.45;
+}
+
+.bonus-tier--on .bonus-tier__effect {
+  color: var(--tier-regalia-base);
+}
+
+.set-bonuses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.set-bonuses__set {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .plate__tier-badge {

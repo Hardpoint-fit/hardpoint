@@ -5,6 +5,7 @@ import { formatStatValue, statLabel, statTone, type StatWords } from "#/lib/fits
 import { ItemDescription, ItemIcon } from "#/components/item-text";
 import { TooltipFacts } from "#/components/rolled-facts";
 import type { GridModule } from "./model";
+import { SpecialDetails } from "./module-special";
 
 /** An FP value as an open fit stores it: the raw 48.16 fixed-point integer, as a decimal string. */
 export function fromRawFp(raw: string): number {
@@ -16,6 +17,7 @@ const RARITY_NAMES: Record<string, string> = { Normal: "STANDARD" };
 export function ModuleTooltip({ module, words }: { module: GridModule; words: StatWords }) {
   const quality = module.quality.toLowerCase();
   const filledPorts = module.ports.filter((port) => port.cipher !== null).length;
+  const shipWide = new Set(module.special && "shipWide" in module.special ? module.special.shipWide : []);
   return (
     <div className="plate">
       <div className="plate__head">
@@ -33,6 +35,7 @@ export function ModuleTooltip({ module, words }: { module: GridModule; words: St
               <span className="tone-negative">NOT IN THE CURRENT BUILD</span>
             )}
           </div>
+          {module.name !== module.baseName && <div className="plate__sub tone-neutral">{module.baseName}</div>}
         </div>
       </div>
       <ItemDescription text={module.description} />
@@ -47,18 +50,10 @@ export function ModuleTooltip({ module, words }: { module: GridModule; words: St
           ))}
         </>
       )}
-      {(module.conduitConnections !== null || module.regalia || module.ports.length > 0 || module.ammo) && <div className="plate__divider" />}
+      {(module.conduitConnections !== null || module.ports.length > 0 || module.ammo) && <div className="plate__divider" />}
       {module.conduitConnections !== null && (
         <div className="plate__row">
           CONDUIT LINKS <b>x{module.conduitConnections}</b>
-        </div>
-      )}
-      {module.regalia && (
-        <div className="plate__row">
-          <span className="accent-regalia">{module.regalia.setName.toUpperCase()}</span>
-          <b className="accent-regalia">
-            {module.regalia.fittedCount}/{module.regalia.pieces}
-          </b>
         </div>
       )}
       {module.ports.length > 0 && (
@@ -85,6 +80,7 @@ export function ModuleTooltip({ module, words }: { module: GridModule; words: St
                 <span>{statLabel(words, modifier.stat)}</span>
                 <b className={`tone-${statTone(words, modifier.stat, change).toLowerCase()}`}>
                   {formatStatValue(words, modifier.stat, modifier.operation, change)}
+                  {shipWide.has(modifier.stat) && <span className="plate__tier-badge">SHIP</span>}
                   {modifier.tier > 0 && <span className="plate__tier-badge">T{modifier.tier}</span>}
                 </b>
               </div>
@@ -92,6 +88,7 @@ export function ModuleTooltip({ module, words }: { module: GridModule; words: St
           })}
         </>
       )}
+      {module.special && <SpecialDetails special={module.special} words={words} />}
     </div>
   );
 }

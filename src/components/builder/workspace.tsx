@@ -19,6 +19,8 @@ import { CopyFitString } from "#/components/fit/copy-fit-string";
 import type { BuilderStart } from "#/lib/site/loaders";
 import { AffinityPanel } from "./affinity-panel";
 import { autosave, bootDraft, browserStorage, clearDraft, draftSlot } from "./draft-storage";
+import { SetBonusList } from "#/components/grid/module-special";
+import { setSummaries, type SetSummary } from "#/components/grid/specials";
 import { GridModPanel, REVERT, type GridModChoice, type GridTool } from "./grid-mod-panel";
 import { createGridModsFetcher, currentAnswer, targetsOf, type GridModsFetcher, type GridModsState } from "./grid-mods";
 import { FitDetails, ImportFit, type BuilderAuth, type Navigate, type SavedState } from "./fit-details";
@@ -118,7 +120,7 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
   const model = useMemo(
     () =>
       fit && hull
-        ? buildGridModel({ hull, items: cat.items, regaliaSets: cat.regaliaSets, artifacts: cat.artifacts, ciphers: cat.ciphers }, fit, result ? { issues: result.issues, conduits: result.conduits, regaliaSets: result.regaliaSets } : null)
+        ? buildGridModel({ hull, items: cat.items, regaliaSets: cat.regaliaSets, artifacts: cat.artifacts, ciphers: cat.ciphers, specials: cat.specials }, fit, result ? { issues: result.issues, conduits: result.conduits, regaliaSets: result.regaliaSets } : null)
         : null,
     [fit, hull, cat, result],
   );
@@ -509,8 +511,15 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
         </div>
 
         <div className="builder-layout__side">
-          <Inspector cat={cat} fit={fit} target={state.selected} dispatch={dispatch} roller={engine} />
-          <StatsPanel cat={cat} evaluation={evaluation} result={result} moduleName={moduleName} />
+          <Inspector
+            cat={cat}
+            fit={fit}
+            target={state.selected}
+            dispatch={dispatch}
+            roller={engine}
+            special={typeof state.selected === "number" ? (model?.modules[state.selected]?.special ?? null) : null}
+          />
+          <StatsPanel cat={cat} evaluation={evaluation} result={result} moduleName={moduleName} sets={setSummaries(model?.modules.map((module) => module.special) ?? [])} />
           <FitDetails
             fit={fit}
             meta={state.meta}
@@ -567,11 +576,14 @@ function StatsPanel({
   evaluation,
   result,
   moduleName,
+  sets,
 }: {
   cat: BuilderCatalog;
   evaluation: LiveEvaluation;
   result: EvaluationResponse | null;
   moduleName: (index: number) => string | null;
+  /** The fit's regalia sets with their bonuses, from the grid model. */
+  sets: readonly SetSummary[];
 }) {
   const shown = result ?? evaluation.result?.response ?? null;
   const stale = shown !== null && result === null;
@@ -601,21 +613,7 @@ function StatsPanel({
           {shown.valid ? null : <p className="note">AN INVALID FIT HAS NO STATS OR RATING. FIX THE ISSUES ON THE GRID.</p>}
           {shown.valid && Array.isArray(shown.sections) && shown.sections.length > 0 && <HullSpecs sections={shown.sections} />}
           {shown.valid && <div className="stats-panel__heading">MODIFIERS</div>}
-          {shown.regaliaSets.length > 0 && (
-            <ul className="set-list" aria-label="Regalia sets">
-              {shown.regaliaSets.map((group) => {
-                const set = cat.regaliaSets.get(group.set);
-                return (
-                  <li key={group.set} className="plate__row">
-                    <span className="accent-regalia">{(set?.name ?? "REGALIA SET").toUpperCase()}</span>
-                    <b className="accent-regalia">
-                      {group.fittedCount}/{set?.pieces ?? group.fittedCount}
-                    </b>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          {sets.length > 0 && <SetBonusList sets={sets} />}
           {shown.conduits.length > 0 && (
             <ul className="set-list" aria-label="Conduit links">
               {shown.conduits.map((link) => (

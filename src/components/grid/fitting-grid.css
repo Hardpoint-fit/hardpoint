@@ -347,6 +347,12 @@
   left: auto;
 }
 
+/* A click focuses the module to select it; its tooltip then shows only while hovered, so it doesn't stay
+   over the inspector. Keyboard focus still shows it. */
+.fg-module:focus:not(:focus-visible):not(:hover) > .tip {
+  display: none;
+}
+
 .fg-module:hover,
 .fg-module:focus-visible,
 .fg-module:focus-within {

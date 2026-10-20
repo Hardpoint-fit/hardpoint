@@ -43,6 +43,8 @@ import {
 } from "./rules";
 import { breachTiers, canRandomize, defaultBreachTier, randomize } from "./randomize";
 import type { BuilderAction, RollEdit, Target } from "./state";
+import { SpecialDetails } from "#/components/grid/module-special";
+import { specialName, type RollSpecial } from "#/components/grid/specials";
 
 /** A modifier's raw FP as the game shows it: a Multiply as the change from 1. */
 export function modifierText(words: StatWords, stat: string, operation: string, raw: number): { text: string; tone: string } {
@@ -460,11 +462,14 @@ export function Inspector({
   target,
   dispatch,
   roller,
+  special = null,
 }: {
   cat: BuilderCatalog;
   fit: OpenFit;
   target: Target | null;
   dispatch: Dispatch<BuilderAction>;
+  /** The selected module's regalia piece, artifact, harmonic set or heretical special, as the grid model has it. */
+  special?: RollSpecial | null;
   /** The engine's roller for RANDOMIZE ROLL and the dice; without one the inspector offers none. */
   roller?: Pick<EngineClient, "roll">;
 }) {
@@ -535,8 +540,9 @@ export function Inspector({
       <div className="inspector__title">
         <ItemIcon src={icon} size={48} />
         <div>
-          <div className={`inspector__name accent-${tier}`}>{subject.name}</div>
+          <div className={`inspector__name accent-${tier}`}>{specialName(special, subject.name)}</div>
           <div className="note">
+            {special && specialName(special, subject.name) !== subject.name ? `${subject.name} · ` : ""}
             {catalogItem ? `${enumWords(catalogItem.slotType)} · ${catalogItem.moduleType === "None" ? "NO TYPE" : enumWords(catalogItem.moduleType)}` : "HULL"}
             {roll.moduleTypeOverride ? ` · THOTH ${enumWords(roll.moduleTypeOverride)}` : ""}
           </div>
@@ -604,6 +610,11 @@ export function Inspector({
         )}
         {roll.rarity === "Harmonic" && (
           <ReferenceSelect label="HARMONIC SET" value={roll.harmonicSet} options={harmonicOptions(cat, subject, roll)} onChange={(def) => edit({ kind: "harmonicSet", def })} />
+        )}
+        {special && (
+          <div className="inspector__special">
+            <SpecialDetails special={special} words={cat.words} />
+          </div>
         )}
       </Section>
 
