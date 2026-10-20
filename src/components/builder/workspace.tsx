@@ -254,6 +254,9 @@ export function Workspace({ cat, start, auth, navigate }: { cat: BuilderCatalog;
 
   const onPalettePointer = (def: string, event: ReactPointerEvent<HTMLElement>) => {
     event.preventDefault();
+    // preventDefault also keeps focus where it was, often the search field, which would then take R and
+    // the other keys meant for the module in hand.
+    if (isTyping(document.activeElement)) (document.activeElement as HTMLElement).blur();
     setModifying(false);
     live.current.drag = { mode: "palette" };
     dispatch({ type: "pickUp", def });
