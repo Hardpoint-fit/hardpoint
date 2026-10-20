@@ -20,7 +20,7 @@ PROJECT=citadel-game-data
 WORKSPACE=Martino
 ENVIRONMENT=production
 REGION=us-east4-eqdc4a
-GITHUB_REPO=iloveenergydrinks/hardpoint
+GITHUB_REPO=Hardpoint-fit/hardpoint
 BRANCH=main
 # hardpoint.fit is the canonical name (registered on Namecheap): sign-in completes there, and the site
 # redirects www.hardpoint.fit to it. fits.alpha.thecitadel.com and the Railway domain serve the same site.
