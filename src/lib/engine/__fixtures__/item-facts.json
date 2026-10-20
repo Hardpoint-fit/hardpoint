@@ -4,37 +4,49 @@
    "label": "REPAIR PER VOLLEY",
    "value": "35",
    "unit": "HP",
-   "tone": "Neutral"
+   "tone": "Neutral",
+   "id": "TurretVolleyDamage",
+   "number": 35
   },
   {
    "label": "TRACKING SPEED",
    "value": "28.6",
    "unit": "°/S",
-   "tone": "Neutral"
+   "tone": "Neutral",
+   "id": "TurretTrackingSpeed",
+   "number": 28.647888
   },
   {
    "label": "OPTIMAL RANGE",
    "value": "1.2",
    "unit": "KM",
-   "tone": "Neutral"
+   "tone": "Neutral",
+   "id": "TurretOptimalRange",
+   "number": 1.1808163
   },
   {
    "label": "MAX RANGE",
    "value": "2.6",
    "unit": "KM",
-   "tone": "Neutral"
+   "tone": "Neutral",
+   "id": "TurretMaxRange",
+   "number": 2.63399
   },
   {
    "label": "HEAT GENERATION",
    "value": "6",
    "unit": "GJ/S",
-   "tone": "Neutral"
+   "tone": "Neutral",
+   "id": "HeatGeneration",
+   "number": 6
   },
   {
    "label": "FIRE RATE",
    "value": "1",
    "unit": "S",
-   "tone": "Neutral"
+   "tone": "Neutral",
+   "id": "CycleDuration",
+   "number": 1
   }
  ]
 }

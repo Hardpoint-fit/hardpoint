@@ -1,5 +1,5 @@
 {
- "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "build": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "artifacts": [
   {
    "def": "275107089619583858",
@@ -11,33 +11,135 @@
      "operation": "Multiply",
      "tier": 4,
      "min": "76021",
-     "max": "83886"
+     "max": "83886",
+     "scope": "ShipWide",
+     "row": {
+      "label": "MAX HEAT CAPACITY",
+      "value": "16-28",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "MaxHeatCapacity",
+      "number": null
+     },
+     "minRow": {
+      "label": "MAX HEAT CAPACITY",
+      "value": "+16%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "MaxHeatCapacity",
+      "number": 15.99884
+     },
+     "maxRow": {
+      "label": "MAX HEAT CAPACITY",
+      "value": "+28%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "MaxHeatCapacity",
+      "number": 27.999878
+     }
     },
     {
      "stat": "MaxArmor",
      "operation": "Multiply",
      "tier": 4,
      "min": "93716",
-     "max": "115343"
+     "max": "115343",
+     "scope": "ShipWide",
+     "row": {
+      "label": "ARMOR HP",
+      "value": "43-76",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "ArmorHitPoints",
+      "number": null
+     },
+     "minRow": {
+      "label": "ARMOR HP",
+      "value": "+43%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "ArmorHitPoints",
+      "number": 42.999268
+     },
+     "maxRow": {
+      "label": "ARMOR HP",
+      "value": "+76%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "ArmorHitPoints",
+      "number": 75.99945
+     }
     },
     {
      "stat": "Mass",
      "operation": "Multiply",
      "tier": 4,
      "min": "93716",
-     "max": "115343"
+     "max": "115343",
+     "scope": "ShipWide",
+     "row": {
+      "label": "MASS",
+      "value": "43-76",
+      "unit": "%",
+      "tone": "Negative",
+      "id": "Mass",
+      "number": null
+     },
+     "minRow": {
+      "label": "MASS",
+      "value": "+43%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "Mass",
+      "number": 42.999268
+     },
+     "maxRow": {
+      "label": "MASS",
+      "value": "+76%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "Mass",
+      "number": 75.99945
+     }
     },
     {
      "stat": "SignatureRadius",
      "operation": "Multiply",
      "tier": 4,
      "min": "340787",
-     "max": "504627"
+     "max": "504627",
+     "scope": "ShipWide",
+     "row": {
+      "label": "SIGNATURE RADIUS",
+      "value": "420-670",
+      "unit": "%",
+      "tone": "Negative",
+      "id": "SignatureRadius",
+      "number": null
+     },
+     "minRow": {
+      "label": "SIGNATURE RADIUS",
+      "value": "+420%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "SignatureRadius",
+      "number": 419.9997
+     },
+     "maxRow": {
+      "label": "SIGNATURE RADIUS",
+      "value": "+670%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "SignatureRadius",
+      "number": 669.9997
+     }
     }
    ],
    "scaledStat": null,
    "pointRating": 3850,
    "patinaMax": 0,
+   "targeting": "CasterAnchored",
+   "ability": null,
    "art": null
   },
   {
@@ -50,26 +152,103 @@
      "operation": "Multiply",
      "tier": 4,
      "min": "72089",
-     "max": "76677"
+     "max": "76677",
+     "scope": "Local",
+     "row": {
+      "label": "MISSILE DAMAGE",
+      "value": "10-17",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "GuidedDamageMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "MISSILE DAMAGE",
+      "value": "+10%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "GuidedDamageMultiplier",
+      "number": 9.999084
+     },
+     "maxRow": {
+      "label": "MISSILE DAMAGE",
+      "value": "+17%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "GuidedDamageMultiplier",
+      "number": 16.999817
+     }
     },
     {
      "stat": "MissileRechargeTime",
      "operation": "Multiply",
      "tier": 4,
      "min": "55051",
-     "max": "58983"
+     "max": "58983",
+     "scope": "ShipWide",
+     "row": {
+      "label": "MISSILE RECHARGE TIME",
+      "value": "10-16",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "GuidedRechargeTime",
+      "number": null
+     },
+     "minRow": {
+      "label": "MISSILE RECHARGE TIME",
+      "value": "-16%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "GuidedRechargeTime",
+      "number": -15.99884
+     },
+     "maxRow": {
+      "label": "MISSILE RECHARGE TIME",
+      "value": "-10%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "GuidedRechargeTime",
+      "number": -9.999084
+     }
     },
     {
      "stat": "MissileRange",
      "operation": "Multiply",
      "tier": 4,
      "min": "47186",
-     "max": "55051"
+     "max": "55051",
+     "scope": "Local",
+     "row": {
+      "label": "MISSILE RANGE",
+      "value": "16-28",
+      "unit": "%",
+      "tone": "Negative",
+      "id": "GuidedRange",
+      "number": null
+     },
+     "minRow": {
+      "label": "MISSILE RANGE",
+      "value": "-28%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "GuidedRange",
+      "number": -27.999878
+     },
+     "maxRow": {
+      "label": "MISSILE RANGE",
+      "value": "-16%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "GuidedRange",
+      "number": -15.99884
+     }
     }
    ],
    "scaledStat": null,
    "pointRating": 300,
    "patinaMax": 0,
+   "targeting": "WorldAim",
+   "ability": null,
    "art": null
   },
   {
@@ -82,28 +261,128 @@
      "operation": "Multiply",
      "tier": 4,
      "min": "76021",
-     "max": "83886"
+     "max": "83886",
+     "scope": "ShipWide",
+     "row": {
+      "label": "HEAT DISSIPATION",
+      "value": "16-28",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "HeatDissipation",
+      "number": null
+     },
+     "minRow": {
+      "label": "HEAT DISSIPATION",
+      "value": "+16%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "HeatDissipation",
+      "number": 15.99884
+     },
+     "maxRow": {
+      "label": "HEAT DISSIPATION",
+      "value": "+28%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "HeatDissipation",
+      "number": 27.999878
+     }
     },
     {
      "stat": "TurretRange",
      "operation": "Multiply",
      "tier": 4,
      "min": "77332",
-     "max": "87818"
+     "max": "87818",
+     "scope": "ShipWide",
+     "row": {
+      "label": "TURRET RANGE",
+      "value": "18-34",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretRangeMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "TURRET RANGE",
+      "value": "+18%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretRangeMultiplier",
+      "number": 17.999268
+     },
+     "maxRow": {
+      "label": "TURRET RANGE",
+      "value": "+34%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretRangeMultiplier",
+      "number": 33.999634
+     }
     },
     {
      "stat": "ECMMaxRange",
      "operation": "Multiply",
      "tier": 4,
      "min": "93716",
-     "max": "115343"
+     "max": "115343",
+     "scope": "ShipWide",
+     "row": {
+      "label": "ECM MAX RANGE",
+      "value": "43-76",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "MaxRange",
+      "number": null
+     },
+     "minRow": {
+      "label": "ECM MAX RANGE",
+      "value": "+43%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "MaxRange",
+      "number": 42.999268
+     },
+     "maxRow": {
+      "label": "ECM MAX RANGE",
+      "value": "+76%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "MaxRange",
+      "number": 75.99945
+     }
     },
     {
      "stat": "MaxHull",
      "operation": "Multiply",
      "tier": 4,
      "min": "33424",
-     "max": "45220"
+     "max": "45220",
+     "scope": "ShipWide",
+     "row": {
+      "label": "HULL HP",
+      "value": "31-49",
+      "unit": "%",
+      "tone": "Negative",
+      "id": "HullHitPoints",
+      "number": null
+     },
+     "minRow": {
+      "label": "HULL HP",
+      "value": "-49%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "HullHitPoints",
+      "number": -48.999023
+     },
+     "maxRow": {
+      "label": "HULL HP",
+      "value": "-31%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "HullHitPoints",
+      "number": -30.999756
+     }
     }
    ],
    "scaledStat": {
@@ -113,6 +392,8 @@
    },
    "pointRating": 3250,
    "patinaMax": 0,
+   "targeting": "CasterAnchored",
+   "ability": null,
    "art": null
   },
   {
@@ -125,36 +406,282 @@
      "operation": "Multiply",
      "tier": 4,
      "min": "55051",
-     "max": "60949"
+     "max": "60949",
+     "scope": "Local",
+     "row": {
+      "label": "FIRE RATE",
+      "value": "7-16",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretFireRateMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "FIRE RATE",
+      "value": "+16%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretFireRateMultiplier",
+      "number": 15.99884
+     },
+     "maxRow": {
+      "label": "FIRE RATE",
+      "value": "+7%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretFireRateMultiplier",
+      "number": 6.9992065
+     }
     },
     {
      "stat": "SignatureRadius",
      "operation": "Multiply",
      "tier": 4,
      "min": "51119",
-     "max": "57672"
+     "max": "57672",
+     "scope": "ShipWide",
+     "row": {
+      "label": "SIGNATURE RADIUS",
+      "value": "12-22",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "SignatureRadius",
+      "number": null
+     },
+     "minRow": {
+      "label": "SIGNATURE RADIUS",
+      "value": "-22%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "SignatureRadius",
+      "number": -21.998596
+     },
+     "maxRow": {
+      "label": "SIGNATURE RADIUS",
+      "value": "-12%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "SignatureRadius",
+      "number": -11.999512
+     }
     },
     {
      "stat": "TurretDamage",
      "operation": "Multiply",
      "tier": 4,
      "min": "70778",
-     "max": "77332"
+     "max": "77332",
+     "scope": "Local",
+     "row": {
+      "label": "TURRET DAMAGE",
+      "value": "8-18",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "TURRET DAMAGE",
+      "value": "+8%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": 7.998657
+     },
+     "maxRow": {
+      "label": "TURRET DAMAGE",
+      "value": "+18%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": 17.999268
+     }
     },
     {
      "stat": "HeatDissipationRate",
      "operation": "Multiply",
      "tier": 4,
      "min": "36701",
-     "max": "53740"
+     "max": "53740",
+     "scope": "ShipWide",
+     "row": {
+      "label": "HEAT DISSIPATION",
+      "value": "18-44",
+      "unit": "%",
+      "tone": "Negative",
+      "id": "HeatDissipation",
+      "number": null
+     },
+     "minRow": {
+      "label": "HEAT DISSIPATION",
+      "value": "-44%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "HeatDissipation",
+      "number": -43.99872
+     },
+     "maxRow": {
+      "label": "HEAT DISSIPATION",
+      "value": "-18%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "HeatDissipation",
+      "number": -17.999268
+     }
     }
    ],
    "scaledStat": null,
    "pointRating": 750,
    "patinaMax": 0,
+   "targeting": "SelectedEnemy",
+   "ability": null,
    "art": {
     "base": "/v1/art/53d8c335b7d1b461d99612fa3806c7fa.996793cfe9b54c2f.webp"
    }
+  },
+  {
+   "def": "424160229327184801",
+   "name": "FLOB'S RECKONING",
+   "item": "1424482143259373120",
+   "modifiers": [
+    {
+     "stat": "TurretDamage",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "70123",
+     "max": "75366",
+     "scope": "Local",
+     "row": {
+      "label": "TURRET DAMAGE",
+      "value": "7-15",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "TURRET DAMAGE",
+      "value": "+7%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": 6.9992065
+     },
+     "maxRow": {
+      "label": "TURRET DAMAGE",
+      "value": "+15%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": 14.99939
+     }
+    },
+    {
+     "stat": "TurretRange",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "72089",
+     "max": "78643",
+     "scope": "Local",
+     "row": {
+      "label": "TURRET RANGE",
+      "value": "10-20",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretRangeMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "TURRET RANGE",
+      "value": "+10%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretRangeMultiplier",
+      "number": 9.999084
+     },
+     "maxRow": {
+      "label": "TURRET RANGE",
+      "value": "+20%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretRangeMultiplier",
+      "number": 19.999695
+     }
+    },
+    {
+     "stat": "TurretCritChance",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "80609",
+     "max": "93061",
+     "scope": "Local",
+     "row": {
+      "label": "TURRET CRIT CHANCE",
+      "value": "23-42",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretCritChance",
+      "number": null
+     },
+     "minRow": {
+      "label": "TURRET CRIT CHANCE",
+      "value": "+23%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretCritChance",
+      "number": 22.999573
+     },
+     "maxRow": {
+      "label": "TURRET CRIT CHANCE",
+      "value": "+42%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretCritChance",
+      "number": 41.999817
+     }
+    },
+    {
+     "stat": "HeatDissipationRate",
+     "operation": "Multiply",
+     "tier": 4,
+     "min": "42599",
+     "max": "53740",
+     "scope": "ShipWide",
+     "row": {
+      "label": "HEAT DISSIPATION",
+      "value": "18-35",
+      "unit": "%",
+      "tone": "Negative",
+      "id": "HeatDissipation",
+      "number": null
+     },
+     "minRow": {
+      "label": "HEAT DISSIPATION",
+      "value": "-35%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "HeatDissipation",
+      "number": -34.999084
+     },
+     "maxRow": {
+      "label": "HEAT DISSIPATION",
+      "value": "-18%",
+      "unit": null,
+      "tone": "Negative",
+      "id": "HeatDissipation",
+      "number": -17.999268
+     }
+    }
+   ],
+   "scaledStat": null,
+   "pointRating": 750,
+   "patinaMax": 0,
+   "targeting": "SelectedEnemy",
+   "ability": {
+    "name": "FLOB'S RECKONING",
+    "description": "CHARGES THE BATTERY, THEN GATHERS EVERY LANCE'S SHOT INTO ONE SHELL. IT BURSTS ON THE FIRST SHIP IT STRIKES, ALLIES INCLUDED, OR WHERE ITS REACH RUNS OUT, AND THE BLAST SWEEPS A CONE BEYOND IT. THE RECOIL SHOVES YOUR SHIP BACK. FIRE BEFORE THE FIRE WINDOW EXPIRES."
+   },
+   "art": null
   }
  ]
 }

@@ -1,5 +1,5 @@
 {
- "buildSha": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "buildSha": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "valid": true,
  "issues": [],
  "conduits": [
@@ -154,15 +154,15 @@
    "stat": "SensorRange",
    "stage": "Fitted",
    "operation": "Multiply",
-   "total": 0.17999267578125,
+   "total": 0.1199951171875,
    "sources": [
     {
      "kind": "Module",
      "asset": "1278500398224355069",
      "affinityType": "None",
-     "raw": 0.17999267578125,
+     "raw": 0.1199951171875,
      "ratio": 1,
-     "effective": 0.17999267578125,
+     "effective": 0.1199951171875,
      "isStackingExempt": false
     }
    ]
@@ -256,15 +256,15 @@
    "stat": "MaxHeat",
    "stage": "Fitted",
    "operation": "Multiply",
-   "total": 0.1975860595703125,
+   "total": 0.2076263427734375,
    "sources": [
     {
      "kind": "Module",
      "asset": "1276464883135659217",
      "affinityType": "None",
-     "raw": 0.149993896484375,
+     "raw": 0.160003662109375,
      "ratio": 0.9579925537109375,
-     "effective": 0.1436920166015625,
+     "effective": 0.153289794921875,
      "isStackingExempt": false
     },
     {
@@ -436,15 +436,15 @@
    "stat": "CargoCapacity",
    "stage": "Fitted",
    "operation": "Add",
-   "total": -6,
+   "total": -4,
    "sources": [
     {
      "kind": "Module",
      "asset": "1276464883135659217",
      "affinityType": "None",
-     "raw": -4,
+     "raw": -2,
      "ratio": 1,
-     "effective": -4,
+     "effective": -2,
      "isStackingExempt": false
     },
     {
@@ -478,7 +478,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "EFFECTIVE HEALTH",
-      "text": "COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE."
+      "text": "COMBINED SURVIVABILITY OF ARMOR AND HULL, WEIGHTED BY RESISTANCE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -494,7 +496,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX ARMOR",
-      "text": "TOTAL ARMOR HIT POINTS WHEN FULLY REPAIRED. ARMOR ABSORBS DAMAGE BEFORE HULL HP IS TOUCHED."
+      "text": "TOTAL ARMOR HIT POINTS WHEN FULLY REPAIRED. ARMOR ABSORBS DAMAGE BEFORE HULL HP IS TOUCHED.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -510,7 +514,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX HULL",
-      "text": "STRUCTURAL INTEGRITY OF THE SHIP. WHEN HULL REACHES ZERO, THE SHIP IS DESTROYED."
+      "text": "STRUCTURAL INTEGRITY OF THE SHIP. WHEN HULL REACHES ZERO, THE SHIP IS DESTROYED.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -526,7 +532,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "ARMOR REPAIR",
-      "text": "RATE AT WHICH ARMOR IS RESTORED PER SECOND DURING COMBAT."
+      "text": "RATE AT WHICH ARMOR IS RESTORED PER SECOND DURING COMBAT.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -542,7 +550,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SUSTAIN",
-      "text": "COMBINED DEFENSIVE RECOVERY PER SECOND FROM ARMOR REPAIR AND BARRIER REGENERATION."
+      "text": "COMBINED DEFENSIVE RECOVERY PER SECOND FROM ARMOR REPAIR AND BARRIER REGENERATION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -562,7 +572,9 @@
      "secondaryTone": "Negative",
      "help": {
       "title": "KINETIC RESIST",
-      "text": "PERCENT OF INCOMING KINETIC DAMAGE PREVENTED BY ARMOR."
+      "text": "PERCENT OF INCOMING KINETIC DAMAGE PREVENTED BY ARMOR.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -578,7 +590,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "EXPLOSIVE RESIST",
-      "text": "PERCENT OF INCOMING EXPLOSIVE DAMAGE PREVENTED BY ARMOR."
+      "text": "PERCENT OF INCOMING EXPLOSIVE DAMAGE PREVENTED BY ARMOR.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -594,7 +608,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "ACID RESIST",
-      "text": "PERCENT OF INCOMING ACID DAMAGE PREVENTED BY ARMOR."
+      "text": "PERCENT OF INCOMING ACID DAMAGE PREVENTED BY ARMOR.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -616,7 +632,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "DPS",
-      "text": "TOTAL DAMAGE PER SECOND FROM ALL FITTED OFFENSIVE SOURCES."
+      "text": "DAMAGE PER SECOND FROM ALL FITTED WEAPONS AND DRONES, KEPT UP THROUGH RELOADS. BURST IS THE RATE WHILE EVERY MAGAZINE LASTS.",
+      "statLabel": "BURST DPS",
+      "statValue": "0"
      }
     }
    ]
@@ -629,32 +647,36 @@
      "id": "time-to-scram",
      "label": "TIME TO SCRAM",
      "primary": {
-      "text": "01:04",
+      "text": "01:05",
       "unit": "",
-      "number": 64.02557
+      "number": 64.56235
      },
      "secondary": null,
      "primaryTone": "Neutral",
      "secondaryTone": "Neutral",
      "help": {
       "title": "TIME TO SCRAM",
-      "text": "HOW LONG UNTIL THE REACTOR OVERHEATS AND SHUTS DOWN UNDER FULL LOAD. STABLE MEANS DISSIPATION EXCEEDS GENERATION."
+      "text": "HOW LONG UNTIL THE REACTOR OVERHEATS AND SHUTS DOWN UNDER FULL LOAD. STABLE MEANS DISSIPATION EXCEEDS GENERATION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
      "id": "max-heat",
      "label": "MAX HEAT CAPACITY",
      "primary": {
-      "text": "629",
+      "text": "634",
       "unit": "GJ",
-      "number": 628.73267
+      "number": 634.00385
      },
      "secondary": null,
      "primaryTone": "Neutral",
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX HEAT CAPACITY",
-      "text": "TOTAL HEAT THE REACTOR CAN ABSORB BEFORE TRIGGERING A SCRAM. HIGHER CAPACITY GIVES MORE TIME UNDER HEAVY LOAD."
+      "text": "TOTAL HEAT THE REACTOR CAN ABSORB BEFORE TRIGGERING A SCRAM. HIGHER CAPACITY GIVES MORE TIME UNDER HEAVY LOAD.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -670,7 +692,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "HEAT DISSIPATION",
-      "text": "HEAT VENTED PER SECOND. IF THIS EXCEEDS HEAT GENERATION, THE REACTOR IS THERMALLY STABLE."
+      "text": "HEAT VENTED PER SECOND. IF THIS EXCEEDS HEAT GENERATION, THE REACTOR IS THERMALLY STABLE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -686,7 +710,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "HEAT GENERATION",
-      "text": "HEAT PRODUCED PER SECOND BY FITTED MODULES WHEN ACTIVE. IT MUST STAY BELOW HEAT DISSIPATION TO AVOID EVENTUAL SCRAM."
+      "text": "HEAT PRODUCED PER SECOND BY FITTED MODULES WHEN ACTIVE. IT MUST STAY BELOW HEAT DISSIPATION TO AVOID EVENTUAL SCRAM.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -702,7 +728,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "NET HEAT",
-      "text": "HEAT GENERATED PER SECOND AFTER DISSIPATION UNDER FULL FITTED LOAD."
+      "text": "HEAT GENERATED PER SECOND AFTER DISSIPATION UNDER FULL FITTED LOAD.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -724,7 +752,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MASS",
-      "text": "TOTAL MASS OF HULL PLUS FITTED MODULES. HIGHER MASS REDUCES ACCELERATION AND TURN RATE FOR THE SAME THRUST AND TORQUE."
+      "text": "TOTAL MASS OF HULL PLUS FITTED MODULES. HIGHER MASS REDUCES ACCELERATION AND TURN RATE FOR THE SAME THRUST AND TORQUE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -740,7 +770,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "THRUST",
-      "text": "FORWARD FORCE PRODUCED BY PROPULSION MODULES. COMBINED WITH MASS TO DETERMINE ACCELERATION."
+      "text": "FORWARD FORCE PRODUCED BY PROPULSION MODULES. COMBINED WITH MASS TO DETERMINE ACCELERATION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -756,7 +788,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "ACCELERATION",
-      "text": "HOW QUICKLY THE SHIP REACHES MAX VELOCITY. DERIVED FROM THRUST DIVIDED BY MASS."
+      "text": "HOW QUICKLY THE SHIP REACHES MAX VELOCITY. DERIVED FROM THRUST DIVIDED BY MASS.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -772,7 +806,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "TURN ACCELERATION",
-      "text": "HOW QUICKLY STEERING CHANGES THE SHIP'S TURN RATE."
+      "text": "HOW QUICKLY STEERING CHANGES THE SHIP'S TURN RATE.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -788,7 +824,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "TURN RATE",
-      "text": "THE AUTHORED STEERING ANGULAR-SPEED CAP. COLLISION IMPULSES ARE NOT CLAMPED TO IT."
+      "text": "THE AUTHORED STEERING ANGULAR-SPEED CAP. COLLISION IMPULSES ARE NOT CLAMPED TO IT.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -804,7 +842,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "MAX VELOCITY",
-      "text": "TOP SPEED THE SHIP CAN REACH UNDER NORMAL PROPULSION."
+      "text": "TOP SPEED THE SHIP CAN REACH UNDER NORMAL PROPULSION.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -817,16 +857,18 @@
      "id": "sensor-range",
      "label": "SENSOR RANGE",
      "primary": {
-      "text": "5.29",
+      "text": "5.03",
       "unit": "KM",
-      "number": 5.2947474
+      "number": 5.0255322
      },
      "secondary": null,
      "primaryTone": "Neutral",
      "secondaryTone": "Neutral",
      "help": {
       "title": "SENSOR RANGE",
-      "text": "MAXIMUM DISTANCE AT WHICH A CONTACT WITH CLEAR LINE OF SIGHT IS IDENTIFIED AND CAN BE TARGETED."
+      "text": "MAXIMUM DISTANCE AT WHICH A CONTACT WITH CLEAR LINE OF SIGHT IS IDENTIFIED AND CAN BE TARGETED.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -842,7 +884,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SIGNATURE RADIUS",
-      "text": "YOUR SHIP'S TARGETING PROFILE. LARGER SIGNATURES ARE EASIER FOR HOSTILE TURRETS TO TRACK."
+      "text": "YOUR SHIP'S TARGETING PROFILE. LARGER SIGNATURES ARE EASIER FOR HOSTILE TURRETS TO TRACK.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -864,7 +908,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "BATTERY HARDPOINTS",
-      "text": "NUMBER OF TURRET SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF TURRET SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -880,7 +926,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SUBSYSTEM HARDPOINTS",
-      "text": "NUMBER OF SUBSYSTEM MODULE SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF SUBSYSTEM MODULE SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -896,7 +944,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "PROPULSION HARDPOINTS",
-      "text": "NUMBER OF PROPULSION MODULE SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF PROPULSION MODULE SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -912,7 +962,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "CORE SLOTS",
-      "text": "NUMBER OF CORE MODULE SLOTS AVAILABLE ON THIS HULL."
+      "text": "NUMBER OF CORE MODULE SLOTS AVAILABLE ON THIS HULL.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -928,7 +980,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SAFETY HOLD SLOTS",
-      "text": "NUMBER OF CARGO SLOTS PROTECTED FROM LOSS ON DESTRUCTION."
+      "text": "NUMBER OF CARGO SLOTS PROTECTED FROM LOSS ON DESTRUCTION.",
+      "statLabel": null,
+      "statValue": null
      }
     },
     {
@@ -944,7 +998,9 @@
      "secondaryTone": "Neutral",
      "help": {
       "title": "SALVAGE LUCK",
-      "text": "MULTIPLIER AFFECTING THE QUALITY AND QUANTITY OF SALVAGE FROM WRECKS."
+      "text": "MULTIPLIER AFFECTING THE QUALITY AND QUANTITY OF SALVAGE FROM WRECKS.",
+      "statLabel": null,
+      "statValue": null
      }
     }
    ]
@@ -1157,7 +1213,7 @@
      "stat": "MaxHeat",
      "label": "MAX HEAT CAPACITY",
      "operation": "Multiply",
-     "total": 0.19758606,
+     "total": 0.20762634,
      "sources": [
       {
        "kind": "RegaliaPiece",
@@ -1184,9 +1240,9 @@
        "kind": "Module",
        "asset": "1276464883135659217",
        "affinityType": "None",
-       "raw": 0.1499939,
+       "raw": 0.16000366,
        "ratio": 0.95799255,
-       "effective": 0.14369202,
+       "effective": 0.1532898,
        "isStackingExempt": false,
        "parts": []
       },
@@ -1371,15 +1427,15 @@
      "stat": "SensorRange",
      "label": "SENSOR RANGE",
      "operation": "Multiply",
-     "total": 0.17999268,
+     "total": 0.11999512,
      "sources": [
       {
        "kind": "Module",
        "asset": "1278500398224355069",
        "affinityType": "None",
-       "raw": 0.17999268,
+       "raw": 0.11999512,
        "ratio": 1,
-       "effective": 0.17999268,
+       "effective": 0.11999512,
        "isStackingExempt": false,
        "parts": []
       }
@@ -1459,15 +1515,15 @@
      "stat": "CargoCapacity",
      "label": "CARGO CAPACITY",
      "operation": "Add",
-     "total": -6,
+     "total": -4,
      "sources": [
       {
        "kind": "Module",
        "asset": "1276464883135659217",
        "affinityType": "None",
-       "raw": -4,
+       "raw": -2,
        "ratio": 1,
-       "effective": -4,
+       "effective": -2,
        "isStackingExempt": false,
        "parts": []
       },

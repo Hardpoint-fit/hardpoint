@@ -1,5 +1,5 @@
 {
- "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "build": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "fittingGrid": {
   "cellSize": 48,
   "slotInset": 3,
@@ -579,16 +579,9 @@
    "InvalidRedFill": "rgba(255, 64, 64, 0.16)",
    "InvalidRedBorder": "rgba(255, 64, 64, 0.8)",
    "ApplicationDimVeil": "rgba(0, 0, 0, 0.4)",
-   "OfflineStateVeil": "rgba(0, 0, 0, 0.32)",
    "DimmedCellVeil": "rgba(0, 0, 0, 0.52)",
-   "PreviewActive": "rgba(0, 176, 80, 1)",
-   "PreviewActiveHover": "rgba(24, 206, 104, 1)",
-   "PreviewActiveFill": "rgba(0, 176, 80, 0.18)",
-   "PreviewActiveHoverFill": "rgba(0, 176, 80, 0.24)",
    "ConduitConnected": "rgba(180, 180, 0, 1)",
    "ConduitConnectedHover": "rgba(255, 255, 50, 1)",
-   "ConduitConnectedOfflineHover": "rgba(212, 212, 28, 1)",
-   "RegaliaSelectedGreen": "rgba(0, 176, 80, 1)",
    "RegaliaWeldGreen": "rgba(70, 210, 130, 0.95)",
    "RegaliaWeldGlow": "rgba(150, 255, 200, 1)",
    "CollectReadyGold": "rgba(250, 198, 20, 1)",
@@ -605,8 +598,7 @@
    "EmptyPortSocket": "rgba(24, 26, 30, 1)",
    "EmptyPortSocketDimmed": "rgba(16, 18, 22, 1)",
    "IconDimTint": "rgba(144, 152, 162, 0.58)",
-   "IconApplicationDimTint": "rgba(160, 168, 176, 0.72)",
-   "IconOfflineTint": "rgba(168, 174, 182, 0.68)"
+   "IconApplicationDimTint": "rgba(160, 168, 176, 0.72)"
   }
  }
 }

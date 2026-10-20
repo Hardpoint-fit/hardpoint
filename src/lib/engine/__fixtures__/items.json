@@ -1,5 +1,5 @@
 {
- "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "build": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "items": [
   {
    "def": "1276464883135659217",
@@ -8,33 +8,44 @@
    "facts": [
     {
      "label": "MAX HEAT CAPACITY",
-     "value": "+15%",
+     "value": "+16%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "MaxHeatCapacity",
+     "number": 16.000366
     },
     {
      "label": "HEAT DISSIPATION",
      "value": "+4%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "HeatDissipation",
+     "number": 3.9993286
     },
     {
      "label": "MASS",
      "value": "+3%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "Mass",
+     "number": 2.999878
     },
     {
      "label": "CARGO CAPACITY",
-     "value": "-4",
+     "value": "-2",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "CargoCapacity",
+     "number": -2
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
    "moduleType": "Utility",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -302,26 +313,26 @@
        "tiers": [
         {
          "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
          "min": "66846",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 2,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 3,
-         "min": "68157",
-         "max": "71434",
+         "min": "67502",
+         "max": "69468",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -599,27 +610,36 @@
    "facts": [
     {
      "label": "SENSOR RANGE",
-     "value": "+18%",
+     "value": "+12%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "SensorRange",
+     "number": 11.999512
     },
     {
      "label": "ECM MAX RANGE",
      "value": "+8%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "MaxRange",
+     "number": 7.998657
     },
     {
      "label": "SALVAGE LUCK",
      "value": "+8%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "SalvageLuck",
+     "number": 7.998657
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
    "moduleType": "Utility",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -887,26 +907,26 @@
        "tiers": [
         {
          "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
          "min": "66846",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 2,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 3,
-         "min": "68157",
-         "max": "71434",
+         "min": "67502",
+         "max": "69468",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -1186,43 +1206,61 @@
      "label": "REPAIR PER VOLLEY",
      "value": "35",
      "unit": "HP",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "TurretVolleyDamage",
+     "number": 35
     },
     {
      "label": "TRACKING SPEED",
      "value": "28.6",
      "unit": "°/S",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "TurretTrackingSpeed",
+     "number": 28.647888
     },
     {
      "label": "OPTIMAL RANGE",
      "value": "1.2",
      "unit": "KM",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "TurretOptimalRange",
+     "number": 1.1808163
     },
     {
      "label": "MAX RANGE",
      "value": "2.6",
      "unit": "KM",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "TurretMaxRange",
+     "number": 2.63399
     },
     {
      "label": "HEAT GENERATION",
      "value": "6",
      "unit": "GJ/S",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "HeatGeneration",
+     "number": 6
     },
     {
      "label": "FIRE RATE",
      "value": "1",
      "unit": "S",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "CycleDuration",
+     "number": 1
     }
    ],
    "category": "Module",
    "slotType": "Battery",
    "slotSize": "ONExONE",
    "moduleType": "Utility",
+   "targeting": "SelectedSquadAlly",
+   "autoActivateOnOverheat": false,
+   "ability": {
+    "name": "SURGE",
+    "description": "RAPIDLY CYCLES THE REPAIR BATTERY UNTIL ITS CHARGES ARE EMPTY OR THE SURGE ENDS."
+   },
    "payloads": [
     "ArmorRepairCharge"
    ],
@@ -1477,26 +1515,26 @@
        "tiers": [
         {
          "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
          "min": "66846",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 2,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 3,
-         "min": "68157",
-         "max": "71434",
+         "min": "67502",
+         "max": "69468",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -1773,31 +1811,42 @@
      "label": "HEAT DISSIPATION",
      "value": "+1,200%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "HeatDissipation",
+     "number": 1200
     },
     {
      "label": "CYCLE DURATION",
      "value": "3",
      "unit": "S",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "CycleDuration",
+     "number": 3
     },
     {
      "label": "DEACTIVATION COOLDOWN",
      "value": "30",
      "unit": "S",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "DeactivationCooldown",
+     "number": 30
     },
     {
      "label": "TURN RATE",
      "value": "-50%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "TurnRate",
+     "number": -50
     }
    ],
    "category": "Module",
    "slotType": "Subsystem",
    "slotSize": "ONExTWO",
    "moduleType": "ECM",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": true,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -1927,26 +1976,26 @@
        "tiers": [
         {
          "tier": 1,
-         "min": "66846",
-         "max": "68157",
+         "min": "66191",
+         "max": "67502",
          "allowed": true
         },
         {
          "tier": 2,
+         "min": "66846",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 3,
          "min": "67502",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 3,
-         "min": "68157",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -2284,25 +2333,34 @@
      "label": "ARMOR EXPLOSIVE RESIST",
      "value": "+15%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "ResistanceExplosive",
+     "number": 14.99939
     },
     {
      "label": "ARMOR KINETIC RESIST",
      "value": "+35%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "ResistanceKinetic",
+     "number": 35.00061
     },
     {
      "label": "HEAT GENERATION",
      "value": "9.5",
      "unit": "GJ/S",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "HeatGeneration",
+     "number": 9.5
     }
    ],
    "category": "Module",
    "slotType": "Subsystem",
    "slotSize": "ONExTHREE",
    "moduleType": "Armor",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 1,
@@ -2618,26 +2676,26 @@
        "tiers": [
         {
          "tier": 1,
-         "min": "67502",
-         "max": "69468",
+         "min": "66846",
+         "max": "68157",
          "allowed": true
         },
         {
          "tier": 2,
-         "min": "68157",
-         "max": "70778",
+         "min": "67502",
+         "max": "68812",
          "allowed": true
         },
         {
          "tier": 3,
-         "min": "68812",
-         "max": "72089",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "69468",
-         "max": "74055",
+         "min": "68157",
+         "max": "71434",
          "allowed": true
         }
        ]
@@ -2845,25 +2903,34 @@
      "label": "MAX HEAT CAPACITY",
      "value": "-7%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "MaxHeatCapacity",
+     "number": -7.0007324
     },
     {
      "label": "MASS",
      "value": "-6%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "Mass",
+     "number": -5.999756
     },
     {
      "label": "MAX VELOCITY",
      "value": "+7%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "MaxSpeed",
+     "number": 7.0007324
     }
    ],
    "category": "Module",
    "slotType": "Propulsion",
    "slotSize": "ONExTWO",
    "moduleType": "Propulsion",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -3294,19 +3361,26 @@
      "label": "MISSILE DAMAGE",
      "value": "+10%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "GuidedDamageMultiplier",
+     "number": 10.00061
     },
     {
      "label": "MAX HEAT CAPACITY",
      "value": "-8%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "MaxHeatCapacity",
+     "number": -8.000183
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
    "moduleType": "Missile",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -3469,26 +3543,26 @@
        "tiers": [
         {
          "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
          "min": "66846",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 2,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 3,
-         "min": "68157",
-         "max": "71434",
+         "min": "67502",
+         "max": "69468",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -3768,25 +3842,34 @@
      "label": "ARMOR KINETIC RESIST",
      "value": "-4%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "ResistanceKinetic",
+     "number": -3.9993286
     },
     {
      "label": "MASS",
      "value": "-2%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "Mass",
+     "number": -2.0004272
     },
     {
      "label": "SIGNATURE RADIUS",
      "value": "-18%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "SignatureRadius",
+     "number": -17.999268
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
    "moduleType": "Utility",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -4053,26 +4136,26 @@
        "tiers": [
         {
          "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
          "min": "66846",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 2,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 3,
-         "min": "68157",
-         "max": "71434",
+         "min": "67502",
+         "max": "69468",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -4350,25 +4433,34 @@
      "label": "TRACKING SPEED",
      "value": "+10%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "TurretTrackingSpeed",
+     "number": 9.999084
     },
     {
      "label": "TURRET RANGE",
      "value": "+14%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "TurretRangeMultiplier",
+     "number": 13.999939
     },
     {
      "label": "SIGNATURE RADIUS",
      "value": "+10%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "SignatureRadius",
+     "number": 10.00061
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
    "moduleType": "Turret",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -4756,25 +4848,34 @@
      "label": "ARMOR HP",
      "value": "-6%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "ArmorHitPoints",
+     "number": -5.999756
     },
     {
      "label": "BARRIER HP",
      "value": "+22%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "BarrierHitPoints",
+     "number": 22.000122
     },
     {
      "label": "MASS",
      "value": "-4%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "Mass",
+     "number": -4.0008545
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "ONExTWO",
    "moduleType": "Shield",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -5007,26 +5108,26 @@
        "tiers": [
         {
          "tier": 1,
+         "min": "66191",
+         "max": "67502",
+         "allowed": true
+        },
+        {
+         "tier": 2,
          "min": "66846",
          "max": "68812",
          "allowed": true
         },
         {
-         "tier": 2,
-         "min": "67502",
-         "max": "70123",
-         "allowed": true
-        },
-        {
          "tier": 3,
-         "min": "68157",
-         "max": "71434",
+         "min": "67502",
+         "max": "69468",
          "allowed": true
         },
         {
          "tier": 4,
-         "min": "68812",
-         "max": "72744",
+         "min": "67502",
+         "max": "70123",
          "allowed": true
         }
        ]
@@ -5202,25 +5303,34 @@
      "label": "MAX VELOCITY",
      "value": "+2%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "MaxSpeed",
+     "number": 2.0004272
     },
     {
      "label": "CONNECTED MODULES",
      "value": "0",
      "unit": null,
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "ConduitConnections",
+     "number": null
     },
     {
      "label": "THROUGHPUT",
      "value": "50",
      "unit": "%",
-     "tone": "Neutral"
+     "tone": "Neutral",
+     "id": "ConduitThroughput",
+     "number": 50
     }
    ],
    "category": "Conduit",
    "slotType": "Core",
    "slotSize": "ONExONE",
    "moduleType": "Propulsion",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -5572,19 +5682,26 @@
      "label": "TURN RATE",
      "value": "+8%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "TurnRate",
+     "number": 8.000183
     },
     {
      "label": "MAX VELOCITY",
      "value": "+2%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "MaxSpeed",
+     "number": 2.0004272
     }
    ],
    "category": "Module",
    "slotType": "Propulsion",
    "slotSize": "ONExONE",
    "moduleType": "Propulsion",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,
@@ -6003,31 +6120,42 @@
      "label": "MAX AMMO COUNT",
      "value": "+25%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "TurretMagazineSize",
+     "number": 25
     },
     {
      "label": "MAX HEAT CAPACITY",
      "value": "+15%",
      "unit": null,
-     "tone": "Positive"
+     "tone": "Positive",
+     "id": "MaxHeatCapacity",
+     "number": 14.99939
     },
     {
      "label": "MASS",
      "value": "+2%",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "Mass",
+     "number": 2.0004272
     },
     {
      "label": "CARGO CAPACITY",
      "value": "-2",
      "unit": null,
-     "tone": "Negative"
+     "tone": "Negative",
+     "id": "CargoCapacity",
+     "number": -2
     }
    ],
    "category": "Module",
    "slotType": "Core",
    "slotSize": "L_TRIOMINO",
    "moduleType": "Turret",
+   "targeting": "CasterAnchored",
+   "autoActivateOnOverheat": false,
+   "ability": null,
    "payloads": [],
    "shape": {
     "originRow": 2,

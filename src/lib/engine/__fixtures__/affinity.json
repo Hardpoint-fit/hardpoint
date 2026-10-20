@@ -1,5 +1,5 @@
 {
- "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "build": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "affinity": {
   "maxLevel": 30,
   "maxPointsPerCategory": 20,
@@ -120,8 +120,8 @@
       "choices": [
        {
         "option": 0,
-        "name": "EXTENDED MAGAZINES",
-        "description": "+25% MAX AMMO CAPACITY"
+        "name": "SURGE RELAYS",
+        "description": "TURRET ABILITY COOLDOWNS 30% SHORTER"
        },
        {
         "option": 1,
@@ -196,11 +196,11 @@
      },
      {
       "option": 2,
-      "stat": "MaxHeat",
+      "stat": "MaxHull",
       "operation": "Multiply",
-      "valuePerPoint": "65536",
-      "name": "MAX HEAT",
-      "description": "+1.25% MAX HEAT PER POINT",
+      "valuePerPoint": "98304",
+      "name": "MAX HULL",
+      "description": "+1.5% MAX HULL PER POINT",
       "invertDisplaySign": false
      },
      {
@@ -225,8 +225,8 @@
        },
        {
         "option": 1,
-        "name": "INNER KEEP",
-        "description": "+50% MAX HULL"
+        "name": "THERMAL FLOW",
+        "description": "BARRIERS VENT 1 HEAT PER 10 DAMAGE THEY ABSORB"
        }
       ]
      },
@@ -236,8 +236,8 @@
       "choices": [
        {
         "option": 0,
-        "name": "THERMAL FLOW",
-        "description": "BARRIERS VENT 1 HEAT PER 10 DAMAGE THEY ABSORB"
+        "name": "INNER KEEP",
+        "description": "+50% MAX HULL"
        }
       ]
      },
@@ -259,7 +259,7 @@
        {
         "option": 0,
         "name": "HELLFIRE BARRIER",
-        "description": "DESTROYED BARRIERS DETONATE OUT TO 20X THEIR RADIUS FOR DAMAGE EQUAL TO HALF THEIR MAX HP"
+        "description": "DESTROYED BARRIERS DETONATE OUT TO 6X THEIR RADIUS FOR EXPLOSIVE DAMAGE OF HALF THEIR MAX HP, FALLING TO A QUARTER AT FULL REACH"
        },
        {
         "option": 1,
@@ -364,7 +364,7 @@
        {
         "option": 1,
         "name": "DEAD ANGLE",
-        "description": "+10% TURRET CRIT CHANCE AND -5% PENETRATION COOLDOWN PER SECOND OF DRIFTING, UP TO 10 STACKS. RESETS 5S AFTER YOU STOP DRIFTING"
+        "description": "+10% TURRET CRIT CHANCE PER SECOND OF DRIFTING, UP TO +100%. RESETS 5S AFTER YOU STOP DRIFTING"
        }
       ]
      }
@@ -437,7 +437,7 @@
        {
         "option": 0,
         "name": "SWARM DISCIPLINE",
-        "description": "BELOW 60% HEAT, DRONE OUTPUT SCALES UP TO +50%"
+        "description": "BELOW 60% HEAT, DRONE OUTPUT SCALES UP TO +20%"
        }
       ]
      },
@@ -459,12 +459,12 @@
        {
         "option": 0,
         "name": "TITHE PROTOCOL",
-        "description": "PASSIVE ARMOR REGEN: 5/SEC. RISES TO 20/SEC WITH DRONE DEPLOYED. 2X DRONE SPEED."
+        "description": "+1 ARMOR/SEC PER USED BANDWIDTH. +2% CARGO DRONE REPAIR SPEED PER UNUSED BANDWIDTH."
        },
        {
         "option": 1,
         "name": "BROOD LORD",
-        "description": "+3 DRONE BANDWIDTH; +25% DRONE ENDURANCE; SIGNATURE RADIUS +50% WHILE DRONES ARE DEPLOYED"
+        "description": "+3 DRONE BANDWIDTH. +1% DRONE ENDURANCE AND SIGNATURE RADIUS PER USED BANDWIDTH."
        }
       ]
      }
@@ -715,8 +715,8 @@
       "stat": "MaxRepairAmount",
       "operation": "Multiply",
       "valuePerPoint": "65536",
-      "name": "REPAIR AMOUNT",
-      "description": "+1% MAX REPAIR AMOUNT PER POINT",
+      "name": "ARMOR REPAIR",
+      "description": "+1% ARMOR REPAIR PER POINT",
       "invertDisplaySign": false
      },
      {
@@ -753,7 +753,7 @@
        {
         "option": 0,
         "name": "DAMAGE CONTROL",
-        "description": "REPAIR AMOUNT SCALES UP TO +50% AS YOUR ARMOR DROPS"
+        "description": "ARMOR REPAIR SCALES UP TO +50% AS YOUR ARMOR DROPS"
        }
       ]
      },
@@ -775,7 +775,7 @@
        {
         "option": 0,
         "name": "IMPACT THRESHOLD",
-        "description": "PER-HIT DAMAGE CAPPED AT 1.5% OF MAX ARMOR"
+        "description": "DAMAGE OVER 1.5% OF MAX ARMOR IS TAKEN OVER 7 SECONDS; 10% LESS DAMAGE TAKEN FROM ALL SOURCES"
        },
        {
         "option": 1,

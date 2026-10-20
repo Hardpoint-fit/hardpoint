@@ -158,12 +158,21 @@ export type SpecRow = {
 /** `text` then `unit` is what the game shows; `number` is the shown number in that unit, null for a word (STABLE, ∞). */
 export type SpecValue = { text: string; unit: string; number: number | null };
 
-export type SpecHelp = { title: string; text: string };
+/** `statLabel` and `statValue` name the stat the help is about, when it is one. An older engine sends neither. */
+export type SpecHelp = { title: string; text: string; statLabel?: string | null; statValue?: string | null };
 
 // ---- Item facts (ItemFacts.cs) -------------------------------------------------------------------
 
 /** A line of the game's item tooltip facts: `value` then `unit`, toned "Neutral", "Positive" or "Negative". */
-export type FactRow = { label: string; value: string | null; unit: string | null; tone: string };
+export type FactRow = {
+  label: string;
+  value: string | null;
+  unit: string | null;
+  tone: string;
+  /** The stat the line shows, and its number (null for a word). An older engine sends neither. */
+  id?: string;
+  number?: number | null;
+};
 
 // ---- Request and response bodies ---------------------------------------------------------------
 
@@ -304,6 +313,10 @@ export type CatalogHull = {
   slots: string[];
   roll: CatalogRoll;
   art: ArtKeys | null;
+  /** An older engine sends none of these three. `model` is a /v1/art URL of the hull's 3D model. */
+  baseCargoCapacity?: number;
+  safetyHoldSlots?: number;
+  model?: string | null;
 };
 
 export type CatalogItem = {
@@ -322,9 +335,14 @@ export type CatalogItem = {
   portRules: CatalogPortRules;
   roll: CatalogRoll;
   art: ArtKeys | null;
+  /** How its ability aims, the ability itself (null for a passive module) and whether it fires on overheat. An older engine sends none. */
+  targeting?: string;
+  ability?: CatalogAbility | null;
+  autoActivateOnOverheat?: boolean;
 };
 
-export type CatalogRegaliaSet = { def: string; name: string; pieces: string[] };
+/** `bonuses`, lowest piece count first, is what the set adds as more of it is linked. An older engine sends none. */
+export type CatalogRegaliaSet = { def: string; name: string; pieces: string[]; bonuses?: CatalogSetBonus[] };
 
 /** The rotation-0 footprint in the 5x5 shape grid ports are anchored in. */
 export type CatalogShape = { originRow: number; originCol: number; cells: CatalogCell[] };
@@ -400,7 +418,14 @@ export type CatalogArtifact = {
   patinaMax: number;
   /** The artifact's own icon, shown for an identified artifact; only artifacts whose definition authors one have it. */
   art: ArtKeys | null;
+  /** How its ability aims ("SelectedEnemy", "WorldAim", "CasterAnchored"). An older engine sends none. */
+  targeting?: string;
+  /** The ability the artifact grants, in the game's words; null for most. An older engine sends none. */
+  ability?: CatalogAbility | null;
 };
+
+/** An active ability in the game's words. */
+export type CatalogAbility = { name: string; description: string };
 
 export type CatalogRegalia = {
   def: string;
@@ -409,9 +434,44 @@ export type CatalogRegalia = {
   set: string | null;
   modifiers: CatalogTemplateLine[];
   scaledStat: CatalogScaledStatRange | null;
+  /** The piece's own bonus once linked to others of its set. An older engine sends none. */
+  linkedBonuses?: CatalogSetBonus[];
 };
 
-export type CatalogTemplateLine = { stat: string; operation: string; tier: number; min: string; max: string };
+/**
+ * A template's modifier line. `scope` is "Local" (the module itself) or "ShipWide"; `row` words its rolled
+ * range, `minRow` and `maxRow` its ends, as the item tooltip does. An older engine sends none of the four.
+ */
+export type CatalogTemplateLine = {
+  stat: string;
+  operation: string;
+  tier: number;
+  min: string;
+  max: string;
+  scope?: string;
+  row?: CatalogStatRow;
+  minRow?: CatalogStatRow;
+  maxRow?: CatalogStatRow;
+};
+
+/** A stat line as the game words it: `value` carries its sign and, for a percentage, its "%". */
+export type CatalogStatRow = { label: string; value: string; unit: string | null; tone: string; id: string; number: number | null };
+
+/** What a regalia set, or a piece of one, adds once `pieces` of the set are linked. */
+export type CatalogSetBonus = { pieces: number; modifiers: CatalogSetBonusLine[]; effects: CatalogSetEffect[] };
+
+export type CatalogSetBonusLine = { stat: string; operation: string; value: string; row: CatalogStatRow };
+
+/** A triggered effect; `displayText` is the game's line, with its chance when that is below 100%. */
+export type CatalogSetEffect = {
+  kind: string;
+  rule: string;
+  text: string;
+  chance: string;
+  strength: string | null;
+  displayText: string;
+  chanceNumber: number;
+};
 
 export type CatalogScaledStatRange = { rule: string; min: string; max: string };
 

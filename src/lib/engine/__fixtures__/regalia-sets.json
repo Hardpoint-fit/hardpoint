@@ -1,5 +1,5 @@
 {
- "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "build": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "regaliaSets": [
   {
    "def": "271759098196484334",
@@ -9,6 +9,88 @@
     "359734331002714082",
     "376835473569659020",
     "519416144862481557"
+   ],
+   "bonuses": [
+    {
+     "pieces": 2,
+     "modifiers": [
+      {
+       "stat": "TurretCritChance",
+       "operation": "Multiply",
+       "value": "83231",
+       "row": {
+        "label": "TURRET CRIT CHANCE",
+        "value": "+27%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "TurretCritChance",
+        "number": 27.000427
+       }
+      }
+     ],
+     "effects": []
+    },
+    {
+     "pieces": 3,
+     "modifiers": [
+      {
+       "stat": "MaxSpeed",
+       "operation": "Multiply",
+       "value": "76677",
+       "row": {
+        "label": "MAX VELOCITY",
+        "value": "+17%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "MaxSpeed",
+        "number": 16.999817
+       }
+      },
+      {
+       "stat": "Thrust",
+       "operation": "Multiply",
+       "value": "72090",
+       "row": {
+        "label": "THRUST",
+        "value": "+10%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "Thrust",
+        "number": 10.00061
+       }
+      }
+     ],
+     "effects": []
+    },
+    {
+     "pieces": 4,
+     "modifiers": [
+      {
+       "stat": "TurretRotationRate",
+       "operation": "Multiply",
+       "value": "80609",
+       "row": {
+        "label": "TRACKING SPEED",
+        "value": "+23%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "TurretTrackingSpeed",
+        "number": 22.999573
+       }
+      }
+     ],
+     "effects": [
+      {
+       "kind": "Triggered",
+       "rule": "498402145893224930",
+       "text": "ON CRITICAL HIT +50% MAX SPEED FOR 3S (10S COOLDOWN)",
+       "chance": "65536",
+       "strength": null,
+       "displayText": "ON CRITICAL HIT +50% MAX SPEED FOR 3S (10S COOLDOWN)",
+       "chanceNumber": 1
+      }
+     ]
+    }
    ]
   },
   {
@@ -19,6 +101,101 @@
     "398496575653313900",
     "434100042014308992",
     "460593953622019903"
+   ],
+   "bonuses": [
+    {
+     "pieces": 2,
+     "modifiers": [
+      {
+       "stat": "TurretRange",
+       "operation": "Multiply",
+       "value": "77988",
+       "row": {
+        "label": "TURRET RANGE",
+        "value": "+19%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "TurretRangeMultiplier",
+        "number": 19.000244
+       }
+      },
+      {
+       "stat": "ECMMaxRange",
+       "operation": "Multiply",
+       "value": "114688",
+       "row": {
+        "label": "ECM MAX RANGE",
+        "value": "+75%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "MaxRange",
+        "number": 75
+       }
+      }
+     ],
+     "effects": []
+    },
+    {
+     "pieces": 3,
+     "modifiers": [
+      {
+       "stat": "TurretCritChance",
+       "operation": "Multiply",
+       "value": "80609",
+       "row": {
+        "label": "TURRET CRIT CHANCE",
+        "value": "+23%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "TurretCritChance",
+        "number": 22.999573
+       }
+      },
+      {
+       "stat": "TurretDamage",
+       "operation": "Multiply",
+       "value": "70779",
+       "row": {
+        "label": "TURRET DAMAGE",
+        "value": "+8%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "TurretDamageMultiplier",
+        "number": 8.000183
+       }
+      }
+     ],
+     "effects": []
+    },
+    {
+     "pieces": 4,
+     "modifiers": [
+      {
+       "stat": "SignatureRadius",
+       "operation": "Multiply",
+       "value": "56361",
+       "row": {
+        "label": "SIGNATURE RADIUS",
+        "value": "-14%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "SignatureRadius",
+        "number": -13.999939
+       }
+      }
+     ],
+     "effects": [
+      {
+       "kind": "Triggered",
+       "rule": "353836214286116472",
+       "text": "ON KILL CLOAKS SHIP FOR 15S (60S CD)",
+       "chance": "65536",
+       "strength": null,
+       "displayText": "ON KILL CLOAKS SHIP FOR 15S (60S CD)",
+       "chanceNumber": 1
+      }
+     ]
+    }
    ]
   }
  ]

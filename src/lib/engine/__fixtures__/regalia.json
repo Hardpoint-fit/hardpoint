@@ -1,5 +1,5 @@
 {
- "build": "d38e3a515e8548daaf0562260b059a783a159bb3",
+ "build": "6429a7a5c2656bfcd6e4841df2947c8824d38020",
  "regalia": [
   {
    "def": "270456803905027437",
@@ -12,10 +12,56 @@
      "operation": "Multiply",
      "tier": 4,
      "min": "69468",
-     "max": "72744"
+     "max": "72744",
+     "scope": "Local",
+     "row": {
+      "label": "TURRET DAMAGE",
+      "value": "6-11",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": null
+     },
+     "minRow": {
+      "label": "TURRET DAMAGE",
+      "value": "+6%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": 5.999756
+     },
+     "maxRow": {
+      "label": "TURRET DAMAGE",
+      "value": "+11%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "TurretDamageMultiplier",
+      "number": 10.998535
+     }
     }
    ],
-   "scaledStat": null
+   "scaledStat": null,
+   "linkedBonuses": [
+    {
+     "pieces": 2,
+     "modifiers": [
+      {
+       "stat": "TurretRange",
+       "operation": "Multiply",
+       "value": "74711",
+       "row": {
+        "label": "TURRET RANGE",
+        "value": "+14%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "TurretRangeMultiplier",
+        "number": 13.999939
+       }
+      }
+     ],
+     "effects": []
+    }
+   ]
   },
   {
    "def": "272157818179065936",
@@ -28,17 +74,88 @@
      "operation": "Multiply",
      "tier": 4,
      "min": "74055",
-     "max": "81264"
+     "max": "81264",
+     "scope": "ShipWide",
+     "row": {
+      "label": "MINING SPEED",
+      "value": "13-24",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "MiningDamage",
+      "number": null
+     },
+     "minRow": {
+      "label": "MINING SPEED",
+      "value": "+13%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "MiningDamage",
+      "number": 12.998962
+     },
+     "maxRow": {
+      "label": "MINING SPEED",
+      "value": "+24%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "MiningDamage",
+      "number": 23.999023
+     }
     },
     {
      "stat": "SalvageLuck",
      "operation": "Multiply",
      "tier": 4,
      "min": "70123",
-     "max": "74711"
+     "max": "74711",
+     "scope": "ShipWide",
+     "row": {
+      "label": "SALVAGE LUCK",
+      "value": "7-14",
+      "unit": "%",
+      "tone": "Positive",
+      "id": "SalvageLuck",
+      "number": null
+     },
+     "minRow": {
+      "label": "SALVAGE LUCK",
+      "value": "+7%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "SalvageLuck",
+      "number": 6.9992065
+     },
+     "maxRow": {
+      "label": "SALVAGE LUCK",
+      "value": "+14%",
+      "unit": null,
+      "tone": "Positive",
+      "id": "SalvageLuck",
+      "number": 13.999939
+     }
     }
    ],
-   "scaledStat": null
+   "scaledStat": null,
+   "linkedBonuses": [
+    {
+     "pieces": 2,
+     "modifiers": [
+      {
+       "stat": "MaxHeat",
+       "operation": "Multiply",
+       "value": "77332",
+       "row": {
+        "label": "MAX HEAT CAPACITY",
+        "value": "+18%",
+        "unit": null,
+        "tone": "Positive",
+        "id": "MaxHeatCapacity",
+        "number": 17.999268
+       }
+      }
+     ],
+     "effects": []
+    }
+   ]
   }
  ]
 }
